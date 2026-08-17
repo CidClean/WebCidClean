@@ -1,9 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { createClient, listClients } from '../api/clients'
-import type { Client } from '../types/models'
+import { listCatalogItems } from '../api/settings'
+import type { CatalogItem, Client, FacilityType } from '../types/models'
+import { FACILITY_TYPES } from '../types/models'
 import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
+import { Select } from '../components/ui/Select'
 import { StatusBadge } from '../components/ui/StatusBadge'
 
 export function ClientsListPage() {
@@ -71,9 +74,22 @@ function NewClientForm({ onCreated }: { onCreated: () => void }) {
   const [lastName, setLastName] = useState('')
   const [company, setCompany] = useState('')
   const [role, setRole] = useState('')
-  const [servicesRequired, setServicesRequired] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [facilityType, setFacilityType] = useState<FacilityType>('Office')
+  const [otherFacilityType, setOtherFacilityType] = useState('')
+  const [services, setServices] = useState<CatalogItem[]>([])
+  const [selectedServices, setSelectedServices] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    listCatalogItems('service').then((items) => setServices(items.filter((s) => s.active)))
+  }, [])
+
+  function toggleService(name: string) {
+    setSelectedServices((prev) => (prev.includes(name) ? prev.filter((s) => s !== name) : [...prev, name]))
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -85,9 +101,10 @@ function NewClientForm({ onCreated }: { onCreated: () => void }) {
         last_name: lastName,
         company: company || null,
         role: role || null,
-        services_required: servicesRequired
-          ? servicesRequired.split(',').map((s) => s.trim()).filter(Boolean)
-          : null,
+        email: email || null,
+        phone: phone || null,
+        facility_type: facilityType === 'Other' ? otherFacilityType || null : facilityType,
+        services_required: selectedServices.length > 0 ? selectedServices : null,
       })
       onCreated()
     } catch (err) {
@@ -112,16 +129,50 @@ function NewClientForm({ onCreated }: { onCreated: () => void }) {
         <Field label="Role">
           <Input value={role} onChange={(e) => setRole(e.target.value)} placeholder="e.g. Office Manager" />
         </Field>
-        <div className="col-span-2">
-          <Field label="Services Required (comma separated)">
-            <Input
-              value={servicesRequired}
-              onChange={(e) => setServicesRequired(e.target.value)}
-              placeholder="e.g. Office cleaning, Window washing"
-            />
+        <Field label="Email">
+          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        </Field>
+        <Field label="Phone">
+          <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+        </Field>
+        <Field label="Facility Type">
+          <Select value={facilityType} onChange={(e) => setFacilityType(e.target.value as FacilityType)}>
+            {FACILITY_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        {facilityType === 'Other' && (
+          <Field label="Specify Facility Type">
+            <Input value={otherFacilityType} onChange={(e) => setOtherFacilityType(e.target.value)} />
           </Field>
-        </div>
+        )}
       </div>
+
+      <div>
+        <span className="block text-sm font-medium text-gray-700 mb-1">Services Required</span>
+        {services.length === 0 ? (
+          <p className="text-xs text-gray-500">
+            No services defined yet — add some under Settings &rarr; Services &amp; Add-ons.
+          </p>
+        ) : (
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            {services.map((s) => (
+              <label key={s.id} className="flex items-center gap-1.5 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={selectedServices.includes(s.name)}
+                  onChange={() => toggleService(s.name)}
+                />
+                {s.name}
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+
       {error && <p className="text-sm text-red-600">{error}</p>}
       <Button type="submit" disabled={submitting}>
         {submitting ? 'Saving...' : 'Save Client'}

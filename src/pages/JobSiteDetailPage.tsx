@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getClientBillingInfo, listClientDocuments } from '../api/clients'
-import { activateJob, getJobSite } from '../api/jobSites'
+import { activateJob, getJobSite, updateStaffPaymentAmount } from '../api/jobSites'
 import { listAreasForJobSite } from '../api/areas'
 import { listQuotesForJobSite } from '../api/quotes'
 import { listAssignmentsForJobSite, removeAssignment } from '../api/staff'
@@ -11,7 +11,7 @@ import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
 import { StatusBadge } from '../components/ui/StatusBadge'
 import { AreaForm } from '../components/areas/AreaForm'
-import { AreaPictureUpload } from '../components/areas/AreaPictureUpload'
+import { AreaCard } from '../components/areas/AreaCard'
 import { AssignStaffForm } from '../components/staff/AssignStaffForm'
 
 export function JobSiteDetailPage() {
@@ -47,7 +47,7 @@ export function JobSiteDetailPage() {
         </div>
       </div>
 
-      <JobSiteDetails jobSite={jobSite} />
+      <JobSiteDetails jobSite={jobSite} onUpdated={refresh} />
 
       <Section title="Areas">
         <AreasSection jobSiteId={jobSiteId} />
@@ -64,7 +64,7 @@ export function JobSiteDetailPage() {
       )}
 
       <Section title="Staff Assignments">
-        <StaffAssignmentsSection jobSiteId={jobSiteId} />
+        <StaffAssignmentsSection jobSite={jobSite} />
       </Section>
     </div>
   )
@@ -79,54 +79,82 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   )
 }
 
-function JobSiteDetails({ jobSite }: { jobSite: JobSite }) {
+function JobSiteDetails({ jobSite, onUpdated }: { jobSite: JobSite; onUpdated: () => void }) {
   return (
-    <dl className="bg-white rounded border border-gray-200 p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-      <div>
-        <dt className="text-gray-500">Contact</dt>
-        <dd className="text-gray-900">{jobSite.contact_name || '—'}</dd>
-      </div>
-      <div>
-        <dt className="text-gray-500">Contact Role</dt>
-        <dd className="text-gray-900">{jobSite.contact_role || '—'}</dd>
-      </div>
-      <div>
-        <dt className="text-gray-500">Contact Email</dt>
-        <dd className="text-gray-900">{jobSite.contact_email || '—'}</dd>
-      </div>
-      <div>
-        <dt className="text-gray-500">Contact Phone</dt>
-        <dd className="text-gray-900">{jobSite.contact_phone || '—'}</dd>
-      </div>
-      <div>
-        <dt className="text-gray-500">Frequency</dt>
-        <dd className="text-gray-900">{jobSite.frequency.replace('_', ' ')}</dd>
-      </div>
-      <div>
-        <dt className="text-gray-500">Days</dt>
-        <dd className="text-gray-900">{jobSite.frequency_days?.join(', ') || '—'}</dd>
-      </div>
-      <div>
-        <dt className="text-gray-500">Start Time</dt>
-        <dd className="text-gray-900">{jobSite.preferred_start_time}</dd>
-      </div>
-      <div>
-        <dt className="text-gray-500">End Time</dt>
-        <dd className="text-gray-900">{jobSite.preferred_end_time || '—'}</dd>
-      </div>
-      {jobSite.status === 'active' && (
-        <>
+    <div className="space-y-3">
+      <dl className="bg-white rounded border border-gray-200 p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+        <div>
+          <dt className="text-gray-500">Contact</dt>
+          <dd className="text-gray-900">{jobSite.contact_name || '—'}</dd>
+        </div>
+        <div>
+          <dt className="text-gray-500">Contact Role</dt>
+          <dd className="text-gray-900">{jobSite.contact_role || '—'}</dd>
+        </div>
+        <div>
+          <dt className="text-gray-500">Contact Email</dt>
+          <dd className="text-gray-900">{jobSite.contact_email || '—'}</dd>
+        </div>
+        <div>
+          <dt className="text-gray-500">Contact Phone</dt>
+          <dd className="text-gray-900">{jobSite.contact_phone || '—'}</dd>
+        </div>
+        <div>
+          <dt className="text-gray-500">Frequency</dt>
+          <dd className="text-gray-900">{jobSite.frequency.replace('_', ' ')}</dd>
+        </div>
+        <div>
+          <dt className="text-gray-500">Days</dt>
+          <dd className="text-gray-900">{jobSite.frequency_days?.join(', ') || '—'}</dd>
+        </div>
+        <div>
+          <dt className="text-gray-500">Start Time</dt>
+          <dd className="text-gray-900">{jobSite.preferred_start_time}</dd>
+        </div>
+        <div>
+          <dt className="text-gray-500">End Time</dt>
+          <dd className="text-gray-900">{jobSite.preferred_end_time || '—'}</dd>
+        </div>
+        {jobSite.service_amount !== null && (
           <div>
             <dt className="text-gray-500">Service Amount</dt>
-            <dd className="text-gray-900">${jobSite.service_amount}</dd>
+            <dd className="text-gray-900">${jobSite.service_amount} (from accepted quote)</dd>
           </div>
-          <div>
-            <dt className="text-gray-500">Staff Payment Amount</dt>
-            <dd className="text-gray-900">${jobSite.staff_payment_amount}</dd>
-          </div>
-        </>
-      )}
-    </dl>
+        )}
+      </dl>
+      <StaffPaymentAmountEditor jobSite={jobSite} onUpdated={onUpdated} />
+    </div>
+  )
+}
+
+function StaffPaymentAmountEditor({ jobSite, onUpdated }: { jobSite: JobSite; onUpdated: () => void }) {
+  const [value, setValue] = useState(jobSite.staff_payment_amount !== null ? String(jobSite.staff_payment_amount) : '')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSave() {
+    setSaving(true)
+    setError(null)
+    try {
+      await updateStaffPaymentAmount(jobSite.id, Number(value) || 0)
+      onUpdated()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="bg-white rounded border border-gray-200 p-4 flex items-end gap-2 max-w-sm">
+      <Field label="Staff Payment Amount">
+        <Input type="number" step="0.01" min="0" value={value} onChange={(e) => setValue(e.target.value)} />
+      </Field>
+      <Button variant="secondary" onClick={handleSave} disabled={saving}>
+        {saving ? 'Saving...' : 'Save'}
+      </Button>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+    </div>
   )
 }
 
@@ -147,17 +175,9 @@ function AreasSection({ jobSiteId }: { jobSiteId: string }) {
   return (
     <div className="space-y-3">
       <div className="flex justify-end">
-        <Button onClick={() => setShowForm((v) => !v)}>{showForm ? 'Cancel' : 'Add Area'}</Button>
+        <Button onClick={() => setShowForm((v) => !v)}>{showForm ? 'Done Adding Areas' : 'Add Area'}</Button>
       </div>
-      {showForm && (
-        <AreaForm
-          jobSiteId={jobSiteId}
-          onCreated={() => {
-            setShowForm(false)
-            refresh()
-          }}
-        />
-      )}
+      {showForm && <AreaForm jobSiteId={jobSiteId} existingAreas={areas} onCreated={refresh} />}
       {loading ? (
         <p className="text-sm text-gray-500">Loading...</p>
       ) : areas.length === 0 ? (
@@ -165,17 +185,7 @@ function AreasSection({ jobSiteId }: { jobSiteId: string }) {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {areas.map((area) => (
-            <div key={area.id} className="bg-white rounded border border-gray-200 p-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="font-medium text-gray-900">{area.name}</span>
-                <span className="text-xs text-gray-500">
-                  {area.size} / {area.condition}
-                </span>
-              </div>
-              {area.type && <p className="text-xs text-gray-500">{area.type}</p>}
-              {area.notes && <p className="text-xs text-gray-600">{area.notes}</p>}
-              <AreaPictureUpload areaId={area.id} />
-            </div>
+            <AreaCard key={area.id} area={area} onUpdated={refresh} />
           ))}
         </div>
       )}
@@ -226,8 +236,6 @@ function QuoteSection({ jobSiteId, clientId }: { jobSiteId: string; clientId: st
 function ActivateJobPanel({ jobSite, onActivated }: { jobSite: JobSite; onActivated: () => void }) {
   const [hasBilling, setHasBilling] = useState<boolean | null>(null)
   const [hasDocs, setHasDocs] = useState<boolean | null>(null)
-  const [serviceAmount, setServiceAmount] = useState('')
-  const [staffPaymentAmount, setStaffPaymentAmount] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -236,13 +244,14 @@ function ActivateJobPanel({ jobSite, onActivated }: { jobSite: JobSite; onActiva
     listClientDocuments(jobSite.client_id).then((docs) => setHasDocs(docs.length > 0))
   }, [jobSite.client_id])
 
-  const ready = hasBilling && hasDocs
+  const hasStaffPayment = jobSite.staff_payment_amount !== null
+  const ready = hasBilling && hasDocs && hasStaffPayment && jobSite.service_amount !== null
 
   async function handleActivate() {
     setSubmitting(true)
     setError(null)
     try {
-      await activateJob(jobSite.id, Number(serviceAmount), Number(staffPaymentAmount))
+      await activateJob(jobSite.id)
       onActivated()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to activate job')
@@ -253,50 +262,52 @@ function ActivateJobPanel({ jobSite, onActivated }: { jobSite: JobSite; onActiva
 
   return (
     <div className="bg-white rounded border border-gray-200 p-4 space-y-3 max-w-md">
+      {jobSite.service_amount === null && (
+        <p className="text-sm text-red-600">No accepted quote found — the service amount is set automatically when a quote is approved.</p>
+      )}
       {hasBilling === false && (
         <p className="text-sm text-red-600">Client is missing billing information — add it under the client's Billing tab.</p>
       )}
       {hasDocs === false && (
         <p className="text-sm text-red-600">Client has no signed documents — upload one under the client's Documents tab.</p>
       )}
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Service Amount">
-          <Input type="number" step="0.01" min="0" value={serviceAmount} onChange={(e) => setServiceAmount(e.target.value)} />
-        </Field>
-        <Field label="Staff Payment Amount">
-          <Input
-            type="number"
-            step="0.01"
-            min="0"
-            value={staffPaymentAmount}
-            onChange={(e) => setStaffPaymentAmount(e.target.value)}
-          />
-        </Field>
-      </div>
+      {!hasStaffPayment && (
+        <p className="text-sm text-red-600">Set the staff payment amount above before activating.</p>
+      )}
+      <dl className="grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <dt className="text-gray-500">Service Amount</dt>
+          <dd className="text-gray-900">{jobSite.service_amount !== null ? `$${jobSite.service_amount}` : '—'}</dd>
+        </div>
+        <div>
+          <dt className="text-gray-500">Staff Payment Amount</dt>
+          <dd className="text-gray-900">{jobSite.staff_payment_amount !== null ? `$${jobSite.staff_payment_amount}` : '—'}</dd>
+        </div>
+      </dl>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button onClick={handleActivate} disabled={!ready || submitting || !serviceAmount || !staffPaymentAmount}>
+      <Button onClick={handleActivate} disabled={!ready || submitting}>
         {submitting ? 'Activating...' : 'Activate Job'}
       </Button>
     </div>
   )
 }
 
-function StaffAssignmentsSection({ jobSiteId }: { jobSiteId: string }) {
+function StaffAssignmentsSection({ jobSite }: { jobSite: JobSite }) {
   const [assignments, setAssignments] = useState<JobStaffAssignmentWithStaff[]>([])
   const [loading, setLoading] = useState(true)
 
   function refresh() {
     setLoading(true)
-    listAssignmentsForJobSite(jobSiteId)
+    listAssignmentsForJobSite(jobSite.id)
       .then(setAssignments)
       .finally(() => setLoading(false))
   }
 
-  useEffect(refresh, [jobSiteId])
+  useEffect(refresh, [jobSite.id])
 
   return (
     <div className="space-y-3">
-      <AssignStaffForm jobSiteId={jobSiteId} onAssigned={refresh} />
+      <AssignStaffForm jobSiteId={jobSite.id} staffPaymentAmount={jobSite.staff_payment_amount} onAssigned={refresh} />
       {loading ? (
         <p className="text-sm text-gray-500">Loading...</p>
       ) : assignments.length === 0 ? (

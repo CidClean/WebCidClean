@@ -50,19 +50,6 @@ export function PublicQuotePage() {
               </p>
             </div>
 
-            {data.areas.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">Areas</h3>
-                <ul className="text-sm text-gray-700 space-y-1">
-                  {data.areas.map((area) => (
-                    <li key={area.id}>
-                      {area.name} — {area.size}, {area.condition} condition
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
             <div>
               <h3 className="text-sm font-semibold text-gray-700 mb-2">Line Items</h3>
               <div className="divide-y divide-gray-100">
@@ -73,9 +60,21 @@ export function PublicQuotePage() {
                   </div>
                 ))}
               </div>
-              <div className="flex justify-between font-semibold text-gray-900 pt-2">
-                <span>Total</span>
-                <span>${data.quote.amount}</span>
+              <div className="pt-2 space-y-1">
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Subtotal</span>
+                  <span>${(data.quote.amount - data.quote.tax_amount).toFixed(2)}</span>
+                </div>
+                {data.quote.tax_amount > 0 && (
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>Tax</span>
+                    <span>${data.quote.tax_amount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-semibold text-gray-900">
+                  <span>Total</span>
+                  <span>${data.quote.amount.toFixed(2)}</span>
+                </div>
               </div>
             </div>
 

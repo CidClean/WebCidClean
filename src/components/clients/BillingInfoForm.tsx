@@ -1,15 +1,17 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { getClientBillingInfo, upsertClientBillingInfo } from '../../api/clients'
+import type { Client } from '../../types/models'
 import { Button } from '../ui/Button'
 import { Field, Input, Textarea } from '../ui/Input'
 
-export function BillingInfoForm({ clientId }: { clientId: string }) {
+export function BillingInfoForm({ clientId, client }: { clientId: string; client: Client }) {
   const [billingName, setBillingName] = useState('')
   const [billingEmail, setBillingEmail] = useState('')
   const [billingPhone, setBillingPhone] = useState('')
   const [billingAddress, setBillingAddress] = useState('')
   const [paymentTerms, setPaymentTerms] = useState('')
   const [notes, setNotes] = useState('')
+  const [sameAsClient, setSameAsClient] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -52,10 +54,23 @@ export function BillingInfoForm({ clientId }: { clientId: string }) {
     }
   }
 
+  function toggleSameAsClient(checked: boolean) {
+    setSameAsClient(checked)
+    if (checked) {
+      setBillingName(client.company || `${client.first_name} ${client.last_name}`)
+      setBillingEmail(client.email ?? '')
+      setBillingPhone(client.phone ?? '')
+    }
+  }
+
   if (loading) return <p className="text-sm text-gray-500">Loading...</p>
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded border border-gray-200 p-4 space-y-3 max-w-lg">
+      <label className="flex items-center gap-2 text-sm text-gray-700">
+        <input type="checkbox" checked={sameAsClient} onChange={(e) => toggleSameAsClient(e.target.checked)} />
+        Same as client information
+      </label>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Billing Name">
           <Input value={billingName} onChange={(e) => setBillingName(e.target.value)} />

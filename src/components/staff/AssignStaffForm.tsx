@@ -2,13 +2,20 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { assignStaffToJob, listStaff } from '../../api/staff'
 import type { Staff } from '../../types/models'
 import { Button } from '../ui/Button'
-import { Field, Input } from '../ui/Input'
+import { Field } from '../ui/Input'
 import { Select } from '../ui/Select'
 
-export function AssignStaffForm({ jobSiteId, onAssigned }: { jobSiteId: string; onAssigned: () => void }) {
+export function AssignStaffForm({
+  jobSiteId,
+  staffPaymentAmount,
+  onAssigned,
+}: {
+  jobSiteId: string
+  staffPaymentAmount: number | null
+  onAssigned: () => void
+}) {
   const [staff, setStaff] = useState<Staff[]>([])
   const [staffId, setStaffId] = useState('')
-  const [paymentAmount, setPaymentAmount] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -24,8 +31,7 @@ export function AssignStaffForm({ jobSiteId, onAssigned }: { jobSiteId: string; 
     setSubmitting(true)
     setError(null)
     try {
-      await assignStaffToJob(jobSiteId, staffId, Number(paymentAmount))
-      setPaymentAmount('')
+      await assignStaffToJob(jobSiteId, staffId)
       onAssigned()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to assign staff')
@@ -36,6 +42,10 @@ export function AssignStaffForm({ jobSiteId, onAssigned }: { jobSiteId: string; 
 
   if (staff.length === 0) {
     return <p className="text-sm text-gray-500">No staff created yet. Add staff first.</p>
+  }
+
+  if (staffPaymentAmount === null) {
+    return <p className="text-sm text-gray-500">Set the job site's staff payment amount above before assigning staff.</p>
   }
 
   return (
@@ -49,16 +59,7 @@ export function AssignStaffForm({ jobSiteId, onAssigned }: { jobSiteId: string; 
           ))}
         </Select>
       </Field>
-      <Field label="Payment Amount">
-        <Input
-          type="number"
-          step="0.01"
-          min="0"
-          value={paymentAmount}
-          onChange={(e) => setPaymentAmount(e.target.value)}
-          required
-        />
-      </Field>
+      <p className="text-sm text-gray-600 pb-1.5">Pays ${staffPaymentAmount}</p>
       <Button type="submit" disabled={submitting}>
         {submitting ? 'Saving...' : 'Assign'}
       </Button>

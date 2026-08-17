@@ -14,6 +14,21 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          id: boolean
+          tax_rate: number
+        }
+        Insert: {
+          id?: boolean
+          tax_rate?: number
+        }
+        Update: {
+          id?: boolean
+          tax_rate?: number
+        }
+        Relationships: []
+      }
       area_pictures: {
         Row: {
           area_id: string
@@ -166,6 +181,36 @@ export type Database = {
         }
         Relationships: []
       }
+      catalog_items: {
+        Row: {
+          active: boolean
+          created_at: string
+          default_price: number
+          id: string
+          kind: Database["public"]["Enums"]["catalog_item_kind"]
+          name: string
+          taxable: boolean
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          default_price?: number
+          id?: string
+          kind: Database["public"]["Enums"]["catalog_item_kind"]
+          name: string
+          taxable?: boolean
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          default_price?: number
+          id?: string
+          kind?: Database["public"]["Enums"]["catalog_item_kind"]
+          name?: string
+          taxable?: boolean
+        }
+        Relationships: []
+      }
       client_billing_info: {
         Row: {
           billing_address: string | null
@@ -246,9 +291,12 @@ export type Database = {
         Row: {
           company: string | null
           created_at: string
+          email: string | null
+          facility_type: string | null
           first_name: string
           id: string
           last_name: string
+          phone: string | null
           role: string | null
           services_required: string[] | null
           status: Database["public"]["Enums"]["client_status"]
@@ -257,9 +305,12 @@ export type Database = {
         Insert: {
           company?: string | null
           created_at?: string
+          email?: string | null
+          facility_type?: string | null
           first_name: string
           id?: string
           last_name: string
+          phone?: string | null
           role?: string | null
           services_required?: string[] | null
           status?: Database["public"]["Enums"]["client_status"]
@@ -268,13 +319,43 @@ export type Database = {
         Update: {
           company?: string | null
           created_at?: string
+          email?: string | null
+          facility_type?: string | null
           first_name?: string
           id?: string
           last_name?: string
+          phone?: string | null
           role?: string | null
           services_required?: string[] | null
           status?: Database["public"]["Enums"]["client_status"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      discounts: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          type: Database["public"]["Enums"]["discount_type"]
+          value: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          type: Database["public"]["Enums"]["discount_type"]
+          value: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          type?: Database["public"]["Enums"]["discount_type"]
+          value?: number
         }
         Relationships: []
       }
@@ -675,6 +756,7 @@ export type Database = {
           id: string
           quote_id: string
           sort_order: number
+          taxable: boolean
         }
         Insert: {
           amount: number
@@ -682,6 +764,7 @@ export type Database = {
           id?: string
           quote_id: string
           sort_order?: number
+          taxable?: boolean
         }
         Update: {
           amount?: number
@@ -689,6 +772,7 @@ export type Database = {
           id?: string
           quote_id?: string
           sort_order?: number
+          taxable?: boolean
         }
         Relationships: [
           {
@@ -753,6 +837,7 @@ export type Database = {
           sent_at: string | null
           share_token: string
           status: Database["public"]["Enums"]["quote_status"]
+          tax_amount: number
         }
         Insert: {
           amount?: number
@@ -765,6 +850,7 @@ export type Database = {
           sent_at?: string | null
           share_token?: string
           status?: Database["public"]["Enums"]["quote_status"]
+          tax_amount?: number
         }
         Update: {
           amount?: number
@@ -777,6 +863,7 @@ export type Database = {
           sent_at?: string | null
           share_token?: string
           status?: Database["public"]["Enums"]["quote_status"]
+          tax_amount?: number
         }
         Relationships: [
           {
@@ -1202,14 +1289,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      activate_job: {
-        Args: {
-          p_job_site_id: string
-          p_service_amount: number
-          p_staff_payment_amount: number
-        }
-        Returns: undefined
-      }
+      activate_job: { Args: { p_job_site_id: string }; Returns: undefined }
       admin_activate_converted_account: {
         Args: {
           p_actor_aal: string
@@ -3409,11 +3489,7 @@ export type Database = {
         Returns: Json
       }
       assign_staff_to_job: {
-        Args: {
-          p_job_site_id: string
-          p_payment_amount: number
-          p_staff_id: string
-        }
+        Args: { p_job_site_id: string; p_staff_id: string }
         Returns: undefined
       }
       auth_risk_precheck: {
@@ -3585,6 +3661,7 @@ export type Database = {
     Enums: {
       area_condition: "good" | "normal" | "bad"
       area_size: "small" | "normal" | "big"
+      catalog_item_kind: "service" | "addon"
       client_status:
         | "prospect"
         | "contacted"
@@ -3593,6 +3670,7 @@ export type Database = {
         | "pending"
         | "active"
         | "archived"
+      discount_type: "percentage" | "fixed"
       frequency_type:
         | "one_time"
         | "daily"
@@ -3739,6 +3817,7 @@ export const Constants = {
     Enums: {
       area_condition: ["good", "normal", "bad"],
       area_size: ["small", "normal", "big"],
+      catalog_item_kind: ["service", "addon"],
       client_status: [
         "prospect",
         "contacted",
@@ -3748,6 +3827,7 @@ export const Constants = {
         "active",
         "archived",
       ],
+      discount_type: ["percentage", "fixed"],
       frequency_type: [
         "one_time",
         "daily",

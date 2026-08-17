@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getClient } from '../api/clients'
 import { getJobSite } from '../api/jobSites'
+import { getAppSettings, listCatalogItems, listDiscounts } from '../api/settings'
 import {
   createQuote,
   getQuote,
@@ -13,7 +14,7 @@ import {
   uploadQuotePdf,
 } from '../api/quotes'
 import { renderQuotePdfBlob } from '../lib/pdf'
-import type { Client, JobSite, Quote, QuoteResponse } from '../types/models'
+import type { CatalogItem, Client, Discount, JobSite, Quote, QuoteResponse } from '../types/models'
 import { Button } from '../components/ui/Button'
 import { StatusBadge } from '../components/ui/StatusBadge'
 import { QuoteLineItemsEditor, type LineItemDraft } from '../components/quotes/QuoteLineItemsEditor'
@@ -25,8 +26,11 @@ export function QuoteEditorPage() {
   const [jobSite, setJobSite] = useState<JobSite | null>(null)
   const [client, setClient] = useState<Client | null>(null)
   const [quote, setQuote] = useState<Quote | null>(null)
-  const [items, setItems] = useState<LineItemDraft[]>([{ description: '', amount: '' }])
+  const [items, setItems] = useState<LineItemDraft[]>([{ description: '', amount: '', taxable: false }])
   const [responses, setResponses] = useState<QuoteResponse[]>([])
+  const [catalogItems, setCatalogItems] = useState<CatalogItem[]>([])
+  const [discounts, setDiscounts] = useState<Discount[]>([])
+  const [taxRate, setTaxRate] = useState(0.06)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [sending, setSending] = useState(false)
@@ -36,6 +40,12 @@ export function QuoteEditorPage() {
     getJobSite(jobSiteId).then(setJobSite)
     getClient(clientId).then(setClient)
   }, [jobSiteId, clientId])
+
+  useEffect(() => {
+    listCatalogItems().then((items) => setCatalogItems(items.filter((i) => i.active)))
+    listDiscounts().then((items) => setDiscounts(items.filter((i) => i.active)))
+    getAppSettings().then((s) => setTaxRate(s.tax_rate))
+  }, [])
 
   useEffect(() => {
     if (!jobSiteId || !clientId || !quoteId) return
@@ -53,7 +63,7 @@ export function QuoteEditorPage() {
       setQuote(q)
       const lineItems = await listQuoteLineItems(validQuoteId)
       if (lineItems.length > 0) {
-        setItems(lineItems.map((li) => ({ description: li.description, amount: String(li.amount) })))
+        setItems(lineItems.map((li) => ({ description: li.description, amount: String(li.amount), taxable: li.taxable })))
       }
       const resp = await listQuoteResponses(validQuoteId)
       setResponses(resp)
@@ -66,14 +76,17 @@ export function QuoteEditorPage() {
 
   const editable = quote.status === 'draft' || quote.status === 'changes_requested'
 
+  function parseItems() {
+    return items
+      .filter((i) => i.description.trim() !== '')
+      .map((i) => ({ description: i.description, amount: Number(i.amount) || 0, taxable: i.taxable }))
+  }
+
   async function handleSaveLineItems() {
     setSaving(true)
     setError(null)
     try {
-      const parsed = items
-        .filter((i) => i.description.trim() !== '')
-        .map((i) => ({ description: i.description, amount: Number(i.amount) || 0 }))
-      await replaceQuoteLineItems(quote!.id, parsed)
+      await replaceQuoteLineItems(quote!.id, parseItems(), taxRate)
       const refreshed = await getQuote(quote!.id)
       setQuote(refreshed)
     } catch (err) {
@@ -87,14 +100,14 @@ export function QuoteEditorPage() {
     setSending(true)
     setError(null)
     try {
-      const parsed = items
-        .filter((i) => i.description.trim() !== '')
-        .map((i) => ({ description: i.description, amount: Number(i.amount) || 0 }))
+      const parsed = parseItems()
       if (parsed.length === 0) {
         throw new Error('Add at least one line item before sending')
       }
-      await replaceQuoteLineItems(quote!.id, parsed)
-      const total = parsed.reduce((sum, i) => sum + i.amount, 0)
+      await replaceQuoteLineItems(quote!.id, parsed, taxRate)
+      const subtotal = parsed.reduce((sum, i) => sum + i.amount, 0)
+      const taxableBase = parsed.reduce((sum, i) => (i.taxable && i.amount > 0 ? sum + i.amount : sum), 0)
+      const taxAmount = taxableBase * taxRate
       const blob = await renderQuotePdfBlob({
         companyName: client!.company,
         jobSiteName: jobSite!.name,
@@ -102,7 +115,9 @@ export function QuoteEditorPage() {
         frequency: jobSite!.frequency,
         notes: quote!.notes,
         lineItems: parsed,
-        total,
+        subtotal,
+        taxAmount,
+        total: subtotal + taxAmount,
       })
       const pdfUrl = await uploadQuotePdf(quote!.id, blob)
       await sendQuote(quote!.id, pdfUrl)
@@ -129,7 +144,14 @@ export function QuoteEditorPage() {
       </div>
 
       <div className="bg-white rounded border border-gray-200 p-4 space-y-4 max-w-xl">
-        <QuoteLineItemsEditor items={items} onChange={setItems} readOnly={!editable} />
+        <QuoteLineItemsEditor
+          items={items}
+          onChange={setItems}
+          readOnly={!editable}
+          catalogItems={catalogItems}
+          discounts={discounts}
+          taxRate={taxRate}
+        />
         {error && <p className="text-sm text-red-600">{error}</p>}
         {editable && (
           <div className="flex gap-2">

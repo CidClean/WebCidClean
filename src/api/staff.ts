@@ -59,11 +59,10 @@ export async function listAssignmentsForJobSite(jobSiteId: string): Promise<JobS
   return data as unknown as JobStaffAssignmentWithStaff[]
 }
 
-export async function assignStaffToJob(jobSiteId: string, staffId: string, paymentAmount: number): Promise<void> {
+export async function assignStaffToJob(jobSiteId: string, staffId: string): Promise<void> {
   const { error } = await supabase.rpc('assign_staff_to_job', {
     p_job_site_id: jobSiteId,
     p_staff_id: staffId,
-    p_payment_amount: paymentAmount,
   })
   if (error) throw error
 }

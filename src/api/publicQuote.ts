@@ -1,14 +1,5 @@
 import { supabase } from '../lib/supabase'
 
-export interface PublicQuoteArea {
-  id: string
-  name: string
-  type: string | null
-  size: string
-  condition: string
-  notes: string | null
-}
-
 export interface PublicQuoteLineItem {
   description: string
   amount: number
@@ -19,6 +10,7 @@ export interface PublicQuoteData {
     id: string
     status: string
     amount: number
+    tax_amount: number
     pdf_url: string | null
     notes: string | null
     sent_at: string | null
@@ -33,7 +25,6 @@ export interface PublicQuoteData {
     preferred_end_time: string | null
   }
   client_company: string | null
-  areas: PublicQuoteArea[]
   line_items: PublicQuoteLineItem[]
 }
 

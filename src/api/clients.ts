@@ -18,7 +18,10 @@ export async function createClient(input: {
   last_name: string
   company: string | null
   role: string | null
+  facility_type: string | null
   services_required: string[] | null
+  email: string | null
+  phone: string | null
 }): Promise<Client> {
   const { data, error } = await supabase.from('clients').insert(input).select().single()
   if (error) throw error

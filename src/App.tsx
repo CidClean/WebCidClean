@@ -12,6 +12,7 @@ import { QuoteEditorPage } from './pages/QuoteEditorPage'
 import { StaffListPage } from './pages/StaffListPage'
 import { StaffDetailPage } from './pages/StaffDetailPage'
 import { AccountingPage } from './pages/AccountingPage'
+import { SettingsPage } from './pages/SettingsPage'
 import { PublicQuotePage } from './pages/PublicQuotePage'
 
 function Protected({ children }: { children: ReactNode }) {
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="/staff" element={<Protected><StaffListPage /></Protected>} />
           <Route path="/staff/:staffId" element={<Protected><StaffDetailPage /></Protected>} />
           <Route path="/accounting" element={<Protected><AccountingPage /></Protected>} />
+          <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

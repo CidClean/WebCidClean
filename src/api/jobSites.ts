@@ -34,15 +34,11 @@ export async function archiveJobSite(id: string): Promise<void> {
   if (error) throw error
 }
 
-export async function activateJob(
-  jobSiteId: string,
-  serviceAmount: number,
-  staffPaymentAmount: number,
-): Promise<void> {
-  const { error } = await supabase.rpc('activate_job', {
-    p_job_site_id: jobSiteId,
-    p_service_amount: serviceAmount,
-    p_staff_payment_amount: staffPaymentAmount,
-  })
+export async function activateJob(jobSiteId: string): Promise<void> {
+  const { error } = await supabase.rpc('activate_job', { p_job_site_id: jobSiteId })
   if (error) throw error
+}
+
+export async function updateStaffPaymentAmount(jobSiteId: string, amount: number): Promise<JobSite> {
+  return updateJobSite(jobSiteId, { staff_payment_amount: amount })
 }

@@ -8,6 +8,7 @@ const navItems = [
   { to: '/clients', label: 'Clients' },
   { to: '/staff', label: 'Staff' },
   { to: '/accounting', label: 'Accounting' },
+  { to: '/settings', label: 'Settings' },
 ]
 
 export function AppShell({ children }: { children: ReactNode }) {

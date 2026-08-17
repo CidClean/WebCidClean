@@ -18,10 +18,22 @@ export interface QuotePdfProps {
   frequency: string
   notes: string | null
   lineItems: { description: string; amount: number }[]
+  subtotal: number
+  taxAmount: number
   total: number
 }
 
-export function QuotePdfDocument({ companyName, jobSiteName, jobSiteAddress, frequency, notes, lineItems, total }: QuotePdfProps) {
+export function QuotePdfDocument({
+  companyName,
+  jobSiteName,
+  jobSiteAddress,
+  frequency,
+  notes,
+  lineItems,
+  subtotal,
+  taxAmount,
+  total,
+}: QuotePdfProps) {
   return (
     <Document>
       <Page size="LETTER" style={styles.page}>
@@ -44,6 +56,16 @@ export function QuotePdfDocument({ companyName, jobSiteName, jobSiteAddress, fre
               <Text>${item.amount.toFixed(2)}</Text>
             </View>
           ))}
+          <View style={styles.row}>
+            <Text>Subtotal</Text>
+            <Text>${subtotal.toFixed(2)}</Text>
+          </View>
+          {taxAmount > 0 && (
+            <View style={styles.row}>
+              <Text>Tax</Text>
+              <Text>${taxAmount.toFixed(2)}</Text>
+            </View>
+          )}
           <View style={styles.totalRow}>
             <Text>Total</Text>
             <Text>${total.toFixed(2)}</Text>

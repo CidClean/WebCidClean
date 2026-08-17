@@ -107,7 +107,7 @@ export function ClientDetailPage() {
 
       {tab === 'info' && <InfoTab client={client} />}
       {tab === 'jobSites' && <JobSitesTab client={client} />}
-      {tab === 'billing' && <BillingInfoForm clientId={clientId} />}
+      {tab === 'billing' && <BillingInfoForm clientId={clientId} client={client} />}
       {tab === 'documents' && <DocumentUploadList clientId={clientId} />}
     </div>
   )
@@ -131,6 +131,18 @@ function InfoTab({ client }: { client: Client }) {
       <div>
         <dt className="text-gray-500">Role</dt>
         <dd className="text-gray-900">{client.role || '—'}</dd>
+      </div>
+      <div>
+        <dt className="text-gray-500">Email</dt>
+        <dd className="text-gray-900">{client.email || '—'}</dd>
+      </div>
+      <div>
+        <dt className="text-gray-500">Phone</dt>
+        <dd className="text-gray-900">{client.phone || '—'}</dd>
+      </div>
+      <div>
+        <dt className="text-gray-500">Facility Type</dt>
+        <dd className="text-gray-900">{client.facility_type || '—'}</dd>
       </div>
       <div className="col-span-2">
         <dt className="text-gray-500">Services Required</dt>
