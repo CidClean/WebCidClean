@@ -12,6 +12,7 @@ const COLORS: Record<string, string> = {
   sent: 'bg-blue-100 text-blue-800',
   changes_requested: 'bg-yellow-100 text-yellow-800',
   declined: 'bg-red-100 text-red-800',
+  superseded: 'bg-gray-200 text-gray-500',
 }
 
 export function StatusBadge({ status }: { status: string }) {

@@ -87,6 +87,10 @@ export function PublicQuotePage() {
             <div className="pt-4 border-t border-gray-200">
               {data.quote.status === 'sent' ? (
                 <PublicQuoteResponseForm token={token!} onResponded={refresh} />
+              ) : data.quote.status === 'superseded' ? (
+                <p className="text-sm text-gray-600">
+                  This quote has been replaced by a newer one. Please refer to the latest quote you received.
+                </p>
               ) : (
                 <p className="text-sm text-gray-600">
                   This quote has already been responded to (status: {data.quote.status.replace('_', ' ')}).

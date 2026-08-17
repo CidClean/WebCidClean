@@ -166,7 +166,10 @@ function JobSitesTab({ client }: { client: Client }) {
 
   useEffect(refresh, [client.id])
 
-  const canAdd = client.status === 'in_process'
+  // A client can have several job sites at different stages, so once they've
+  // reached in_process the first time, adding more stays open regardless of
+  // how far along any individual job site (or the client's overall status) is.
+  const canAdd = !['prospect', 'contacted', 'archived'].includes(client.status)
 
   return (
     <div className="space-y-4">

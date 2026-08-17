@@ -3686,6 +3686,7 @@ export type Database = {
         | "approved"
         | "changes_requested"
         | "declined"
+        | "superseded"
       staff_type: "employee" | "contractor"
       weekday: "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun"
     }
@@ -3844,6 +3845,7 @@ export const Constants = {
         "approved",
         "changes_requested",
         "declined",
+        "superseded",
       ],
       staff_type: ["employee", "contractor"],
       weekday: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
