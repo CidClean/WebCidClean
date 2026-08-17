@@ -23,6 +23,8 @@ export function JobSiteForm({ client, onCreated }: { client: Client; onCreated: 
   function copyFromClient() {
     setContactName(`${client.first_name} ${client.last_name}`)
     setContactRole(client.role ?? '')
+    setContactEmail(client.email ?? '')
+    setContactPhone(client.phone ?? '')
   }
 
   async function handleSubmit(e: FormEvent) {
