@@ -55,3 +55,12 @@ export async function listSchedulableJobSites(): Promise<SchedulableJobSite[]> {
   if (error) throw error
   return data as unknown as SchedulableJobSite[]
 }
+
+export async function listAllJobSites(): Promise<SchedulableJobSite[]> {
+  const { data, error } = await supabase
+    .from('job_sites')
+    .select('*, clients(id, first_name, last_name, company)')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data as unknown as SchedulableJobSite[]
+}

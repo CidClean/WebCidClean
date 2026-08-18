@@ -12,7 +12,7 @@ export function AreaCard({ area, onUpdated }: { area: JobSiteArea; onUpdated: ()
 
   if (editing) {
     return (
-      <div className="bg-white rounded border border-gray-200 p-3">
+      <div className="bg-white rounded border border-gray-200 p-3 space-y-3">
         <AreaEditForm
           area={area}
           onSaved={() => {
@@ -21,6 +21,9 @@ export function AreaCard({ area, onUpdated }: { area: JobSiteArea; onUpdated: ()
           }}
           onCancel={() => setEditing(false)}
         />
+        <div className="pt-2 border-t border-gray-100">
+          <AreaPictureUpload areaId={area.id} />
+        </div>
       </div>
     )
   }

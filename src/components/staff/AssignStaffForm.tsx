@@ -95,12 +95,26 @@ export function AssignStaffForm({
     return <p className="text-sm text-gray-500">No staff created yet. Add staff first.</p>
   }
 
+  const alreadyAssignedNames = existingAssignments
+    .map((a) => (a.staff ? `${a.staff.first_name} ${a.staff.last_name}` : null))
+    .filter((n): n is string => !!n)
+
   if (availableStaff.length === 0) {
-    return <p className="text-sm text-gray-500">All staff members are already assigned to this job site.</p>
+    return (
+      <p className="text-sm text-gray-500">
+        All staff members are already assigned to this job site{alreadyAssignedNames.length > 0 ? ` (${alreadyAssignedNames.join(', ')})` : ''}
+        . Edit their amount below, or add a new staff member first.
+      </p>
+    )
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-2">
+      {alreadyAssignedNames.length > 0 && (
+        <p className="text-xs text-gray-400">
+          Already assigned (not shown below — edit their amount in the list instead): {alreadyAssignedNames.join(', ')}
+        </p>
+      )}
       {staffPaymentAmount !== null ? (
         <p className="text-xs text-gray-500">
           Job's staff payment budget: ${staffPaymentAmount} — ${assignedTotal.toFixed(2)} assigned so far. Defaults to an

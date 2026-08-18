@@ -7,6 +7,7 @@ import { LoginPage } from './pages/LoginPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { ClientsListPage } from './pages/ClientsListPage'
 import { ClientDetailPage } from './pages/ClientDetailPage'
+import { JobsListPage } from './pages/JobsListPage'
 import { JobSiteDetailPage } from './pages/JobSiteDetailPage'
 import { QuoteEditorPage } from './pages/QuoteEditorPage'
 import { StaffListPage } from './pages/StaffListPage'
@@ -35,6 +36,7 @@ export default function App() {
           <Route path="/" element={<Protected><DashboardPage /></Protected>} />
           <Route path="/clients" element={<Protected><ClientsListPage /></Protected>} />
           <Route path="/clients/:clientId" element={<Protected><ClientDetailPage /></Protected>} />
+          <Route path="/jobs" element={<Protected><JobsListPage /></Protected>} />
           <Route
             path="/clients/:clientId/job-sites/:jobSiteId"
             element={<Protected><JobSiteDetailPage /></Protected>}
