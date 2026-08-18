@@ -493,6 +493,7 @@ export type Database = {
           preferred_start_time: string
           service_amount: number | null
           staff_payment_amount: number | null
+          start_date: string | null
           status: Database["public"]["Enums"]["job_site_status"]
           updated_at: string
         }
@@ -513,6 +514,7 @@ export type Database = {
           preferred_start_time: string
           service_amount?: number | null
           staff_payment_amount?: number | null
+          start_date?: string | null
           status?: Database["public"]["Enums"]["job_site_status"]
           updated_at?: string
         }
@@ -533,6 +535,7 @@ export type Database = {
           preferred_start_time?: string
           service_amount?: number | null
           staff_payment_amount?: number | null
+          start_date?: string | null
           status?: Database["public"]["Enums"]["job_site_status"]
           updated_at?: string
         }
@@ -1280,6 +1283,54 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_logs: {
+        Row: {
+          created_at: string
+          id: string
+          job_site_id: string
+          notes: string | null
+          payment_amount: number
+          staff_id: string
+          updated_at: string
+          work_date: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          job_site_id: string
+          notes?: string | null
+          payment_amount: number
+          staff_id: string
+          updated_at?: string
+          work_date: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          job_site_id?: string
+          notes?: string | null
+          payment_amount?: number
+          staff_id?: string
+          updated_at?: string
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_logs_job_site_id_fkey"
+            columns: ["job_site_id"]
+            isOneToOne: false
+            referencedRelation: "job_sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_logs_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
             referencedColumns: ["id"]
           },
         ]
@@ -3489,7 +3540,11 @@ export type Database = {
         Returns: Json
       }
       assign_staff_to_job: {
-        Args: { p_job_site_id: string; p_staff_id: string }
+        Args: {
+          p_job_site_id: string
+          p_payment_amount: number
+          p_staff_id: string
+        }
         Returns: undefined
       }
       auth_risk_precheck: {

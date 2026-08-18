@@ -42,3 +42,16 @@ export async function activateJob(jobSiteId: string): Promise<void> {
 export async function updateStaffPaymentAmount(jobSiteId: string, amount: number): Promise<JobSite> {
   return updateJobSite(jobSiteId, { staff_payment_amount: amount })
 }
+
+export interface SchedulableJobSite extends JobSite {
+  clients: { id: string; first_name: string; last_name: string; company: string | null } | null
+}
+
+export async function listSchedulableJobSites(): Promise<SchedulableJobSite[]> {
+  const { data, error } = await supabase
+    .from('job_sites')
+    .select('*, clients(id, first_name, last_name, company)')
+    .neq('status', 'archived')
+  if (error) throw error
+  return data as unknown as SchedulableJobSite[]
+}

@@ -18,6 +18,7 @@ export type JobStaffAssignment = Tables['job_staff_assignments']['Row']
 export type CatalogItem = Tables['catalog_items']['Row']
 export type Discount = Tables['discounts']['Row']
 export type AppSettings = Tables['app_settings']['Row']
+export type WorkLog = Tables['work_logs']['Row']
 
 export type ClientStatus = Client['status']
 export type JobSiteStatus = JobSite['status']

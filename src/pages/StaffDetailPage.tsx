@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getStaffMember, listAssignmentsForStaff, type JobStaffAssignmentWithJobSite } from '../api/staff'
+import { listWorkLogsForStaff, type StaffWorkLogEntry } from '../api/workLogs'
 import type { Staff } from '../types/models'
+import { Button } from '../components/ui/Button'
 import { StatusBadge } from '../components/ui/StatusBadge'
 
 export function StaffDetailPage() {
@@ -59,6 +61,96 @@ export function StaffDetailPage() {
           </div>
         )}
       </div>
+
+      <PaymentsSection staffId={staff.id} />
+    </div>
+  )
+}
+
+function toDateOnly(d: Date): string {
+  return d.toISOString().slice(0, 10)
+}
+
+function startOfMonth(): string {
+  const now = new Date()
+  return toDateOnly(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)))
+}
+
+function startOfWeek(): string {
+  const now = new Date()
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+  d.setUTCDate(d.getUTCDate() - d.getUTCDay())
+  return toDateOnly(d)
+}
+
+function PaymentsSection({ staffId }: { staffId: string }) {
+  const [from, setFrom] = useState(startOfMonth())
+  const [to, setTo] = useState(toDateOnly(new Date()))
+  const [logs, setLogs] = useState<StaffWorkLogEntry[]>([])
+  const [loading, setLoading] = useState(true)
+
+  function refresh() {
+    setLoading(true)
+    listWorkLogsForStaff(staffId, from, to)
+      .then(setLogs)
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(refresh, [staffId, from, to])
+
+  const total = logs.reduce((sum, l) => sum + l.payment_amount, 0)
+
+  return (
+    <div className="space-y-3">
+      <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Payments</h2>
+      <div className="flex flex-wrap items-end gap-3">
+        <div>
+          <label className="block text-xs text-gray-500 mb-1">From</label>
+          <input
+            type="date"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+            className="border border-gray-300 rounded px-2 py-1 text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-gray-500 mb-1">To</label>
+          <input
+            type="date"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            className="border border-gray-300 rounded px-2 py-1 text-sm"
+          />
+        </div>
+        <Button variant="secondary" onClick={() => setFrom(startOfWeek())}>
+          This Week
+        </Button>
+        <Button variant="secondary" onClick={() => setFrom(startOfMonth())}>
+          This Month
+        </Button>
+      </div>
+
+      {loading ? (
+        <p className="text-sm text-gray-500">Loading...</p>
+      ) : logs.length === 0 ? (
+        <p className="text-sm text-gray-500">No logged work days in this range.</p>
+      ) : (
+        <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
+          {logs.map((l) => (
+            <div key={l.id} className="flex items-center justify-between p-3 text-sm">
+              <div>
+                <span className="text-gray-900">{l.job_sites?.name ?? 'Unknown job site'}</span>
+                <span className="text-gray-500 ml-2">{l.work_date}</span>
+              </div>
+              <span className="text-gray-700">${l.payment_amount}</span>
+            </div>
+          ))}
+          <div className="flex items-center justify-between p-3 text-sm font-semibold">
+            <span>Total</span>
+            <span>${total.toFixed(2)}</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

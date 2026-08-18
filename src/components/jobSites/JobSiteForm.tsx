@@ -16,6 +16,7 @@ export function JobSiteForm({ client, onCreated }: { client: Client; onCreated: 
   const [days, setDays] = useState<Weekday[]>([])
   const [startTime, setStartTime] = useState('09:00')
   const [endTime, setEndTime] = useState('')
+  const [startDate, setStartDate] = useState('')
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -44,6 +45,7 @@ export function JobSiteForm({ client, onCreated }: { client: Client; onCreated: 
         frequency_days: days.length > 0 ? days : null,
         preferred_start_time: startTime,
         preferred_end_time: endTime || null,
+        start_date: startDate || null,
         notes: notes || null,
       })
       onCreated()
@@ -95,7 +97,13 @@ export function JobSiteForm({ client, onCreated }: { client: Client; onCreated: 
         <Field label="Preferred End Time (optional)">
           <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
         </Field>
+        <Field label="Start Date (optional)">
+          <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+        </Field>
       </div>
+      <p className="text-xs text-gray-500 -mt-2">
+        Anchors the calendar for one-time/biweekly/monthly jobs (e.g. which week, which day of month). Not required.
+      </p>
 
       <Field label="Notes">
         <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />

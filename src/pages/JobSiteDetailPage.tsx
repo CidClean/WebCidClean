@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getClientBillingInfo, listClientDocuments } from '../api/clients'
-import { activateJob, getJobSite, updateStaffPaymentAmount } from '../api/jobSites'
+import { activateJob, getJobSite, updateJobSite } from '../api/jobSites'
 import { listAreasForJobSite } from '../api/areas'
 import { listQuotesForJobSite } from '../api/quotes'
 import { listAssignmentsForJobSite, removeAssignment } from '../api/staff'
@@ -115,6 +115,10 @@ function JobSiteDetails({ jobSite, onUpdated }: { jobSite: JobSite; onUpdated: (
           <dt className="text-gray-500">End Time</dt>
           <dd className="text-gray-900">{jobSite.preferred_end_time || '—'}</dd>
         </div>
+        <div>
+          <dt className="text-gray-500">Start Date</dt>
+          <dd className="text-gray-900">{jobSite.start_date || '—'}</dd>
+        </div>
         {jobSite.service_amount !== null && (
           <div>
             <dt className="text-gray-500">Service Amount</dt>
@@ -129,6 +133,7 @@ function JobSiteDetails({ jobSite, onUpdated }: { jobSite: JobSite; onUpdated: (
 
 function StaffPaymentAmountEditor({ jobSite, onUpdated }: { jobSite: JobSite; onUpdated: () => void }) {
   const [value, setValue] = useState(jobSite.staff_payment_amount !== null ? String(jobSite.staff_payment_amount) : '')
+  const [startDate, setStartDate] = useState(jobSite.start_date ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -136,7 +141,7 @@ function StaffPaymentAmountEditor({ jobSite, onUpdated }: { jobSite: JobSite; on
     setSaving(true)
     setError(null)
     try {
-      await updateStaffPaymentAmount(jobSite.id, Number(value) || 0)
+      await updateJobSite(jobSite.id, { staff_payment_amount: Number(value) || 0, start_date: startDate || null })
       onUpdated()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save')
@@ -146,9 +151,12 @@ function StaffPaymentAmountEditor({ jobSite, onUpdated }: { jobSite: JobSite; on
   }
 
   return (
-    <div className="bg-white rounded border border-gray-200 p-4 flex items-end gap-2 max-w-sm">
+    <div className="bg-white rounded border border-gray-200 p-4 flex items-end gap-2 max-w-lg">
       <Field label="Staff Payment Amount">
         <Input type="number" step="0.01" min="0" value={value} onChange={(e) => setValue(e.target.value)} />
+      </Field>
+      <Field label="Start Date">
+        <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
       </Field>
       <Button variant="secondary" onClick={handleSave} disabled={saving}>
         {saving ? 'Saving...' : 'Save'}
@@ -305,9 +313,16 @@ function StaffAssignmentsSection({ jobSite }: { jobSite: JobSite }) {
 
   useEffect(refresh, [jobSite.id])
 
+  const assignedTotal = assignments.reduce((sum, a) => sum + a.payment_amount, 0)
+
   return (
     <div className="space-y-3">
-      <AssignStaffForm jobSiteId={jobSite.id} staffPaymentAmount={jobSite.staff_payment_amount} onAssigned={refresh} />
+      <AssignStaffForm
+        jobSiteId={jobSite.id}
+        staffPaymentAmount={jobSite.staff_payment_amount}
+        assignedTotal={assignedTotal}
+        onAssigned={refresh}
+      />
       {loading ? (
         <p className="text-sm text-gray-500">Loading...</p>
       ) : assignments.length === 0 ? (

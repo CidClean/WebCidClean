@@ -11,6 +11,7 @@ import { JobSiteDetailPage } from './pages/JobSiteDetailPage'
 import { QuoteEditorPage } from './pages/QuoteEditorPage'
 import { StaffListPage } from './pages/StaffListPage'
 import { StaffDetailPage } from './pages/StaffDetailPage'
+import { CalendarPage } from './pages/CalendarPage'
 import { AccountingPage } from './pages/AccountingPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { PublicQuotePage } from './pages/PublicQuotePage'
@@ -44,6 +45,7 @@ export default function App() {
           />
           <Route path="/staff" element={<Protected><StaffListPage /></Protected>} />
           <Route path="/staff/:staffId" element={<Protected><StaffDetailPage /></Protected>} />
+          <Route path="/calendar" element={<Protected><CalendarPage /></Protected>} />
           <Route path="/accounting" element={<Protected><AccountingPage /></Protected>} />
           <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
 
