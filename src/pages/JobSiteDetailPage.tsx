@@ -360,6 +360,20 @@ function StaffAssignmentsSection({ jobSite, onUpdated }: { jobSite: JobSite; onU
     onUpdated()
   }
 
+  async function handleRemove(assignment: JobStaffAssignmentWithStaff) {
+    await removeAssignment(assignment.id)
+    const remaining = assignments.filter((a) => a.id !== assignment.id)
+    if (jobSite.staff_payment_amount !== null && remaining.length > 0) {
+      const evenShare = jobSite.staff_payment_amount / remaining.length
+      for (const a of remaining) {
+        if (Math.abs(a.payment_amount - evenShare) > 0.01) {
+          await assignStaffToJob(jobSite.id, a.staff_id, Number(evenShare.toFixed(2)))
+        }
+      }
+    }
+    refreshAll()
+  }
+
   return (
     <div className="space-y-6">
       <Section title="Staff Payment Budget">
@@ -375,7 +389,7 @@ function StaffAssignmentsSection({ jobSite, onUpdated }: { jobSite: JobSite; onU
         ) : (
           <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
             {assignments.map((a) => (
-              <AssignmentRow key={a.id} assignment={a} onChanged={refreshAll} />
+              <AssignmentRow key={a.id} assignment={a} onChanged={refreshAll} onRemove={() => handleRemove(a)} />
             ))}
           </div>
         )}
@@ -415,7 +429,15 @@ function StaffPaymentBudgetEditor({ jobSite, onUpdated }: { jobSite: JobSite; on
   )
 }
 
-function AssignmentRow({ assignment, onChanged }: { assignment: JobStaffAssignmentWithStaff; onChanged: () => void }) {
+function AssignmentRow({
+  assignment,
+  onChanged,
+  onRemove,
+}: {
+  assignment: JobStaffAssignmentWithStaff
+  onChanged: () => void
+  onRemove: () => void
+}) {
   const [editing, setEditing] = useState(false)
   const [amount, setAmount] = useState(String(assignment.payment_amount))
   const [saving, setSaving] = useState(false)
@@ -465,10 +487,7 @@ function AssignmentRow({ assignment, onChanged }: { assignment: JobStaffAssignme
               <button onClick={() => setEditing(true)} className="text-xs text-blue-600 hover:underline">
                 Edit
               </button>
-              <button
-                onClick={() => removeAssignment(assignment.id).then(onChanged)}
-                className="text-xs text-red-600 hover:underline"
-              >
+              <button onClick={onRemove} className="text-xs text-red-600 hover:underline">
                 Remove
               </button>
             </>
