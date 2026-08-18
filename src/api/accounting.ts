@@ -6,28 +6,50 @@ export interface AccountingRow {
   client_id: string
   client_name: string
   service_amount: number
-  staff_payment_amount: number
+  staff_cost: number
+  job_expenses: number
   profit: number
 }
 
-export async function listActiveJobAccounting(): Promise<AccountingRow[]> {
-  const { data, error } = await supabase
-    .from('job_sites')
-    .select('id, name, service_amount, staff_payment_amount, client_id, clients(first_name, last_name, company)')
-    .eq('status', 'active')
-    .order('name', { ascending: true })
-  if (error) throw error
+export async function listJobAccounting(from: string, to: string): Promise<AccountingRow[]> {
+  const [jobSitesRes, workLogsRes, expensesRes] = await Promise.all([
+    supabase
+      .from('job_sites')
+      .select('id, name, service_amount, client_id, status, clients(first_name, last_name, company)')
+      .in('status', ['active', 'paused'])
+      .order('name', { ascending: true }),
+    supabase.from('work_logs').select('job_site_id, payment_amount').gte('work_date', from).lte('work_date', to),
+    supabase
+      .from('expenses')
+      .select('job_site_id, amount')
+      .not('job_site_id', 'is', null)
+      .gte('expense_date', from)
+      .lte('expense_date', to),
+  ])
+  if (jobSitesRes.error) throw jobSitesRes.error
+  if (workLogsRes.error) throw workLogsRes.error
+  if (expensesRes.error) throw expensesRes.error
 
-  return (data as unknown as Array<{
+  const staffCostByJobSite = new Map<string, number>()
+  for (const log of workLogsRes.data as Array<{ job_site_id: string; payment_amount: number }>) {
+    staffCostByJobSite.set(log.job_site_id, (staffCostByJobSite.get(log.job_site_id) ?? 0) + log.payment_amount)
+  }
+
+  const expensesByJobSite = new Map<string, number>()
+  for (const exp of expensesRes.data as Array<{ job_site_id: string; amount: number }>) {
+    expensesByJobSite.set(exp.job_site_id, (expensesByJobSite.get(exp.job_site_id) ?? 0) + exp.amount)
+  }
+
+  return (jobSitesRes.data as unknown as Array<{
     id: string
     name: string
     service_amount: number | null
-    staff_payment_amount: number | null
     client_id: string
     clients: { first_name: string; last_name: string; company: string | null } | null
   }>).map((row) => {
     const service = row.service_amount ?? 0
-    const staffPay = row.staff_payment_amount ?? 0
+    const staffCost = staffCostByJobSite.get(row.id) ?? 0
+    const jobExpenses = expensesByJobSite.get(row.id) ?? 0
     const clientName = row.clients
       ? row.clients.company || `${row.clients.first_name} ${row.clients.last_name}`
       : 'Unknown client'
@@ -37,8 +59,9 @@ export async function listActiveJobAccounting(): Promise<AccountingRow[]> {
       client_id: row.client_id,
       client_name: clientName,
       service_amount: service,
-      staff_payment_amount: staffPay,
-      profit: service - staffPay,
+      staff_cost: staffCost,
+      job_expenses: jobExpenses,
+      profit: service - staffCost - jobExpenses,
     }
   })
 }

@@ -9,12 +9,17 @@ import {
   updateDiscount,
   updateTaxRate,
 } from '../api/settings'
-import type { CatalogItem, CatalogItemKind, Discount, DiscountType } from '../types/models'
+import {
+  createExpenseCategory,
+  deleteExpenseCategory,
+  listExpenseCategories,
+} from '../api/expenses'
+import type { CatalogItem, CatalogItemKind, Discount, DiscountType, ExpenseCategory } from '../types/models'
 import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 
-type Tab = 'catalog' | 'discounts' | 'tax'
+type Tab = 'catalog' | 'discounts' | 'expense-categories' | 'tax'
 
 export function SettingsPage() {
   const [tab, setTab] = useState<Tab>('catalog')
@@ -28,6 +33,7 @@ export function SettingsPage() {
           [
             ['catalog', 'Services & Add-ons'],
             ['discounts', 'Discounts'],
+            ['expense-categories', 'Expense Categories'],
             ['tax', 'Tax Rate'],
           ] as [Tab, string][]
         ).map(([value, label]) => (
@@ -45,6 +51,7 @@ export function SettingsPage() {
 
       {tab === 'catalog' && <CatalogTab />}
       {tab === 'discounts' && <DiscountsTab />}
+      {tab === 'expense-categories' && <ExpenseCategoriesTab />}
       {tab === 'tax' && <TaxRateTab />}
     </div>
   )
@@ -256,6 +263,136 @@ function DiscountForm({ onCreated }: { onCreated: () => void }) {
             <Input value={name} onChange={(e) => setName(e.target.value)} required />
           </Field>
         </div>
+      </div>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      <Button type="submit" disabled={submitting}>
+        {submitting ? 'Saving...' : 'Save'}
+      </Button>
+    </form>
+  )
+}
+
+function ExpenseCategoriesTab() {
+  const [categories, setCategories] = useState<ExpenseCategory[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  function refresh() {
+    setLoading(true)
+    listExpenseCategories()
+      .then(setCategories)
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(refresh, [])
+
+  const topLevel = categories.filter((c) => !c.parent_category_id)
+  const childrenOf = (id: string) => categories.filter((c) => c.parent_category_id === id)
+
+  async function handleDelete(category: ExpenseCategory) {
+    if (childrenOf(category.id).length > 0) {
+      setError(`Delete subcategories of "${category.name}" first.`)
+      return
+    }
+    if (!confirm(`Delete category "${category.name}"? Expenses using it will keep their amount but lose the category.`)) return
+    setError(null)
+    try {
+      await deleteExpenseCategory(category.id)
+      refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete')
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button onClick={() => setShowForm((v) => !v)}>{showForm ? 'Cancel' : 'New Category'}</Button>
+      </div>
+      {showForm && (
+        <ExpenseCategoryForm
+          categories={categories}
+          onCreated={() => {
+            setShowForm(false)
+            refresh()
+          }}
+        />
+      )}
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      {loading ? (
+        <p className="text-sm text-gray-500">Loading...</p>
+      ) : (
+        <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
+          {topLevel.length === 0 && <p className="p-4 text-sm text-gray-500">No expense categories yet.</p>}
+          {topLevel.map((cat) => (
+            <div key={cat.id}>
+              <div className="flex items-center justify-between p-3">
+                <span className="text-sm font-medium text-gray-900">{cat.name}</span>
+                <button onClick={() => handleDelete(cat)} className="text-xs text-red-600 hover:underline">
+                  Delete
+                </button>
+              </div>
+              {childrenOf(cat.id).map((sub) => (
+                <div key={sub.id} className="flex items-center justify-between p-3 pl-8 border-t border-gray-50">
+                  <span className="text-sm text-gray-700">{sub.name}</span>
+                  <button onClick={() => handleDelete(sub)} className="text-xs text-red-600 hover:underline">
+                    Delete
+                  </button>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ExpenseCategoryForm({
+  categories,
+  onCreated,
+}: {
+  categories: ExpenseCategory[]
+  onCreated: () => void
+}) {
+  const [name, setName] = useState('')
+  const [parentId, setParentId] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const topLevel = categories.filter((c) => !c.parent_category_id)
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    setSubmitting(true)
+    setError(null)
+    try {
+      await createExpenseCategory({ name, parent_category_id: parentId || null })
+      onCreated()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="bg-white rounded border border-gray-200 p-4 space-y-3 max-w-lg">
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Name">
+          <Input value={name} onChange={(e) => setName(e.target.value)} required />
+        </Field>
+        <Field label="Parent Category (optional)">
+          <Select value={parentId} onChange={(e) => setParentId(e.target.value)}>
+            <option value="">None (top-level)</option>
+            {topLevel.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <Button type="submit" disabled={submitting}>
