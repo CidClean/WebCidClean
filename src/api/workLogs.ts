@@ -68,6 +68,7 @@ export async function listWorkLogsForStaff(staffId: string, from: string, to: st
     job_site_id: a.job_site_id,
     staff_id: a.staff_id,
     payment_amount: a.payment_amount,
+    start_date: a.start_date,
   }))
 
   const entries = computeAccrual(jobSites, accrualAssignments, overridesRes.data as WorkLogOverride[], from, to)

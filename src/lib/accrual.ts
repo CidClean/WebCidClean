@@ -17,6 +17,7 @@ export interface AssignmentForAccrual {
   job_site_id: string
   staff_id: string
   payment_amount: number
+  start_date: string
 }
 
 export interface WorkLogOverride {
@@ -42,11 +43,12 @@ export interface AccrualEntry {
  * says otherwise. Today itself only counts if explicitly confirmed via an
  * override (excluded=false) — it hasn't necessarily happened yet.
  *
- * Accrual is anchored purely to the job site's start_date, not to when the
- * assignment row was created — admins set this up in batches, often after
- * the fact (e.g. recording today who's been working a job since the 1st),
- * so assigning staff must retroactively fill in the already-elapsed
- * scheduled days rather than only start counting from that moment on.
+ * Accrual is anchored to each assignment's own (editable) start_date, not to
+ * when the assignment row happened to be created in the system — admins set
+ * this up in batches, often after the fact (e.g. recording today who's been
+ * working a job since the 1st), so this date should reflect when the staff
+ * member actually started, and can be backdated to retroactively fill in
+ * already-elapsed scheduled days.
  */
 export function computeAccrual(
   jobSites: AccrualJobSite[],
@@ -80,6 +82,7 @@ export function computeAccrual(
     for (const date of occurrences) {
       const defaultIncluded = date < today
       for (const a of jsAssignments) {
+        if (date < a.start_date) continue
         const override = overrideMap.get(`${js.id}|${a.staff_id}|${date}`)
         const included = override ? !override.excluded : defaultIncluded
         if (!included) continue

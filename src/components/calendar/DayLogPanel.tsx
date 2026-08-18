@@ -20,6 +20,8 @@ interface Row {
   defaultIncluded: boolean
   overrideId: string | null
   checked: boolean
+  beforeStart: boolean
+  assignmentStartDate: string
 }
 
 export function DayLogPanel({ jobSiteId, jobSiteName, date, onClose }: DayLogPanelProps) {
@@ -43,15 +45,19 @@ export function DayLogPanel({ jobSiteId, jobSiteName, date, onClose }: DayLogPan
       const logsByStaff = new Map<string, WorkLog>(logs.map((l) => [l.staff_id, l]))
       setRows(
         (assignments as JobStaffAssignmentWithStaff[]).map((a) => {
+          const beforeStart = date < a.start_date
           const override = logsByStaff.get(a.staff_id)
-          const checked = override ? !override.excluded : defaultIncluded
+          const rowDefaultIncluded = !beforeStart && defaultIncluded
+          const checked = beforeStart ? false : override ? !override.excluded : defaultIncluded
           return {
             staffId: a.staff_id,
             staffName: a.staff ? `${a.staff.first_name} ${a.staff.last_name}` : 'Unknown',
             amount: override && !override.excluded ? override.payment_amount : a.payment_amount,
-            defaultIncluded,
+            defaultIncluded: rowDefaultIncluded,
             overrideId: override?.id ?? null,
             checked,
+            beforeStart,
+            assignmentStartDate: a.start_date,
           }
         }),
       )
@@ -129,16 +135,28 @@ export function DayLogPanel({ jobSiteId, jobSiteName, date, onClose }: DayLogPan
                 : 'Already counted automatically. Uncheck if this person did not actually work that day.'}
             </p>
           )}
-          {rows.map((row) => (
-            <label key={row.staffId} className="flex items-center justify-between text-sm text-gray-700">
-              <span className="flex items-center gap-2">
-                <input type="checkbox" checked={row.checked} onChange={(e) => toggleRow(row.staffId, e.target.checked)} />
-                {row.staffName}
-                {row.checked !== row.defaultIncluded && <span className="text-xs text-blue-600">(adjusted)</span>}
-              </span>
-              <span className="text-gray-500">${row.amount}</span>
-            </label>
-          ))}
+          {rows.map((row) =>
+            row.beforeStart ? (
+              <div key={row.staffId} className="flex items-center justify-between text-sm text-gray-400">
+                <span>
+                  {row.staffName} <span className="text-xs">(starts {row.assignmentStartDate})</span>
+                </span>
+              </div>
+            ) : (
+              <label key={row.staffId} className="flex items-center justify-between text-sm text-gray-700">
+                <span className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={row.checked}
+                    onChange={(e) => toggleRow(row.staffId, e.target.checked)}
+                  />
+                  {row.staffName}
+                  {row.checked !== row.defaultIncluded && <span className="text-xs text-blue-600">(adjusted)</span>}
+                </span>
+                <span className="text-gray-500">${row.amount}</span>
+              </label>
+            ),
+          )}
 
           {error && <p className="text-sm text-red-600">{error}</p>}
           {saved && <p className="text-sm text-green-600">Saved.</p>}

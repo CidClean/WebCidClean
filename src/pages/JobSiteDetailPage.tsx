@@ -367,7 +367,7 @@ function StaffAssignmentsSection({ jobSite, onUpdated }: { jobSite: JobSite; onU
       const evenShare = jobSite.staff_payment_amount / remaining.length
       for (const a of remaining) {
         if (Math.abs(a.payment_amount - evenShare) > 0.01) {
-          await assignStaffToJob(jobSite.id, a.staff_id, Number(evenShare.toFixed(2)))
+          await assignStaffToJob(jobSite.id, a.staff_id, Number(evenShare.toFixed(2)), a.start_date)
         }
       }
     }
@@ -440,6 +440,7 @@ function AssignmentRow({
 }) {
   const [editing, setEditing] = useState(false)
   const [amount, setAmount] = useState(String(assignment.payment_amount))
+  const [startDate, setStartDate] = useState(assignment.start_date)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -447,7 +448,7 @@ function AssignmentRow({
     setSaving(true)
     setError(null)
     try {
-      await assignStaffToJob(assignment.job_site_id, assignment.staff_id, Number(amount) || 0)
+      await assignStaffToJob(assignment.job_site_id, assignment.staff_id, Number(amount) || 0, startDate)
       setEditing(false)
       onChanged()
     } catch (err) {
@@ -474,6 +475,7 @@ function AssignmentRow({
                 onChange={(e) => setAmount(e.target.value)}
                 className="w-24"
               />
+              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-36" />
               <button onClick={handleSave} disabled={saving} className="text-xs text-blue-600 hover:underline">
                 {saving ? 'Saving...' : 'Save'}
               </button>
@@ -483,7 +485,9 @@ function AssignmentRow({
             </>
           ) : (
             <>
-              <span className="text-sm text-gray-700">${assignment.payment_amount}</span>
+              <span className="text-sm text-gray-700">
+                ${assignment.payment_amount} <span className="text-gray-400">since {assignment.start_date}</span>
+              </span>
               <button onClick={() => setEditing(true)} className="text-xs text-blue-600 hover:underline">
                 Edit
               </button>

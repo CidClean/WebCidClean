@@ -636,6 +636,7 @@ export type Database = {
           job_site_id: string
           payment_amount: number
           staff_id: string
+          start_date: string
         }
         Insert: {
           created_at?: string
@@ -643,6 +644,7 @@ export type Database = {
           job_site_id: string
           payment_amount: number
           staff_id: string
+          start_date?: string
         }
         Update: {
           created_at?: string
@@ -650,6 +652,7 @@ export type Database = {
           job_site_id?: string
           payment_amount?: number
           staff_id?: string
+          start_date?: string
         }
         Relationships: [
           {
@@ -3625,14 +3628,24 @@ export type Database = {
         }
         Returns: Json
       }
-      assign_staff_to_job: {
-        Args: {
-          p_job_site_id: string
-          p_payment_amount: number
-          p_staff_id: string
-        }
-        Returns: undefined
-      }
+      assign_staff_to_job:
+        | {
+            Args: {
+              p_job_site_id: string
+              p_payment_amount: number
+              p_staff_id: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_job_site_id: string
+              p_payment_amount: number
+              p_staff_id: string
+              p_start_date?: string
+            }
+            Returns: undefined
+          }
       auth_risk_precheck: {
         Args: {
           p_action: string
