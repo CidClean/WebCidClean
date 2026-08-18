@@ -36,8 +36,19 @@ function formatHeading(mode: ViewMode, anchor: Date): string {
   return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })} – ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}`
 }
 
+const VIEW_MODE_STORAGE_KEY = 'calendarViewMode'
+
+function loadViewMode(): ViewMode {
+  const stored = localStorage.getItem(VIEW_MODE_STORAGE_KEY)
+  return stored === 'month' || stored === 'week' || stored === 'day' ? stored : 'month'
+}
+
 export function CalendarPage() {
-  const [viewMode, setViewMode] = useState<ViewMode>('month')
+  const [viewMode, setViewModeState] = useState<ViewMode>(loadViewMode)
+  function setViewMode(mode: ViewMode) {
+    setViewModeState(mode)
+    localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode)
+  }
   const [anchor, setAnchor] = useState(() => atUTCMidnight(new Date()))
   const [jobSites, setJobSites] = useState<SchedulableJobSite[]>([])
   const [loading, setLoading] = useState(true)
@@ -141,8 +152,8 @@ export function CalendarPage() {
       </div>
 
       <p className="text-sm text-gray-500">
-        Shows the recurring schedule computed from each job site's frequency — nothing to set up. Click a day to log who
-        actually worked, whenever it's convenient.
+        Staff pay accrues automatically for scheduled days once they've passed — nothing to log. Click a past or
+        today's date only if you need to correct it (someone didn't actually work, or today's visit just happened).
       </p>
 
       {loading ? (

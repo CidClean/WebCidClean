@@ -46,7 +46,7 @@ export function JobSiteForm({ client, onCreated }: { client: Client; onCreated: 
         frequency_days: days.length > 0 ? days : null,
         preferred_start_time: startTime,
         preferred_end_time: endTime || null,
-        start_date: startDate || null,
+        start_date: startDate,
         estimated_duration_minutes: Number(estimatedDuration) || 60,
         notes: notes || null,
       })
@@ -108,14 +108,14 @@ export function JobSiteForm({ client, onCreated }: { client: Client; onCreated: 
             required
           />
         </Field>
-        <Field label="Start Date (optional)">
-          <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+        <Field label="Start Date">
+          <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
         </Field>
       </div>
       <p className="text-xs text-gray-500 -mt-2">
         Estimated duration is how long the visit actually takes (used for staff scheduling conflicts and future hourly
-        pay) — the preferred window above is just the client's requested time slot. Start date anchors the calendar for
-        one-time/biweekly/monthly jobs; optional.
+        pay) — the preferred window above is just the client's requested time slot. Start date anchors the recurring
+        schedule and staff pay only accrues for visits on or after it.
       </p>
 
       <Field label="Notes">

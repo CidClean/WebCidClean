@@ -38,7 +38,7 @@ export function JobSiteEditForm({ jobSite, onSaved, onCancel }: { jobSite: JobSi
         frequency_days: days.length > 0 ? days : null,
         preferred_start_time: startTime,
         preferred_end_time: endTime || null,
-        start_date: startDate || null,
+        start_date: startDate,
         estimated_duration_minutes: Number(estimatedDuration) || 60,
         notes: notes || null,
       })
@@ -91,13 +91,14 @@ export function JobSiteEditForm({ jobSite, onSaved, onCancel }: { jobSite: JobSi
             required
           />
         </Field>
-        <Field label="Start Date (optional)">
-          <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+        <Field label="Start Date">
+          <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
         </Field>
       </div>
       <p className="text-xs text-gray-500 -mt-2">
         Estimated duration is how long the visit actually takes — used to check staff scheduling conflicts and (later)
-        hourly pay. The preferred window above is just the client's requested time slot.
+        hourly pay. The preferred window above is just the client's requested time slot. Start date anchors the
+        recurring schedule and staff pay only accrues for visits on or after it.
       </p>
 
       <Field label="Notes">

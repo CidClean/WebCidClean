@@ -1373,6 +1373,7 @@ export type Database = {
       work_logs: {
         Row: {
           created_at: string
+          excluded: boolean
           id: string
           job_site_id: string
           notes: string | null
@@ -1383,6 +1384,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          excluded?: boolean
           id?: string
           job_site_id: string
           notes?: string | null
@@ -1393,6 +1395,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          excluded?: boolean
           id?: string
           job_site_id?: string
           notes?: string | null

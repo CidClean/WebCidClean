@@ -30,7 +30,10 @@ function startOfWeek(): string {
   return toDateOnly(d)
 }
 
+type Tab = 'accounts' | 'expenses'
+
 export function AccountingPage() {
+  const [tab, setTab] = useState<Tab>('accounts')
   const [from, setFrom] = useState(startOfMonth())
   const [to, setTo] = useState(toDateOnly(new Date()))
   const [rows, setRows] = useState<AccountingRow[]>([])
@@ -75,10 +78,8 @@ export function AccountingPage() {
   const netProfit = totals.profit - generalTotal
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Accounting</h1>
-      </div>
+    <div className="space-y-6">
+      <h1 className="text-xl font-semibold text-gray-900">Accounting</h1>
 
       <div className="flex flex-wrap items-end gap-3">
         <div>
@@ -109,86 +110,113 @@ export function AccountingPage() {
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      <section className="space-y-3">
-        <div>
-          <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Accounts (Job Sites)</h2>
-          <p className="text-xs text-gray-500">
-            Income (service amount) minus staff cost logged in this range minus job-attributed expenses in this range.
-          </p>
-        </div>
-        {loading ? (
-          <p className="text-sm text-gray-500">Loading...</p>
-        ) : rows.length === 0 ? (
-          <p className="text-sm text-gray-500">No active or paused job sites yet.</p>
-        ) : (
-          <div className="bg-white rounded border border-gray-200 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200 text-left text-gray-500">
-                  <th className="p-3 font-medium">Client</th>
-                  <th className="p-3 font-medium">Job Site</th>
-                  <th className="p-3 font-medium text-right">Service Amount</th>
-                  <th className="p-3 font-medium text-right">Staff Cost</th>
-                  <th className="p-3 font-medium text-right">Job Expenses</th>
-                  <th className="p-3 font-medium text-right">Profit</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.job_site_id} className="border-b border-gray-100 last:border-0">
-                    <td className="p-3">
-                      <Link to={`/clients/${row.client_id}`} className="text-blue-600 hover:underline">
-                        {row.client_name}
-                      </Link>
-                    </td>
-                    <td className="p-3">
-                      <Link to={`/clients/${row.client_id}/job-sites/${row.job_site_id}`} className="text-blue-600 hover:underline">
-                        {row.job_site_name}
-                      </Link>
-                    </td>
-                    <td className="p-3 text-right">${row.service_amount.toFixed(2)}</td>
-                    <td className="p-3 text-right">${row.staff_cost.toFixed(2)}</td>
-                    <td className="p-3 text-right">${row.job_expenses.toFixed(2)}</td>
-                    <td className="p-3 text-right font-medium">${row.profit.toFixed(2)}</td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr className="border-t border-gray-200 font-semibold">
-                  <td className="p-3" colSpan={2}>
-                    Total
-                  </td>
-                  <td className="p-3 text-right">${totals.service.toFixed(2)}</td>
-                  <td className="p-3 text-right">${totals.staffCost.toFixed(2)}</td>
-                  <td className="p-3 text-right">${totals.jobExpenses.toFixed(2)}</td>
-                  <td className="p-3 text-right">${totals.profit.toFixed(2)}</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        )}
-      </section>
-
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">General Company Expenses</h2>
-            <p className="text-xs text-gray-500">Expenses not attributed to any job site.</p>
-          </div>
-        </div>
-        <ExpenseList expenses={generalExpenses} onDeleted={refresh} emptyMessage="No general expenses in this range." />
-        <div className="text-right text-sm font-semibold pr-3">Total: ${generalTotal.toFixed(2)}</div>
-      </section>
-
       <section className="bg-white rounded border border-gray-200 p-4 flex items-center justify-between">
         <span className="text-sm font-semibold text-gray-700">Net Profit (all accounts − general expenses)</span>
         <span className="text-lg font-semibold text-gray-900">${netProfit.toFixed(2)}</span>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Log an Expense</h2>
-        <ExpenseForm categories={categories} jobSites={jobSites} onCreated={refresh} />
-      </section>
+      <div className="border-b border-gray-200 flex gap-4">
+        {(
+          [
+            ['accounts', 'Accounts'],
+            ['expenses', 'Expenses'],
+          ] as [Tab, string][]
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            onClick={() => setTab(value)}
+            className={`pb-2 text-sm font-medium border-b-2 -mb-px ${
+              tab === value ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'accounts' && (
+        <section className="space-y-3">
+          <p className="text-xs text-gray-500">
+            Income (service amount) minus staff cost accrued in this range minus job-attributed expenses in this range.
+          </p>
+          {loading ? (
+            <p className="text-sm text-gray-500">Loading...</p>
+          ) : rows.length === 0 ? (
+            <p className="text-sm text-gray-500">No active or paused job sites yet.</p>
+          ) : (
+            <div className="bg-white rounded border border-gray-200 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200 text-left text-gray-500">
+                    <th className="p-3 font-medium">Client</th>
+                    <th className="p-3 font-medium">Job Site</th>
+                    <th className="p-3 font-medium text-right">Service Amount</th>
+                    <th className="p-3 font-medium text-right">Staff Cost</th>
+                    <th className="p-3 font-medium text-right">Job Expenses</th>
+                    <th className="p-3 font-medium text-right">Profit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr key={row.job_site_id} className="border-b border-gray-100 last:border-0">
+                      <td className="p-3">
+                        <Link to={`/clients/${row.client_id}`} className="text-blue-600 hover:underline">
+                          {row.client_name}
+                        </Link>
+                      </td>
+                      <td className="p-3">
+                        <Link
+                          to={`/clients/${row.client_id}/job-sites/${row.job_site_id}`}
+                          className="text-blue-600 hover:underline"
+                        >
+                          {row.job_site_name}
+                        </Link>
+                      </td>
+                      <td className="p-3 text-right">${row.service_amount.toFixed(2)}</td>
+                      <td className="p-3 text-right">${row.staff_cost.toFixed(2)}</td>
+                      <td className="p-3 text-right">${row.job_expenses.toFixed(2)}</td>
+                      <td className="p-3 text-right font-medium">${row.profit.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t border-gray-200 font-semibold">
+                    <td className="p-3" colSpan={2}>
+                      Total
+                    </td>
+                    <td className="p-3 text-right">${totals.service.toFixed(2)}</td>
+                    <td className="p-3 text-right">${totals.staffCost.toFixed(2)}</td>
+                    <td className="p-3 text-right">${totals.jobExpenses.toFixed(2)}</td>
+                    <td className="p-3 text-right">${totals.profit.toFixed(2)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
+
+      {tab === 'expenses' && (
+        <div className="space-y-8">
+          <section className="space-y-3">
+            <div>
+              <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">General Company Expenses</h2>
+              <p className="text-xs text-gray-500">Expenses not attributed to any job site.</p>
+            </div>
+            <ExpenseList
+              expenses={generalExpenses}
+              onDeleted={refresh}
+              emptyMessage="No general expenses in this range."
+            />
+            <div className="text-right text-sm font-semibold pr-3">Total: ${generalTotal.toFixed(2)}</div>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Log an Expense</h2>
+            <ExpenseForm categories={categories} jobSites={jobSites} onCreated={refresh} />
+          </section>
+        </div>
+      )}
     </div>
   )
 }

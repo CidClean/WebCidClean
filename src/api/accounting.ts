@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { computeAccrual, type AccrualJobSite, type AssignmentForAccrual, type WorkLogOverride } from '../lib/accrual'
 
 export interface AccountingRow {
   job_site_id: string
@@ -12,13 +13,16 @@ export interface AccountingRow {
 }
 
 export async function listJobAccounting(from: string, to: string): Promise<AccountingRow[]> {
-  const [jobSitesRes, workLogsRes, expensesRes] = await Promise.all([
+  const [jobSitesRes, assignmentsRes, overridesRes, expensesRes] = await Promise.all([
     supabase
       .from('job_sites')
-      .select('id, name, service_amount, client_id, status, clients(first_name, last_name, company)')
+      .select(
+        'id, name, service_amount, client_id, status, frequency, frequency_days, start_date, clients(first_name, last_name, company)',
+      )
       .in('status', ['active', 'paused'])
       .order('name', { ascending: true }),
-    supabase.from('work_logs').select('job_site_id, payment_amount').gte('work_date', from).lte('work_date', to),
+    supabase.from('job_staff_assignments').select('job_site_id, staff_id, payment_amount, created_at'),
+    supabase.from('work_logs').select('job_site_id, staff_id, work_date, excluded, payment_amount').gte('work_date', from).lte('work_date', to),
     supabase
       .from('expenses')
       .select('job_site_id, amount')
@@ -27,12 +31,30 @@ export async function listJobAccounting(from: string, to: string): Promise<Accou
       .lte('expense_date', to),
   ])
   if (jobSitesRes.error) throw jobSitesRes.error
-  if (workLogsRes.error) throw workLogsRes.error
+  if (assignmentsRes.error) throw assignmentsRes.error
+  if (overridesRes.error) throw overridesRes.error
   if (expensesRes.error) throw expensesRes.error
 
+  const jobSites = jobSitesRes.data as unknown as Array<
+    AccrualJobSite & {
+      name: string
+      service_amount: number | null
+      client_id: string
+      clients: { first_name: string; last_name: string; company: string | null } | null
+    }
+  >
+
+  const accrualEntries = computeAccrual(
+    jobSites,
+    assignmentsRes.data as AssignmentForAccrual[],
+    overridesRes.data as WorkLogOverride[],
+    from,
+    to,
+  )
+
   const staffCostByJobSite = new Map<string, number>()
-  for (const log of workLogsRes.data as Array<{ job_site_id: string; payment_amount: number }>) {
-    staffCostByJobSite.set(log.job_site_id, (staffCostByJobSite.get(log.job_site_id) ?? 0) + log.payment_amount)
+  for (const entry of accrualEntries) {
+    staffCostByJobSite.set(entry.job_site_id, (staffCostByJobSite.get(entry.job_site_id) ?? 0) + entry.payment_amount)
   }
 
   const expensesByJobSite = new Map<string, number>()
@@ -40,13 +62,7 @@ export async function listJobAccounting(from: string, to: string): Promise<Accou
     expensesByJobSite.set(exp.job_site_id, (expensesByJobSite.get(exp.job_site_id) ?? 0) + exp.amount)
   }
 
-  return (jobSitesRes.data as unknown as Array<{
-    id: string
-    name: string
-    service_amount: number | null
-    client_id: string
-    clients: { first_name: string; last_name: string; company: string | null } | null
-  }>).map((row) => {
+  return jobSites.map((row) => {
     const service = row.service_amount ?? 0
     const staffCost = staffCostByJobSite.get(row.id) ?? 0
     const jobExpenses = expensesByJobSite.get(row.id) ?? 0

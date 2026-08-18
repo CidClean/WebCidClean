@@ -39,7 +39,7 @@ export type ScheduleJobSite = Pick<JobSite, 'frequency' | 'frequency_days' | 'st
  * 1st, both approximate.
  */
 export function computeOccurrences(jobSite: ScheduleJobSite, rangeStart: Date, rangeEnd: Date): string[] {
-  if (jobSite.status === 'archived') return []
+  if (jobSite.status === 'archived' || jobSite.status === 'paused') return []
 
   const occurrences: string[] = []
   const dayIndexes = new Set((jobSite.frequency_days ?? []).map((d) => WEEKDAY_INDEX[d as Weekday]))
@@ -49,6 +49,7 @@ export function computeOccurrences(jobSite: ScheduleJobSite, rangeStart: Date, r
   const end = atUTCMidnight(rangeEnd)
 
   for (let cur = start; cur <= end; cur = new Date(cur.getTime() + 86400000)) {
+    if (anchor && cur.getTime() < anchor.getTime()) continue
     const weekday = cur.getUTCDay()
 
     switch (jobSite.frequency) {

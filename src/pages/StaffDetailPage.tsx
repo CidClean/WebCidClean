@@ -167,10 +167,15 @@ function PaymentsSection({ staffId }: { staffId: string }) {
         </Button>
       </div>
 
+      <p className="text-xs text-gray-500">
+        Scheduled days accrue automatically once they've passed. "Adjusted" means an admin changed the default from the
+        calendar.
+      </p>
+
       {loading ? (
         <p className="text-sm text-gray-500">Loading...</p>
       ) : logs.length === 0 ? (
-        <p className="text-sm text-gray-500">No logged work days in this range.</p>
+        <p className="text-sm text-gray-500">No accrued work days in this range.</p>
       ) : (
         <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
           {logs.map((l) => (
@@ -178,6 +183,7 @@ function PaymentsSection({ staffId }: { staffId: string }) {
               <div>
                 <span className="text-gray-900">{l.job_sites?.name ?? 'Unknown job site'}</span>
                 <span className="text-gray-500 ml-2">{l.work_date}</span>
+                {!l.auto && <span className="ml-2 text-xs text-blue-600">adjusted</span>}
               </div>
               <span className="text-gray-700">${l.payment_amount}</span>
             </div>
