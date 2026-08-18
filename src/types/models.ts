@@ -29,6 +29,7 @@ export type AreaCondition = JobSiteArea['condition']
 export type QuoteStatusValue = Quote['status']
 export type QuoteResponseAction = QuoteResponse['action']
 export type StaffType = Staff['type']
+export type StaffStatus = Staff['status']
 export type CatalogItemKind = CatalogItem['kind']
 export type DiscountType = Discount['type']
 
@@ -72,7 +73,9 @@ export const CLIENT_STATUSES: ClientStatus[] = [
   'archived',
 ]
 
-export const JOB_SITE_STATUSES: JobSiteStatus[] = ['new', 'pending', 'approved', 'active', 'archived']
+export const JOB_SITE_STATUSES: JobSiteStatus[] = ['new', 'pending', 'approved', 'active', 'paused', 'archived']
+
+export const STAFF_STATUSES: StaffStatus[] = ['active', 'paused', 'archived']
 
 export const FREQUENCY_TYPES: FrequencyType[] = ['one_time', 'daily', 'weekly', 'biweekly', 'monthly', 'custom']
 

@@ -484,6 +484,7 @@ export type Database = {
           contact_phone: string | null
           contact_role: string | null
           created_at: string
+          estimated_duration_minutes: number
           frequency: Database["public"]["Enums"]["frequency_type"]
           frequency_days: Database["public"]["Enums"]["weekday"][] | null
           id: string
@@ -505,6 +506,7 @@ export type Database = {
           contact_phone?: string | null
           contact_role?: string | null
           created_at?: string
+          estimated_duration_minutes?: number
           frequency: Database["public"]["Enums"]["frequency_type"]
           frequency_days?: Database["public"]["Enums"]["weekday"][] | null
           id?: string
@@ -526,6 +528,7 @@ export type Database = {
           contact_phone?: string | null
           contact_role?: string | null
           created_at?: string
+          estimated_duration_minutes?: number
           frequency?: Database["public"]["Enums"]["frequency_type"]
           frequency_days?: Database["public"]["Enums"]["weekday"][] | null
           id?: string
@@ -1057,6 +1060,7 @@ export type Database = {
           id: string
           last_name: string
           phone: string | null
+          status: Database["public"]["Enums"]["staff_status"]
           type: Database["public"]["Enums"]["staff_type"]
         }
         Insert: {
@@ -1066,6 +1070,7 @@ export type Database = {
           id?: string
           last_name: string
           phone?: string | null
+          status?: Database["public"]["Enums"]["staff_status"]
           type: Database["public"]["Enums"]["staff_type"]
         }
         Update: {
@@ -1075,6 +1080,7 @@ export type Database = {
           id?: string
           last_name?: string
           phone?: string | null
+          status?: Database["public"]["Enums"]["staff_status"]
           type?: Database["public"]["Enums"]["staff_type"]
         }
         Relationships: []
@@ -3733,7 +3739,13 @@ export type Database = {
         | "biweekly"
         | "monthly"
         | "custom"
-      job_site_status: "new" | "pending" | "approved" | "active" | "archived"
+      job_site_status:
+        | "new"
+        | "pending"
+        | "approved"
+        | "active"
+        | "archived"
+        | "paused"
       quote_response_action: "approved" | "changes_requested" | "declined"
       quote_status:
         | "draft"
@@ -3742,6 +3754,7 @@ export type Database = {
         | "changes_requested"
         | "declined"
         | "superseded"
+      staff_status: "active" | "paused" | "archived"
       staff_type: "employee" | "contractor"
       weekday: "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun"
     }
@@ -3892,7 +3905,14 @@ export const Constants = {
         "monthly",
         "custom",
       ],
-      job_site_status: ["new", "pending", "approved", "active", "archived"],
+      job_site_status: [
+        "new",
+        "pending",
+        "approved",
+        "active",
+        "archived",
+        "paused",
+      ],
       quote_response_action: ["approved", "changes_requested", "declined"],
       quote_status: [
         "draft",
@@ -3902,6 +3922,7 @@ export const Constants = {
         "declined",
         "superseded",
       ],
+      staff_status: ["active", "paused", "archived"],
       staff_type: ["employee", "contractor"],
       weekday: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
     },

@@ -1,41 +1,33 @@
 import { useState, type FormEvent } from 'react'
-import { createJobSite } from '../../api/jobSites'
-import type { Client, FrequencyType, Weekday } from '../../types/models'
+import { updateJobSite } from '../../api/jobSites'
+import type { FrequencyType, JobSite, Weekday } from '../../types/models'
 import { Button } from '../ui/Button'
 import { Field, Input, Textarea } from '../ui/Input'
 import { FrequencyPicker } from './FrequencyPicker'
 
-export function JobSiteForm({ client, onCreated }: { client: Client; onCreated: () => void }) {
-  const [name, setName] = useState('')
-  const [address, setAddress] = useState('')
-  const [contactName, setContactName] = useState('')
-  const [contactEmail, setContactEmail] = useState('')
-  const [contactPhone, setContactPhone] = useState('')
-  const [contactRole, setContactRole] = useState('')
-  const [frequency, setFrequency] = useState<FrequencyType>('weekly')
-  const [days, setDays] = useState<Weekday[]>([])
-  const [startTime, setStartTime] = useState('09:00')
-  const [endTime, setEndTime] = useState('')
-  const [startDate, setStartDate] = useState('')
-  const [estimatedDuration, setEstimatedDuration] = useState('60')
-  const [notes, setNotes] = useState('')
+export function JobSiteEditForm({ jobSite, onSaved, onCancel }: { jobSite: JobSite; onSaved: () => void; onCancel: () => void }) {
+  const [name, setName] = useState(jobSite.name)
+  const [address, setAddress] = useState(jobSite.address)
+  const [contactName, setContactName] = useState(jobSite.contact_name ?? '')
+  const [contactEmail, setContactEmail] = useState(jobSite.contact_email ?? '')
+  const [contactPhone, setContactPhone] = useState(jobSite.contact_phone ?? '')
+  const [contactRole, setContactRole] = useState(jobSite.contact_role ?? '')
+  const [frequency, setFrequency] = useState<FrequencyType>(jobSite.frequency)
+  const [days, setDays] = useState<Weekday[]>((jobSite.frequency_days as Weekday[]) ?? [])
+  const [startTime, setStartTime] = useState(jobSite.preferred_start_time)
+  const [endTime, setEndTime] = useState(jobSite.preferred_end_time ?? '')
+  const [startDate, setStartDate] = useState(jobSite.start_date ?? '')
+  const [estimatedDuration, setEstimatedDuration] = useState(String(jobSite.estimated_duration_minutes))
+  const [notes, setNotes] = useState(jobSite.notes ?? '')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  function copyFromClient() {
-    setContactName(`${client.first_name} ${client.last_name}`)
-    setContactRole(client.role ?? '')
-    setContactEmail(client.email ?? '')
-    setContactPhone(client.phone ?? '')
-  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setSubmitting(true)
     setError(null)
     try {
-      await createJobSite({
-        client_id: client.id,
+      await updateJobSite(jobSite.id, {
         name,
         address,
         contact_name: contactName || null,
@@ -50,9 +42,9 @@ export function JobSiteForm({ client, onCreated }: { client: Client; onCreated: 
         estimated_duration_minutes: Number(estimatedDuration) || 60,
         notes: notes || null,
       })
-      onCreated()
+      onSaved()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create job site')
+      setError(err instanceof Error ? err.message : 'Failed to save job site')
     } finally {
       setSubmitting(false)
     }
@@ -67,15 +59,6 @@ export function JobSiteForm({ client, onCreated }: { client: Client; onCreated: 
         <Field label="Address">
           <Input value={address} onChange={(e) => setAddress(e.target.value)} required />
         </Field>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-700">Contact</span>
-        <button type="button" onClick={copyFromClient} className="text-xs text-blue-600 hover:underline">
-          Same as client
-        </button>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
         <Field label="Contact Name">
           <Input value={contactName} onChange={(e) => setContactName(e.target.value)} />
         </Field>
@@ -113,9 +96,8 @@ export function JobSiteForm({ client, onCreated }: { client: Client; onCreated: 
         </Field>
       </div>
       <p className="text-xs text-gray-500 -mt-2">
-        Estimated duration is how long the visit actually takes (used for staff scheduling conflicts and future hourly
-        pay) — the preferred window above is just the client's requested time slot. Start date anchors the calendar for
-        one-time/biweekly/monthly jobs; optional.
+        Estimated duration is how long the visit actually takes — used to check staff scheduling conflicts and (later)
+        hourly pay. The preferred window above is just the client's requested time slot.
       </p>
 
       <Field label="Notes">
@@ -123,9 +105,14 @@ export function JobSiteForm({ client, onCreated }: { client: Client; onCreated: 
       </Field>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={submitting}>
-        {submitting ? 'Saving...' : 'Save Job Site'}
-      </Button>
+      <div className="flex gap-2">
+        <Button type="submit" disabled={submitting}>
+          {submitting ? 'Saving...' : 'Save'}
+        </Button>
+        <Button type="button" variant="secondary" onClick={onCancel}>
+          Cancel
+        </Button>
+      </div>
     </form>
   )
 }

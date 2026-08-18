@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { getStaffMember, listAssignmentsForStaff, type JobStaffAssignmentWithJobSite } from '../api/staff'
+import { getStaffMember, listAssignmentsForStaff, updateStaff, type JobStaffAssignmentWithJobSite } from '../api/staff'
 import { listWorkLogsForStaff, type StaffWorkLogEntry } from '../api/workLogs'
 import type { Staff } from '../types/models'
 import { Button } from '../components/ui/Button'
@@ -11,14 +11,28 @@ export function StaffDetailPage() {
   const [staff, setStaff] = useState<Staff | null>(null)
   const [assignments, setAssignments] = useState<JobStaffAssignmentWithJobSite[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
 
-  useEffect(() => {
+  function refresh() {
     if (!staffId) return
     getStaffMember(staffId)
       .then(setStaff)
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load staff member'))
     listAssignmentsForStaff(staffId).then(setAssignments)
-  }, [staffId])
+  }
+
+  useEffect(refresh, [staffId])
+
+  async function runStatusAction(status: Staff['status']) {
+    if (!staffId) return
+    setActionError(null)
+    try {
+      await updateStaff(staffId, { status })
+      refresh()
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Action failed')
+    }
+  }
 
   if (error) return <p className="text-sm text-red-600">{error}</p>
   if (!staff) return <p className="text-sm text-gray-500">Loading...</p>
@@ -30,14 +44,37 @@ export function StaffDetailPage() {
           &larr; Back to staff
         </Link>
       </div>
-      <div>
-        <h1 className="text-xl font-semibold text-gray-900">
-          {staff.first_name} {staff.last_name}
-        </h1>
-        <p className="text-sm text-gray-500 capitalize">{staff.type}</p>
-        {staff.email && <p className="text-sm text-gray-500">{staff.email}</p>}
-        {staff.phone && <p className="text-sm text-gray-500">{staff.phone}</p>}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">
+            {staff.first_name} {staff.last_name}
+          </h1>
+          <p className="text-sm text-gray-500 capitalize">{staff.type}</p>
+          {staff.email && <p className="text-sm text-gray-500">{staff.email}</p>}
+          {staff.phone && <p className="text-sm text-gray-500">{staff.phone}</p>}
+          <div className="mt-2">
+            <StatusBadge status={staff.status} />
+          </div>
+        </div>
+        <div className="flex gap-2">
+          {staff.status === 'active' && (
+            <Button variant="secondary" onClick={() => runStatusAction('paused')}>
+              Pause
+            </Button>
+          )}
+          {(staff.status === 'paused' || staff.status === 'archived') && (
+            <Button variant="secondary" onClick={() => runStatusAction('active')}>
+              Reactivate
+            </Button>
+          )}
+          {staff.status !== 'archived' && (
+            <Button variant="danger" onClick={() => runStatusAction('archived')}>
+              Archive
+            </Button>
+          )}
+        </div>
       </div>
+      {actionError && <p className="text-sm text-red-600">{actionError}</p>}
 
       <div className="space-y-3">
         <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Job Site Assignments</h2>

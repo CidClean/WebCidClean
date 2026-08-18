@@ -31,14 +31,28 @@ export async function updateStaff(id: string, patch: Partial<Staff>): Promise<St
   return data
 }
 
+export interface AssignedJobSiteSchedule {
+  id: string
+  name: string
+  status: string
+  client_id: string
+  frequency: string
+  frequency_days: string[] | null
+  start_date: string | null
+  preferred_start_time: string
+  estimated_duration_minutes: number
+}
+
 export interface JobStaffAssignmentWithJobSite extends JobStaffAssignment {
-  job_sites: { id: string; name: string; status: string; client_id: string } | null
+  job_sites: AssignedJobSiteSchedule | null
 }
 
 export async function listAssignmentsForStaff(staffId: string): Promise<JobStaffAssignmentWithJobSite[]> {
   const { data, error } = await supabase
     .from('job_staff_assignments')
-    .select('*, job_sites(id, name, status, client_id)')
+    .select(
+      '*, job_sites(id, name, status, client_id, frequency, frequency_days, start_date, preferred_start_time, estimated_duration_minutes)',
+    )
     .eq('staff_id', staffId)
     .order('created_at', { ascending: false })
   if (error) throw error

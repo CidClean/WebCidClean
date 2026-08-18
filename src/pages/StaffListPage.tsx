@@ -6,6 +6,7 @@ import { STAFF_TYPES } from '../types/models'
 import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
+import { StatusBadge } from '../components/ui/StatusBadge'
 
 export function StaffListPage() {
   const [staff, setStaff] = useState<Staff[]>([])
@@ -47,7 +48,10 @@ export function StaffListPage() {
               <span className="font-medium text-gray-900">
                 {s.first_name} {s.last_name}
               </span>
-              <span className="text-sm text-gray-500 capitalize">{s.type}</span>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-500 capitalize">{s.type}</span>
+                <StatusBadge status={s.status} />
+              </div>
             </Link>
           ))}
         </div>
