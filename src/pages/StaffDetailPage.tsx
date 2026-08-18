@@ -90,7 +90,7 @@ export function StaffDetailPage() {
               >
                 <span className="text-sm text-gray-900">{a.job_sites?.name}</span>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-700">${a.payment_amount}</span>
+                  <span className="text-sm text-gray-700">${a.payment_amount}/mo</span>
                   {a.job_sites && <StatusBadge status={a.job_sites.status} />}
                 </div>
               </Link>
@@ -185,7 +185,7 @@ function PaymentsSection({ staffId }: { staffId: string }) {
                 <span className="text-gray-500 ml-2">{l.work_date}</span>
                 {!l.auto && <span className="ml-2 text-xs text-blue-600">adjusted</span>}
               </div>
-              <span className="text-gray-700">${l.payment_amount}</span>
+              <span className="text-gray-700">${l.payment_amount.toFixed(2)}</span>
             </div>
           ))}
           <div className="flex items-center justify-between p-3 text-sm font-semibold">

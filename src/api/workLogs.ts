@@ -49,7 +49,7 @@ export async function listWorkLogsForStaff(staffId: string, from: string, to: st
     listAssignmentsForStaff(staffId),
     supabase
       .from('work_logs')
-      .select('job_site_id, staff_id, work_date, excluded, payment_amount')
+      .select('job_site_id, staff_id, work_date, excluded')
       .eq('staff_id', staffId)
       .gte('work_date', from)
       .lte('work_date', to),

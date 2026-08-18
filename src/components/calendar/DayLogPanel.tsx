@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { listAssignmentsForJobSite } from '../../api/staff'
 import type { JobStaffAssignmentWithStaff } from '../../api/staff'
+import { getJobSite } from '../../api/jobSites'
 import { deleteWorkLog, listWorkLogsForJobSiteDate, upsertWorkLog } from '../../api/workLogs'
 import type { WorkLog } from '../../types/models'
-import { todayDateOnly } from '../../lib/accrual'
+import { computeDailyRate, todayDateOnly } from '../../lib/accrual'
 import { Button } from '../ui/Button'
 
 interface DayLogPanelProps {
@@ -38,7 +39,8 @@ export function DayLogPanel({ jobSiteId, jobSiteName, date, onClose }: DayLogPan
   async function refresh() {
     setLoading(true)
     try {
-      const [assignments, logs] = await Promise.all([
+      const [jobSite, assignments, logs] = await Promise.all([
+        getJobSite(jobSiteId),
         listAssignmentsForJobSite(jobSiteId),
         listWorkLogsForJobSiteDate(jobSiteId, date),
       ])
@@ -52,7 +54,7 @@ export function DayLogPanel({ jobSiteId, jobSiteName, date, onClose }: DayLogPan
           return {
             staffId: a.staff_id,
             staffName: a.staff ? `${a.staff.first_name} ${a.staff.last_name}` : 'Unknown',
-            amount: override && !override.excluded ? override.payment_amount : a.payment_amount,
+            amount: computeDailyRate(jobSite, a.payment_amount, date),
             defaultIncluded: rowDefaultIncluded,
             overrideId: override?.id ?? null,
             checked,
@@ -153,7 +155,7 @@ export function DayLogPanel({ jobSiteId, jobSiteName, date, onClose }: DayLogPan
                   {row.staffName}
                   {row.checked !== row.defaultIncluded && <span className="text-xs text-blue-600">(adjusted)</span>}
                 </span>
-                <span className="text-gray-500">${row.amount}</span>
+                <span className="text-gray-500">${row.amount.toFixed(2)}</span>
               </label>
             ),
           )}

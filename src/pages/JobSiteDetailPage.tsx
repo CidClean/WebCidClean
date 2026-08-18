@@ -330,8 +330,8 @@ function ActivateJobPanel({ jobSite, onActivated }: { jobSite: JobSite; onActiva
           <dd className="text-gray-900">{jobSite.service_amount !== null ? `$${jobSite.service_amount}` : '—'}</dd>
         </div>
         <div>
-          <dt className="text-gray-500">Staff Payment Amount</dt>
-          <dd className="text-gray-900">{jobSite.staff_payment_amount !== null ? `$${jobSite.staff_payment_amount}` : '—'}</dd>
+          <dt className="text-gray-500">Staff Payment Budget (monthly)</dt>
+          <dd className="text-gray-900">{jobSite.staff_payment_amount !== null ? `$${jobSite.staff_payment_amount}/mo` : '—'}</dd>
         </div>
       </dl>
       {error && <p className="text-sm text-red-600">{error}</p>}
@@ -418,7 +418,7 @@ function StaffPaymentBudgetEditor({ jobSite, onUpdated }: { jobSite: JobSite; on
 
   return (
     <div className="bg-white rounded border border-gray-200 p-4 flex items-end gap-2 max-w-sm">
-      <Field label="Staff Payment Amount">
+      <Field label="Staff Payment Budget (monthly)">
         <Input type="number" step="0.01" min="0" value={value} onChange={(e) => setValue(e.target.value)} />
       </Field>
       <Button variant="secondary" onClick={handleSave} disabled={saving}>
@@ -486,7 +486,7 @@ function AssignmentRow({
           ) : (
             <>
               <span className="text-sm text-gray-700">
-                ${assignment.payment_amount} <span className="text-gray-400">since {assignment.start_date}</span>
+                ${assignment.payment_amount}/mo <span className="text-gray-400">since {assignment.start_date}</span>
               </span>
               <button onClick={() => setEditing(true)} className="text-xs text-blue-600 hover:underline">
                 Edit

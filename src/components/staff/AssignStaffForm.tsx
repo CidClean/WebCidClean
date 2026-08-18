@@ -119,8 +119,8 @@ export function AssignStaffForm({
       )}
       {staffPaymentAmount !== null ? (
         <p className="text-xs text-gray-500">
-          Job's staff payment budget: ${staffPaymentAmount} — ${assignedTotal.toFixed(2)} assigned so far. Defaults to an
-          even split; edit the amount to customize.
+          Job's monthly staff payment budget: ${staffPaymentAmount}/mo — ${assignedTotal.toFixed(2)} assigned so far.
+          Defaults to an even split; edit the amount to customize.
         </p>
       ) : (
         <p className="text-xs text-red-600">Set the job site's staff payment amount before assigning staff.</p>
@@ -135,7 +135,7 @@ export function AssignStaffForm({
             ))}
           </Select>
         </Field>
-        <Field label="Payment Amount">
+        <Field label="Monthly Payment Amount">
           <Input type="number" step="0.01" min="0" value={amount} onChange={(e) => setAmount(e.target.value)} required />
         </Field>
         <Field label="Start Date">
@@ -146,8 +146,8 @@ export function AssignStaffForm({
         </Button>
       </div>
       <p className="text-xs text-gray-400">
-        Backdate the start date if this person has actually been on the job since earlier — pay accrues automatically
-        from that date.
+        This amount is per month, split across that month's scheduled visits — pay accrues per visit automatically as
+        days pass. Backdate the start date if this person has actually been on the job since earlier.
       </p>
       {error && <p className="text-sm text-red-600">{error}</p>}
     </form>
