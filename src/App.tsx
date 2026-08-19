@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthContext'
-import { ProtectedRoute } from './auth/ProtectedRoute'
+import { ProtectedRoute, ClientPortalRoute, StaffPortalRoute } from './auth/ProtectedRoute'
 import { AppShell } from './components/layout/AppShell'
 import { LoginPage } from './pages/LoginPage'
+import { SetPasswordPage } from './pages/SetPasswordPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { ClientsListPage } from './pages/ClientsListPage'
 import { ClientDetailPage } from './pages/ClientDetailPage'
@@ -16,6 +17,8 @@ import { CalendarPage } from './pages/CalendarPage'
 import { AccountingPage } from './pages/AccountingPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { PublicQuotePage } from './pages/PublicQuotePage'
+import { ClientPortalPage } from './pages/portal/ClientPortalPage'
+import { StaffPortalPage } from './pages/portal/StaffPortalPage'
 
 function Protected({ children }: { children: ReactNode }) {
   return (
@@ -31,7 +34,11 @@ export default function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/set-password" element={<SetPasswordPage />} />
           <Route path="/q/:token" element={<PublicQuotePage />} />
+
+          <Route path="/portal/client" element={<ClientPortalRoute><ClientPortalPage /></ClientPortalRoute>} />
+          <Route path="/portal/staff" element={<StaffPortalRoute><StaffPortalPage /></StaffPortalRoute>} />
 
           <Route path="/" element={<Protected><DashboardPage /></Protected>} />
           <Route path="/clients" element={<Protected><ClientsListPage /></Protected>} />

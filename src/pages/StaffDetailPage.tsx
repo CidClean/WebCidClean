@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getStaffMember, listAssignmentsForStaff, updateStaff, type JobStaffAssignmentWithJobSite } from '../api/staff'
 import { listWorkLogsForStaff, type StaffWorkLogEntry } from '../api/workLogs'
+import { invitePortalUser } from '../api/portal'
 import type { Staff } from '../types/models'
 import { Button } from '../components/ui/Button'
+import { Field, Input } from '../components/ui/Input'
 import { StatusBadge } from '../components/ui/StatusBadge'
 
 export function StaffDetailPage() {
@@ -100,6 +102,51 @@ export function StaffDetailPage() {
       </div>
 
       <PaymentsSection staffId={staff.id} />
+
+      <PortalInviteSection staff={staff} />
+    </div>
+  )
+}
+
+function PortalInviteSection({ staff }: { staff: Staff }) {
+  const [email, setEmail] = useState(staff.email ?? '')
+  const [sending, setSending] = useState(false)
+  const [sent, setSent] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    setSending(true)
+    setError(null)
+    try {
+      await invitePortalUser({ email, portalRole: staff.type, staffId: staff.id })
+      setSent(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send invite')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <div className="space-y-3 max-w-lg">
+      <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Portal Access</h2>
+      {staff.auth_user_id ? (
+        <p className="text-sm text-green-700 bg-white rounded border border-gray-200 p-4">
+          This staff member has an active portal account and can log in to see their schedule and payments.
+        </p>
+      ) : (
+        <form onSubmit={handleSubmit} className="bg-white rounded border border-gray-200 p-4 flex items-end gap-2">
+          <Field label="Invite Email">
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          </Field>
+          <Button type="submit" disabled={sending}>
+            {sending ? 'Sending...' : 'Invite to Portal'}
+          </Button>
+          {sent && <p className="text-sm text-green-600">Invite sent.</p>}
+          {error && <p className="text-sm text-red-600">{error}</p>}
+        </form>
+      )}
     </div>
   )
 }

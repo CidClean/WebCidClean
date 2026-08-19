@@ -258,22 +258,31 @@ export type Database = {
       client_documents: {
         Row: {
           client_id: string
+          document_type: string
           id: string
           name: string
+          signed_at: string | null
+          signed_by_name: string | null
           storage_path: string
           uploaded_at: string
         }
         Insert: {
           client_id: string
+          document_type?: string
           id?: string
           name: string
+          signed_at?: string | null
+          signed_by_name?: string | null
           storage_path: string
           uploaded_at?: string
         }
         Update: {
           client_id?: string
+          document_type?: string
           id?: string
           name?: string
+          signed_at?: string | null
+          signed_by_name?: string | null
           storage_path?: string
           uploaded_at?: string
         }
@@ -289,6 +298,7 @@ export type Database = {
       }
       clients: {
         Row: {
+          auth_user_id: string | null
           company: string | null
           created_at: string
           email: string | null
@@ -303,6 +313,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auth_user_id?: string | null
           company?: string | null
           created_at?: string
           email?: string | null
@@ -317,6 +328,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auth_user_id?: string | null
           company?: string | null
           created_at?: string
           email?: string | null
@@ -746,6 +758,51 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_requests: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          id: string
+          message: string
+          resolved_at: string | null
+          staff_id: string | null
+          status: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          resolved_at?: string | null
+          staff_id?: string | null
+          status?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          resolved_at?: string | null
+          staff_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_requests_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_requests_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_status_history: {
         Row: {
           changed_at: string
@@ -1134,6 +1191,7 @@ export type Database = {
       }
       staff: {
         Row: {
+          auth_user_id: string | null
           created_at: string
           email: string | null
           first_name: string
@@ -1144,6 +1202,7 @@ export type Database = {
           type: Database["public"]["Enums"]["staff_type"]
         }
         Insert: {
+          auth_user_id?: string | null
           created_at?: string
           email?: string | null
           first_name: string
@@ -1154,6 +1213,7 @@ export type Database = {
           type: Database["public"]["Enums"]["staff_type"]
         }
         Update: {
+          auth_user_id?: string | null
           created_at?: string
           email?: string | null
           first_name?: string
@@ -1164,6 +1224,47 @@ export type Database = {
           type?: Database["public"]["Enums"]["staff_type"]
         }
         Relationships: []
+      }
+      staff_documents: {
+        Row: {
+          document_type: string
+          id: string
+          name: string
+          signed_at: string | null
+          signed_by_name: string | null
+          staff_id: string
+          storage_path: string
+          uploaded_at: string
+        }
+        Insert: {
+          document_type?: string
+          id?: string
+          name: string
+          signed_at?: string | null
+          signed_by_name?: string | null
+          staff_id: string
+          storage_path: string
+          uploaded_at?: string
+        }
+        Update: {
+          document_type?: string
+          id?: string
+          name?: string
+          signed_at?: string | null
+          signed_by_name?: string | null
+          staff_id?: string
+          storage_path?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_documents_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tax_jurisdictions: {
         Row: {
@@ -3628,24 +3729,15 @@ export type Database = {
         }
         Returns: Json
       }
-      assign_staff_to_job:
-        | {
-            Args: {
-              p_job_site_id: string
-              p_payment_amount: number
-              p_staff_id: string
-            }
-            Returns: undefined
-          }
-        | {
-            Args: {
-              p_job_site_id: string
-              p_payment_amount: number
-              p_staff_id: string
-              p_start_date?: string
-            }
-            Returns: undefined
-          }
+      assign_staff_to_job: {
+        Args: {
+          p_job_site_id: string
+          p_payment_amount: number
+          p_staff_id: string
+          p_start_date?: string
+        }
+        Returns: undefined
+      }
       auth_risk_precheck: {
         Args: {
           p_action: string
@@ -3684,11 +3776,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      current_client_id: { Args: never; Returns: string }
+      current_staff_id: { Args: never; Returns: string }
       get_public_prospect_notification_context: {
         Args: { p_prospect_id: string }
         Returns: Json
       }
       get_public_quote: { Args: { p_token: string }; Returns: Json }
+      is_admin: { Args: never; Returns: boolean }
       mark_client_contacted: {
         Args: { p_client_id: string }
         Returns: undefined

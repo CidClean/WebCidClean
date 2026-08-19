@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { archiveClient, getClient, markClientContacted, markClientInProcess } from '../api/clients'
 import { listJobSitesForClient } from '../api/jobSites'
+import { invitePortalUser } from '../api/portal'
 import type { Client, JobSite } from '../types/models'
 import { Button } from '../components/ui/Button'
+import { Field, Input } from '../components/ui/Input'
 import { StatusBadge } from '../components/ui/StatusBadge'
 import { BillingInfoForm } from '../components/clients/BillingInfoForm'
 import { DocumentUploadList } from '../components/clients/DocumentUploadList'
@@ -115,40 +117,87 @@ export function ClientDetailPage() {
 
 function InfoTab({ client }: { client: Client }) {
   return (
-    <dl className="bg-white rounded border border-gray-200 p-4 max-w-lg grid grid-cols-2 gap-3 text-sm">
-      <div>
-        <dt className="text-gray-500">First Name</dt>
-        <dd className="text-gray-900">{client.first_name}</dd>
-      </div>
-      <div>
-        <dt className="text-gray-500">Last Name</dt>
-        <dd className="text-gray-900">{client.last_name}</dd>
-      </div>
-      <div>
-        <dt className="text-gray-500">Company</dt>
-        <dd className="text-gray-900">{client.company || '—'}</dd>
-      </div>
-      <div>
-        <dt className="text-gray-500">Role</dt>
-        <dd className="text-gray-900">{client.role || '—'}</dd>
-      </div>
-      <div>
-        <dt className="text-gray-500">Email</dt>
-        <dd className="text-gray-900">{client.email || '—'}</dd>
-      </div>
-      <div>
-        <dt className="text-gray-500">Phone</dt>
-        <dd className="text-gray-900">{client.phone || '—'}</dd>
-      </div>
-      <div>
-        <dt className="text-gray-500">Facility Type</dt>
-        <dd className="text-gray-900">{client.facility_type || '—'}</dd>
-      </div>
-      <div className="col-span-2">
-        <dt className="text-gray-500">Services Required</dt>
-        <dd className="text-gray-900">{client.services_required?.join(', ') || '—'}</dd>
-      </div>
-    </dl>
+    <div className="space-y-6">
+      <dl className="bg-white rounded border border-gray-200 p-4 max-w-lg grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <dt className="text-gray-500">First Name</dt>
+          <dd className="text-gray-900">{client.first_name}</dd>
+        </div>
+        <div>
+          <dt className="text-gray-500">Last Name</dt>
+          <dd className="text-gray-900">{client.last_name}</dd>
+        </div>
+        <div>
+          <dt className="text-gray-500">Company</dt>
+          <dd className="text-gray-900">{client.company || '—'}</dd>
+        </div>
+        <div>
+          <dt className="text-gray-500">Role</dt>
+          <dd className="text-gray-900">{client.role || '—'}</dd>
+        </div>
+        <div>
+          <dt className="text-gray-500">Email</dt>
+          <dd className="text-gray-900">{client.email || '—'}</dd>
+        </div>
+        <div>
+          <dt className="text-gray-500">Phone</dt>
+          <dd className="text-gray-900">{client.phone || '—'}</dd>
+        </div>
+        <div>
+          <dt className="text-gray-500">Facility Type</dt>
+          <dd className="text-gray-900">{client.facility_type || '—'}</dd>
+        </div>
+        <div className="col-span-2">
+          <dt className="text-gray-500">Services Required</dt>
+          <dd className="text-gray-900">{client.services_required?.join(', ') || '—'}</dd>
+        </div>
+      </dl>
+
+      <PortalInviteSection client={client} />
+    </div>
+  )
+}
+
+function PortalInviteSection({ client }: { client: Client }) {
+  const [email, setEmail] = useState(client.email ?? '')
+  const [sending, setSending] = useState(false)
+  const [sent, setSent] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    setSending(true)
+    setError(null)
+    try {
+      await invitePortalUser({ email, portalRole: 'client', clientId: client.id })
+      setSent(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send invite')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <div className="max-w-lg">
+      <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">Portal Access</h2>
+      {client.auth_user_id ? (
+        <p className="text-sm text-green-700 bg-white rounded border border-gray-200 p-4">
+          This client has an active portal account and can log in to see their job sites, quotes, and documents.
+        </p>
+      ) : (
+        <form onSubmit={handleSubmit} className="bg-white rounded border border-gray-200 p-4 flex items-end gap-2">
+          <Field label="Invite Email">
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          </Field>
+          <Button type="submit" disabled={sending}>
+            {sending ? 'Sending...' : 'Invite to Portal'}
+          </Button>
+          {sent && <p className="text-sm text-green-600">Invite sent.</p>}
+          {error && <p className="text-sm text-red-600">{error}</p>}
+        </form>
+      )}
+    </div>
   )
 }
 

@@ -5,13 +5,15 @@ import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
 
 export function LoginPage() {
-  const { session, signIn } = useAuth()
-  const [email, setEmail] = useState('admin@cidclean.com')
+  const { session, role, roleLoading, signIn } = useAuth()
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  if (session) {
+  if (session && !roleLoading) {
+    if (role === 'client') return <Navigate to="/portal/client" replace />
+    if (role === 'staff') return <Navigate to="/portal/staff" replace />
     return <Navigate to="/" replace />
   }
 
@@ -31,7 +33,7 @@ export function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <form onSubmit={handleSubmit} className="bg-white p-8 rounded shadow-sm w-full max-w-sm space-y-4">
-        <h1 className="text-lg font-semibold text-gray-900">WebCidClean Admin</h1>
+        <h1 className="text-lg font-semibold text-gray-900">WebCidClean</h1>
         <Field label="Email">
           <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         </Field>
