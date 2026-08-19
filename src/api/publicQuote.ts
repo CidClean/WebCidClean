@@ -30,7 +30,13 @@ export interface PublicQuoteData {
 
 export async function getPublicQuote(token: string): Promise<PublicQuoteData | null> {
   const { data, error } = await supabase.rpc('get_public_quote', { p_token: token })
-  if (error) throw error
+  if (error) {
+    // A malformed/corrupted token (e.g. truncated while copy-pasting) fails the
+    // uuid cast before the query even runs — treat it the same as "not found"
+    // instead of surfacing a raw database error to a prospect.
+    if (error.code === '22P02') return null
+    throw error
+  }
   if (!data) return null
   return data as unknown as PublicQuoteData
 }

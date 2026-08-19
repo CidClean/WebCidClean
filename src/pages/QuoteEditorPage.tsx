@@ -168,7 +168,7 @@ export function QuoteEditorPage() {
       {quote.status !== 'draft' && (
         <div className="bg-white rounded border border-gray-200 p-4 max-w-xl space-y-2">
           <h2 className="text-sm font-semibold text-gray-700">Share Link</h2>
-          <p className="text-sm text-gray-600 break-all">{getQuoteShareUrl(quote.share_token)}</p>
+          <ShareLinkRow shareToken={quote.share_token} />
           {quote.pdf_url && (
             <a href={quote.pdf_url} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline">
               View PDF
@@ -193,6 +193,26 @@ export function QuoteEditorPage() {
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+function ShareLinkRow({ shareToken }: { shareToken: string }) {
+  const [copied, setCopied] = useState(false)
+  const url = getQuoteShareUrl(shareToken)
+
+  async function handleCopy() {
+    await navigator.clipboard.writeText(url)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <p className="text-sm text-gray-600 break-all flex-1">{url}</p>
+      <Button variant="secondary" onClick={handleCopy}>
+        {copied ? 'Copied!' : 'Copy Link'}
+      </Button>
     </div>
   )
 }
