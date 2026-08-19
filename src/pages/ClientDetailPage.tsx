@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { archiveClient, getClient, markClientContacted, markClientInProcess } from '../api/clients'
+import { archiveClient, getClient, markClientContacted, markClientInProcess, updateClient } from '../api/clients'
 import { listJobSitesForClient } from '../api/jobSites'
 import { invitePortalUser } from '../api/portal'
 import type { Client, JobSite } from '../types/models'
@@ -107,7 +107,7 @@ export function ClientDetailPage() {
         ))}
       </div>
 
-      {tab === 'info' && <InfoTab client={client} />}
+      {tab === 'info' && <InfoTab client={client} onUpdated={refresh} />}
       {tab === 'jobSites' && <JobSitesTab client={client} />}
       {tab === 'billing' && <BillingInfoForm clientId={clientId} client={client} />}
       {tab === 'documents' && <DocumentUploadList clientId={clientId} />}
@@ -115,46 +115,157 @@ export function ClientDetailPage() {
   )
 }
 
-function InfoTab({ client }: { client: Client }) {
+function InfoTab({ client, onUpdated }: { client: Client; onUpdated: () => void }) {
+  const [editing, setEditing] = useState(false)
+
   return (
     <div className="space-y-6">
-      <dl className="bg-white rounded border border-gray-200 p-4 max-w-lg grid grid-cols-2 gap-3 text-sm">
-        <div>
-          <dt className="text-gray-500">First Name</dt>
-          <dd className="text-gray-900">{client.first_name}</dd>
-        </div>
-        <div>
-          <dt className="text-gray-500">Last Name</dt>
-          <dd className="text-gray-900">{client.last_name}</dd>
-        </div>
-        <div>
-          <dt className="text-gray-500">Company</dt>
-          <dd className="text-gray-900">{client.company || '—'}</dd>
-        </div>
-        <div>
-          <dt className="text-gray-500">Role</dt>
-          <dd className="text-gray-900">{client.role || '—'}</dd>
-        </div>
-        <div>
-          <dt className="text-gray-500">Email</dt>
-          <dd className="text-gray-900">{client.email || '—'}</dd>
-        </div>
-        <div>
-          <dt className="text-gray-500">Phone</dt>
-          <dd className="text-gray-900">{client.phone || '—'}</dd>
-        </div>
-        <div>
-          <dt className="text-gray-500">Facility Type</dt>
-          <dd className="text-gray-900">{client.facility_type || '—'}</dd>
-        </div>
-        <div className="col-span-2">
-          <dt className="text-gray-500">Services Required</dt>
-          <dd className="text-gray-900">{client.services_required?.join(', ') || '—'}</dd>
-        </div>
-      </dl>
+      <div className="max-w-lg">
+        {editing ? (
+          <ClientEditForm
+            client={client}
+            onSaved={() => {
+              setEditing(false)
+              onUpdated()
+            }}
+            onCancel={() => setEditing(false)}
+          />
+        ) : (
+          <div className="bg-white rounded border border-gray-200 p-4 space-y-3">
+            <div className="flex justify-end">
+              <button onClick={() => setEditing(true)} className="text-sm text-blue-600 hover:underline">
+                Edit
+              </button>
+            </div>
+            <dl className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <dt className="text-gray-500">First Name</dt>
+                <dd className="text-gray-900">{client.first_name}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">Last Name</dt>
+                <dd className="text-gray-900">{client.last_name}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">Company</dt>
+                <dd className="text-gray-900">{client.company || '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">Role</dt>
+                <dd className="text-gray-900">{client.role || '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">Email</dt>
+                <dd className="text-gray-900">{client.email || '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">Phone</dt>
+                <dd className="text-gray-900">{client.phone || '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">Facility Type</dt>
+                <dd className="text-gray-900">{client.facility_type || '—'}</dd>
+              </div>
+              <div className="col-span-2">
+                <dt className="text-gray-500">Services Required</dt>
+                <dd className="text-gray-900">{client.services_required?.join(', ') || '—'}</dd>
+              </div>
+            </dl>
+          </div>
+        )}
+      </div>
 
       <PortalInviteSection client={client} />
     </div>
+  )
+}
+
+function ClientEditForm({
+  client,
+  onSaved,
+  onCancel,
+}: {
+  client: Client
+  onSaved: () => void
+  onCancel: () => void
+}) {
+  const [firstName, setFirstName] = useState(client.first_name)
+  const [lastName, setLastName] = useState(client.last_name)
+  const [company, setCompany] = useState(client.company ?? '')
+  const [role, setRole] = useState(client.role ?? '')
+  const [email, setEmail] = useState(client.email ?? '')
+  const [phone, setPhone] = useState(client.phone ?? '')
+  const [facilityType, setFacilityType] = useState(client.facility_type ?? '')
+  const [servicesRequired, setServicesRequired] = useState(client.services_required?.join(', ') ?? '')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    setSaving(true)
+    setError(null)
+    try {
+      await updateClient(client.id, {
+        first_name: firstName,
+        last_name: lastName,
+        company: company || null,
+        role: role || null,
+        email: email || null,
+        phone: phone || null,
+        facility_type: facilityType || null,
+        services_required: servicesRequired
+          ? servicesRequired
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : null,
+      })
+      onSaved()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="bg-white rounded border border-gray-200 p-4 space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="First Name">
+          <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+        </Field>
+        <Field label="Last Name">
+          <Input value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+        </Field>
+        <Field label="Company">
+          <Input value={company} onChange={(e) => setCompany(e.target.value)} />
+        </Field>
+        <Field label="Role">
+          <Input value={role} onChange={(e) => setRole(e.target.value)} />
+        </Field>
+        <Field label="Email">
+          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        </Field>
+        <Field label="Phone">
+          <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+        </Field>
+        <Field label="Facility Type">
+          <Input value={facilityType} onChange={(e) => setFacilityType(e.target.value)} />
+        </Field>
+        <Field label="Services Required (comma-separated)">
+          <Input value={servicesRequired} onChange={(e) => setServicesRequired(e.target.value)} />
+        </Field>
+      </div>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      <div className="flex gap-2">
+        <Button type="submit" disabled={saving}>
+          {saving ? 'Saving...' : 'Save'}
+        </Button>
+        <Button type="button" variant="secondary" onClick={onCancel}>
+          Cancel
+        </Button>
+      </div>
+    </form>
   )
 }
 
