@@ -6,3 +6,26 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# This is a single-page app: every route (including /q/:token) is served
+# from the same index.html, which then loads the current JS bundle by its
+# content-hashed filename. Browsers — Safari on iOS/iPadOS especially — can
+# aggressively disk-cache that root HTML document across visits, so a device
+# can keep loading an old build (pointing at deleted, 404ing asset hashes)
+# long after a new one has deployed. Force revalidation on every request so
+# that never happens; the hashed /assets/* files are safe to leave cached
+# since a new build always gets new filenames.
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
