@@ -6,9 +6,10 @@ import { listAreasForJobSite } from '../api/areas'
 import { listQuotesForJobSite } from '../api/quotes'
 import { assignStaffToJob, listAssignmentsForJobSite, removeAssignment } from '../api/staff'
 import type { JobStaffAssignmentWithStaff } from '../api/staff'
-import type { JobSite, JobSiteArea, Quote } from '../types/models'
+import { PAYMENT_TYPES, PAYMENT_TYPE_LABELS, type JobSite, type JobSiteArea, type PaymentType, type Quote } from '../types/models'
 import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
+import { Select } from '../components/ui/Select'
 import { StatusBadge } from '../components/ui/StatusBadge'
 import { AreaForm } from '../components/areas/AreaForm'
 import { AreaCard } from '../components/areas/AreaCard'
@@ -362,12 +363,14 @@ function StaffAssignmentsSection({ jobSite, onUpdated }: { jobSite: JobSite; onU
 
   async function handleRemove(assignment: JobStaffAssignmentWithStaff) {
     await removeAssignment(assignment.id)
-    const remaining = assignments.filter((a) => a.id !== assignment.id)
-    if (jobSite.staff_payment_amount !== null && remaining.length > 0) {
-      const evenShare = jobSite.staff_payment_amount / remaining.length
-      for (const a of remaining) {
+    const remainingMonthly = assignments.filter(
+      (a) => a.id !== assignment.id && (a.payment_type as PaymentType) === 'monthly',
+    )
+    if (jobSite.staff_payment_amount !== null && remainingMonthly.length > 0) {
+      const evenShare = jobSite.staff_payment_amount / remainingMonthly.length
+      for (const a of remainingMonthly) {
         if (Math.abs(a.payment_amount - evenShare) > 0.01) {
-          await assignStaffToJob(jobSite.id, a.staff_id, Number(evenShare.toFixed(2)), a.start_date)
+          await assignStaffToJob(jobSite.id, a.staff_id, Number(evenShare.toFixed(2)), a.start_date, 'monthly')
         }
       }
     }
@@ -440,6 +443,7 @@ function AssignmentRow({
 }) {
   const [editing, setEditing] = useState(false)
   const [amount, setAmount] = useState(String(assignment.payment_amount))
+  const [paymentType, setPaymentType] = useState<PaymentType>(assignment.payment_type as PaymentType)
   const [startDate, setStartDate] = useState(assignment.start_date)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -448,7 +452,7 @@ function AssignmentRow({
     setSaving(true)
     setError(null)
     try {
-      await assignStaffToJob(assignment.job_site_id, assignment.staff_id, Number(amount) || 0, startDate)
+      await assignStaffToJob(assignment.job_site_id, assignment.staff_id, Number(amount) || 0, startDate, paymentType)
       setEditing(false)
       onChanged()
     } catch (err) {
@@ -457,6 +461,8 @@ function AssignmentRow({
       setSaving(false)
     }
   }
+
+  const suffix = { monthly: '/mo', per_day: '/day', per_hour: '/hr' }[assignment.payment_type as PaymentType]
 
   return (
     <div className="p-3">
@@ -467,6 +473,17 @@ function AssignmentRow({
         <div className="flex items-center gap-3">
           {editing ? (
             <>
+              <Select
+                value={paymentType}
+                onChange={(e) => setPaymentType(e.target.value as PaymentType)}
+                className="w-28"
+              >
+                {PAYMENT_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {PAYMENT_TYPE_LABELS[t]}
+                  </option>
+                ))}
+              </Select>
               <Input
                 type="number"
                 step="0.01"
@@ -486,7 +503,8 @@ function AssignmentRow({
           ) : (
             <>
               <span className="text-sm text-gray-700">
-                ${assignment.payment_amount}/mo <span className="text-gray-400">since {assignment.start_date}</span>
+                ${assignment.payment_amount}
+                {suffix} <span className="text-gray-400">since {assignment.start_date}</span>
               </span>
               <button onClick={() => setEditing(true)} className="text-xs text-blue-600 hover:underline">
                 Edit

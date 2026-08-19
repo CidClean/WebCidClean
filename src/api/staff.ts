@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase'
-import type { JobStaffAssignment, Staff } from '../types/models'
+import type { JobStaffAssignment, PaymentType, Staff } from '../types/models'
 
 export async function listStaff(): Promise<Staff[]> {
   const { data, error } = await supabase.from('staff').select('*').order('created_at', { ascending: false })
@@ -78,12 +78,14 @@ export async function assignStaffToJob(
   staffId: string,
   paymentAmount: number,
   startDate: string,
+  paymentType: PaymentType,
 ): Promise<void> {
   const { error } = await supabase.rpc('assign_staff_to_job', {
     p_job_site_id: jobSiteId,
     p_staff_id: staffId,
     p_payment_amount: paymentAmount,
     p_start_date: startDate,
+    p_payment_type: paymentType,
   })
   if (error) throw error
 }

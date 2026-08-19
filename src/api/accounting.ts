@@ -17,11 +17,11 @@ export async function listJobAccounting(from: string, to: string): Promise<Accou
     supabase
       .from('job_sites')
       .select(
-        'id, name, service_amount, client_id, status, frequency, frequency_days, start_date, clients(first_name, last_name, company)',
+        'id, name, service_amount, client_id, status, frequency, frequency_days, start_date, estimated_duration_minutes, clients(first_name, last_name, company)',
       )
       .in('status', ['active', 'paused'])
       .order('name', { ascending: true }),
-    supabase.from('job_staff_assignments').select('job_site_id, staff_id, payment_amount, start_date'),
+    supabase.from('job_staff_assignments').select('job_site_id, staff_id, payment_amount, payment_type, start_date'),
     supabase.from('work_logs').select('job_site_id, staff_id, work_date, excluded').gte('work_date', from).lte('work_date', to),
     supabase
       .from('expenses')

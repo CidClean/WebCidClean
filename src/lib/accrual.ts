@@ -1,4 +1,5 @@
 import { computeOccurrences, type ScheduleJobSite } from './schedule'
+import type { PaymentType } from '../types/models'
 
 function parseDateOnly(s: string): Date {
   const [y, m, d] = s.split('-').map(Number)
@@ -18,27 +19,40 @@ export function todayDateOnly(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
-/**
- * A single day's share of a monthly assignment amount: payment_amount
- * divided by that job's total scheduled days in `date`'s calendar month.
- * Used wherever a per-day figure needs to be shown or stored (e.g. the
- * calendar's day log), kept consistent with computeAccrual's own math.
- */
-export function computeDailyRate(jobSite: ScheduleJobSite, paymentAmount: number, date: string): number {
-  const [monthStart, monthEnd] = monthBounds(monthKey(date))
-  const daysInMonth = computeOccurrences(jobSite, monthStart, monthEnd).length
-  return daysInMonth > 0 ? paymentAmount / daysInMonth : 0
-}
-
 export interface AccrualJobSite extends ScheduleJobSite {
   id: string
+  estimated_duration_minutes: number
 }
 
 export interface AssignmentForAccrual {
   job_site_id: string
   staff_id: string
   payment_amount: number
+  payment_type: PaymentType
   start_date: string
+}
+
+/**
+ * A single day's pay for one assignment, per its payment_type:
+ * - monthly: payment_amount split across that job's total scheduled days in
+ *   `date`'s calendar month (a day only "pays" once actually worked).
+ * - per_day: payment_amount flat, regardless of the month's schedule.
+ * - per_hour: payment_amount x (the job site's estimated visit duration in
+ *   hours) — the estimate, not actual clocked time, since nothing here
+ *   tracks clock-in/out.
+ * Used both by computeAccrual and wherever a per-day figure needs to be
+ * shown or stored (e.g. the calendar's day log).
+ */
+export function computeDailyRate(
+  jobSite: AccrualJobSite,
+  assignment: Pick<AssignmentForAccrual, 'payment_amount' | 'payment_type'>,
+  date: string,
+): number {
+  if (assignment.payment_type === 'per_day') return assignment.payment_amount
+  if (assignment.payment_type === 'per_hour') return assignment.payment_amount * (jobSite.estimated_duration_minutes / 60)
+  const [monthStart, monthEnd] = monthBounds(monthKey(date))
+  const daysInMonth = computeOccurrences(jobSite, monthStart, monthEnd).length
+  return daysInMonth > 0 ? assignment.payment_amount / daysInMonth : 0
 }
 
 export interface WorkLogOverride {
@@ -63,12 +77,8 @@ export interface AccrualEntry {
  * counts if explicitly confirmed via an override (excluded=false) — it
  * hasn't necessarily happened yet.
  *
- * `assignment.payment_amount` is the staff's total pay for a full month on
- * that job, not a per-visit rate — so each accrued day is worth
- * payment_amount / (that job's total scheduled days in that calendar
- * month), and a day only "pays" once it's actually counted as worked. A job
- * with zero scheduled days in a given month (e.g. it hasn't started yet)
- * contributes nothing for that month.
+ * Each entry's dollar amount is computed by computeDailyRate per the
+ * assignment's payment_type (monthly/per_day/per_hour) — see there.
  *
  * Accrual is anchored to each assignment's own (editable) start_date, not to
  * when the assignment row happened to be created in the system — admins set
@@ -101,22 +111,6 @@ export function computeAccrual(
   const rangeStart = parseDateOnly(from)
   const rangeEnd = parseDateOnly(clippedTo)
   const entries: AccrualEntry[] = []
-  const monthTotalsByJobSite = new Map<string, Map<string, number>>()
-
-  function monthTotal(js: AccrualJobSite, key: string): number {
-    let cache = monthTotalsByJobSite.get(js.id)
-    if (!cache) {
-      cache = new Map()
-      monthTotalsByJobSite.set(js.id, cache)
-    }
-    let total = cache.get(key)
-    if (total === undefined) {
-      const [monthStart, monthEnd] = monthBounds(key)
-      total = computeOccurrences(js, monthStart, monthEnd).length
-      cache.set(key, total)
-    }
-    return total
-  }
 
   for (const js of jobSites) {
     const jsAssignments = assignmentsByJobSite.get(js.id) ?? []
@@ -124,13 +118,12 @@ export function computeAccrual(
     const occurrences = computeOccurrences(js, rangeStart, rangeEnd)
     for (const date of occurrences) {
       const defaultIncluded = date < today
-      const daysInMonth = monthTotal(js, monthKey(date))
       for (const a of jsAssignments) {
         if (date < a.start_date) continue
         const override = overrideMap.get(`${js.id}|${a.staff_id}|${date}`)
         const included = override ? !override.excluded : defaultIncluded
         if (!included) continue
-        const amount = daysInMonth > 0 ? a.payment_amount / daysInMonth : 0
+        const amount = computeDailyRate(js, a, date)
         entries.push({ job_site_id: js.id, staff_id: a.staff_id, work_date: date, payment_amount: amount, auto: !override })
       }
     }

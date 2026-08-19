@@ -37,6 +37,14 @@ export type StaffStatus = Staff['status']
 export type CatalogItemKind = CatalogItem['kind']
 export type DiscountType = Discount['type']
 
+export type PaymentType = 'monthly' | 'per_day' | 'per_hour'
+export const PAYMENT_TYPES: PaymentType[] = ['monthly', 'per_day', 'per_hour']
+export const PAYMENT_TYPE_LABELS: Record<PaymentType, string> = {
+  monthly: 'Monthly',
+  per_day: 'Per Day',
+  per_hour: 'Per Hour',
+}
+
 export const FACILITY_TYPES = [
   'Office',
   'Medical Center',

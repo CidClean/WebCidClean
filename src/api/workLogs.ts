@@ -68,6 +68,7 @@ export async function listWorkLogsForStaff(staffId: string, from: string, to: st
     job_site_id: a.job_site_id,
     staff_id: a.staff_id,
     payment_amount: a.payment_amount,
+    payment_type: a.payment_type as AssignmentForAccrual['payment_type'],
     start_date: a.start_date,
   }))
 

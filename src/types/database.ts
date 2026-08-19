@@ -647,6 +647,7 @@ export type Database = {
           id: string
           job_site_id: string
           payment_amount: number
+          payment_type: string
           staff_id: string
           start_date: string
         }
@@ -655,6 +656,7 @@ export type Database = {
           id?: string
           job_site_id: string
           payment_amount: number
+          payment_type?: string
           staff_id: string
           start_date?: string
         }
@@ -663,6 +665,7 @@ export type Database = {
           id?: string
           job_site_id?: string
           payment_amount?: number
+          payment_type?: string
           staff_id?: string
           start_date?: string
         }
@@ -3733,6 +3736,7 @@ export type Database = {
         Args: {
           p_job_site_id: string
           p_payment_amount: number
+          p_payment_type?: string
           p_staff_id: string
           p_start_date?: string
         }

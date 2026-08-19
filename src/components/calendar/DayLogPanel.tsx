@@ -3,7 +3,7 @@ import { listAssignmentsForJobSite } from '../../api/staff'
 import type { JobStaffAssignmentWithStaff } from '../../api/staff'
 import { getJobSite } from '../../api/jobSites'
 import { deleteWorkLog, listWorkLogsForJobSiteDate, upsertWorkLog } from '../../api/workLogs'
-import type { WorkLog } from '../../types/models'
+import type { PaymentType, WorkLog } from '../../types/models'
 import { computeDailyRate, todayDateOnly } from '../../lib/accrual'
 import { Button } from '../ui/Button'
 
@@ -54,7 +54,11 @@ export function DayLogPanel({ jobSiteId, jobSiteName, date, onClose }: DayLogPan
           return {
             staffId: a.staff_id,
             staffName: a.staff ? `${a.staff.first_name} ${a.staff.last_name}` : 'Unknown',
-            amount: computeDailyRate(jobSite, a.payment_amount, date),
+            amount: computeDailyRate(
+              jobSite,
+              { payment_amount: a.payment_amount, payment_type: a.payment_type as PaymentType },
+              date,
+            ),
             defaultIncluded: rowDefaultIncluded,
             overrideId: override?.id ?? null,
             checked,
