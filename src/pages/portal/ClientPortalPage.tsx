@@ -14,6 +14,7 @@ import {
   type MyInvoice,
   type MyQuote,
 } from '../../api/clientPortal'
+import { createInvoiceCheckoutSession } from '../../api/invoices'
 import type { ClientDocument, JobSite, PortalRequest } from '../../types/models'
 import { Button } from '../../components/ui/Button'
 import { Textarea } from '../../components/ui/Input'
@@ -127,6 +128,8 @@ function QuotesTab() {
 function InvoicesTab() {
   const [invoices, setInvoices] = useState<MyInvoice[]>([])
   const [loading, setLoading] = useState(true)
+  const [payingId, setPayingId] = useState<string | null>(null)
+  const [payError, setPayError] = useState<string | null>(null)
 
   useEffect(() => {
     listMyInvoices()
@@ -134,29 +137,52 @@ function InvoicesTab() {
       .finally(() => setLoading(false))
   }, [])
 
+  async function handlePay(invoiceId: string) {
+    setPayingId(invoiceId)
+    setPayError(null)
+    try {
+      const url = await createInvoiceCheckoutSession(invoiceId)
+      window.location.href = url
+    } catch {
+      // Most likely cause right now: online payments aren't configured yet
+      // (STRIPE_SECRET_KEY not set). Not a reason to hide the button —
+      // just tell the payer to reach out instead.
+      setPayError('Online payment isn\'t available yet — please contact us to arrange payment.')
+      setPayingId(null)
+    }
+  }
+
   if (loading) return <p className="text-sm text-gray-500">Loading...</p>
   if (invoices.length === 0) return <p className="text-sm text-gray-500">No invoices yet.</p>
 
   return (
-    <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
-      {invoices.map((inv) => (
-        <div key={inv.id} className="p-4 flex items-center justify-between">
-          <div>
-            <span className="text-sm font-medium text-gray-900">{inv.job_sites?.name ?? 'Job site'}</span>
-            <span className="text-sm text-gray-500 ml-2">
-              {inv.period_start} – {inv.period_end} · ${inv.amount.toFixed(2)}
-            </span>
+    <div className="space-y-2">
+      {payError && <p className="text-sm text-amber-600">{payError}</p>}
+      <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
+        {invoices.map((inv) => (
+          <div key={inv.id} className="p-4 flex items-center justify-between">
+            <div>
+              <span className="text-sm font-medium text-gray-900">{inv.job_sites?.name ?? 'Job site'}</span>
+              <span className="text-sm text-gray-500 ml-2">
+                {inv.period_start} – {inv.period_end} · ${inv.amount.toFixed(2)}
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <StatusBadge status={inv.status} />
+              {inv.pdf_url && (
+                <a href={inv.pdf_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline">
+                  View PDF
+                </a>
+              )}
+              {inv.status === 'sent' && (
+                <Button onClick={() => handlePay(inv.id)} disabled={payingId === inv.id}>
+                  {payingId === inv.id ? 'Redirecting...' : 'Pay Now'}
+                </Button>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <StatusBadge status={inv.status} />
-            {inv.pdf_url && (
-              <a href={inv.pdf_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline">
-                View PDF
-              </a>
-            )}
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   )
 }

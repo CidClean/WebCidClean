@@ -112,3 +112,17 @@ export async function voidInvoice(invoiceId: string): Promise<void> {
   const { error } = await supabase.from('invoices').update({ status: 'void' }).eq('id', invoiceId)
   if (error) throw error
 }
+
+/**
+ * Starts a Stripe Checkout session for a sent invoice and returns the URL to
+ * redirect the payer to. Throws if online payments aren't configured yet
+ * (STRIPE_SECRET_KEY not set as an edge function secret) — callers should
+ * show a friendly fallback rather than treating that as a crash.
+ */
+export async function createInvoiceCheckoutSession(invoiceId: string): Promise<string> {
+  const { data, error } = await supabase.functions.invoke('create-invoice-checkout-session', {
+    body: { invoiceId },
+  })
+  if (error) throw error
+  return data.url as string
+}

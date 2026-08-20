@@ -573,6 +573,8 @@ export type Database = {
           sent_at: string | null
           share_token: string
           status: Database["public"]["Enums"]["invoice_status"]
+          stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
           tax_amount: number
           updated_at: string
         }
@@ -590,6 +592,8 @@ export type Database = {
           sent_at?: string | null
           share_token?: string
           status?: Database["public"]["Enums"]["invoice_status"]
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
           tax_amount?: number
           updated_at?: string
         }
@@ -607,6 +611,8 @@ export type Database = {
           sent_at?: string | null
           share_token?: string
           status?: Database["public"]["Enums"]["invoice_status"]
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
           tax_amount?: number
           updated_at?: string
         }
