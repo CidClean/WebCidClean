@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getClientBillingInfo, listClientDocuments } from '../api/clients'
 import { activateJob, getJobSite, updateJobSite } from '../api/jobSites'
+import { getJobSiteClosingSummary } from '../api/accounting'
 import { listAreasForJobSite } from '../api/areas'
 import { listQuotesForJobSite } from '../api/quotes'
 import { assignStaffToJob, listAssignmentsForJobSite, removeAssignment } from '../api/staff'
@@ -45,6 +46,24 @@ export function JobSiteDetailPage() {
     }
   }
 
+  async function handleArchive() {
+    if (!jobSiteId) return
+    setActionError(null)
+    try {
+      const summary = await getJobSiteClosingSummary(jobSiteId)
+      const confirmed = confirm(
+        `Closing summary for this job site (to date):\n\n` +
+          `Staff payments accrued: $${summary.staffCostToDate.toFixed(2)}\n` +
+          `Expenses logged: $${summary.expensesToDate.toFixed(2)}\n\n` +
+          `Make sure these are settled before archiving. Archive this job site?`,
+      )
+      if (!confirmed) return
+      await runStatusAction('archived')
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to prepare closing summary')
+    }
+  }
+
   if (error) return <p className="text-sm text-red-600">{error}</p>
   if (!jobSite || !jobSiteId || !clientId) return <p className="text-sm text-gray-500">Loading...</p>
 
@@ -76,7 +95,7 @@ export function JobSiteDetailPage() {
             </Button>
           )}
           {jobSite.status !== 'archived' && (
-            <Button variant="danger" onClick={() => runStatusAction('archived')}>
+            <Button variant="danger" onClick={handleArchive}>
               Archive
             </Button>
           )}

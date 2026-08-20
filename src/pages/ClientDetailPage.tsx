@@ -40,6 +40,27 @@ export function ClientDetailPage() {
     }
   }
 
+  async function handleArchiveClient() {
+    if (!clientId) return
+    setActionError(null)
+    try {
+      const jobSites = await listJobSitesForClient(clientId)
+      const openJobSites = jobSites.filter((js) => js.status !== 'archived')
+      if (openJobSites.length > 0) {
+        setActionError(
+          `Archive these job sites first (from their own page — each shows a closing summary before archiving): ${openJobSites
+            .map((js) => js.name)
+            .join(', ')}.`,
+        )
+        return
+      }
+      await archiveClient(clientId)
+      navigate('/clients')
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Action failed')
+    }
+  }
+
   if (error) return <p className="text-sm text-red-600">{error}</p>
   if (!client || !clientId) return <p className="text-sm text-gray-500">Loading...</p>
 
@@ -70,15 +91,7 @@ export function ClientDetailPage() {
             <Button onClick={() => runAction(() => markClientInProcess(clientId))}>Move to In Process</Button>
           )}
           {client.status !== 'archived' && (
-            <Button
-              variant="danger"
-              onClick={() =>
-                runAction(async () => {
-                  await archiveClient(clientId)
-                  navigate('/clients')
-                })
-              }
-            >
+            <Button variant="danger" onClick={handleArchiveClient}>
               Archive
             </Button>
           )}

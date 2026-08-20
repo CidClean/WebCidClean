@@ -1,5 +1,8 @@
 import { supabase } from '../lib/supabase'
-import { computeAccrual, type AccrualJobSite, type AssignmentForAccrual, type WorkLogOverride } from '../lib/accrual'
+import { computeAccrual, todayDateOnly, type AccrualJobSite, type AssignmentForAccrual, type WorkLogOverride } from '../lib/accrual'
+import { getJobSite } from './jobSites'
+import { listAssignmentsForJobSite } from './staff'
+import { listExpenses } from './expenses'
 
 export interface AccountingRow {
   job_site_id: string
@@ -80,4 +83,50 @@ export async function listJobAccounting(from: string, to: string): Promise<Accou
       profit: service - staffCost - jobExpenses,
     }
   })
+}
+
+export interface JobSiteClosingSummary {
+  staffCostToDate: number
+  expensesToDate: number
+}
+
+/**
+ * What's accrued/logged for a job site over its whole lifetime (start_date
+ * through today), regardless of its current status — used to show the admin
+ * what's outstanding before they archive it, so pausing beforehand doesn't
+ * hide days that already accrued while it was active.
+ */
+export async function getJobSiteClosingSummary(jobSiteId: string): Promise<JobSiteClosingSummary> {
+  const jobSite = await getJobSite(jobSiteId)
+  const today = todayDateOnly()
+  const from = jobSite.start_date ?? today
+
+  const [assignments, overridesRes, expenses] = await Promise.all([
+    listAssignmentsForJobSite(jobSiteId),
+    supabase.from('work_logs').select('job_site_id, staff_id, work_date, excluded').eq('job_site_id', jobSiteId),
+    listExpenses({ jobSiteId }),
+  ])
+  if (overridesRes.error) throw overridesRes.error
+
+  const accrualJobSite: AccrualJobSite = {
+    id: jobSite.id,
+    status: 'active',
+    frequency: jobSite.frequency,
+    frequency_days: jobSite.frequency_days,
+    start_date: jobSite.start_date,
+    estimated_duration_minutes: jobSite.estimated_duration_minutes,
+  }
+  const accrualAssignments: AssignmentForAccrual[] = assignments.map((a) => ({
+    job_site_id: a.job_site_id,
+    staff_id: a.staff_id,
+    payment_amount: a.payment_amount,
+    payment_type: a.payment_type as AssignmentForAccrual['payment_type'],
+    start_date: a.start_date,
+  }))
+
+  const entries = computeAccrual([accrualJobSite], accrualAssignments, overridesRes.data as WorkLogOverride[], from, today)
+  const staffCostToDate = entries.reduce((sum, e) => sum + e.payment_amount, 0)
+  const expensesToDate = expenses.reduce((sum, e) => sum + e.amount, 0)
+
+  return { staffCostToDate, expensesToDate }
 }
