@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase'
-import type { ClientDocument, JobSite, PortalRequest, Quote } from '../types/models'
+import type { ClientDocument, Invoice, JobSite, PortalRequest, Quote } from '../types/models'
 
 // RLS scopes every query here to the signed-in client's own rows automatically —
 // no client_id filters needed (or trusted) client-side.
@@ -22,6 +22,20 @@ export async function listMyQuotes(): Promise<MyQuote[]> {
     .order('created_at', { ascending: false })
   if (error) throw error
   return data as unknown as MyQuote[]
+}
+
+export interface MyInvoice extends Invoice {
+  job_sites: { id: string; name: string } | null
+}
+
+export async function listMyInvoices(): Promise<MyInvoice[]> {
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('*, job_sites(id, name)')
+    .neq('status', 'draft')
+    .order('period_start', { ascending: false })
+  if (error) throw error
+  return data as unknown as MyInvoice[]
 }
 
 export async function listMyDocuments(): Promise<ClientDocument[]> {

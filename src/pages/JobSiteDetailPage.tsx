@@ -5,9 +5,18 @@ import { activateJob, getJobSite, updateJobSite } from '../api/jobSites'
 import { getJobSiteClosingSummary } from '../api/accounting'
 import { listAreasForJobSite } from '../api/areas'
 import { listQuotesForJobSite } from '../api/quotes'
+import { listInvoicesForJobSite } from '../api/invoices'
 import { assignStaffToJob, listAssignmentsForJobSite, removeAssignment } from '../api/staff'
 import type { JobStaffAssignmentWithStaff } from '../api/staff'
-import { PAYMENT_TYPES, PAYMENT_TYPE_LABELS, type JobSite, type JobSiteArea, type PaymentType, type Quote } from '../types/models'
+import {
+  PAYMENT_TYPES,
+  PAYMENT_TYPE_LABELS,
+  type Invoice,
+  type JobSite,
+  type JobSiteArea,
+  type PaymentType,
+  type Quote,
+} from '../types/models'
 import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
@@ -17,7 +26,7 @@ import { AreaCard } from '../components/areas/AreaCard'
 import { AssignStaffForm } from '../components/staff/AssignStaffForm'
 import { JobSiteEditForm } from '../components/jobSites/JobSiteEditForm'
 
-type Tab = 'info' | 'areas' | 'staff' | 'quote'
+type Tab = 'info' | 'areas' | 'staff' | 'quote' | 'invoices'
 
 export function JobSiteDetailPage() {
   const { clientId, jobSiteId } = useParams<{ clientId: string; jobSiteId: string }>()
@@ -110,6 +119,7 @@ export function JobSiteDetailPage() {
             ['areas', 'Areas'],
             ['staff', 'Staff'],
             ['quote', 'Quote'],
+            ['invoices', 'Invoices'],
           ] as [Tab, string][]
         ).map(([value, label]) => (
           <button
@@ -128,6 +138,7 @@ export function JobSiteDetailPage() {
       {tab === 'areas' && <AreasSection jobSiteId={jobSiteId} />}
       {tab === 'staff' && <StaffAssignmentsSection jobSite={jobSite} onUpdated={refresh} />}
       {tab === 'quote' && <QuoteSection jobSiteId={jobSiteId} clientId={clientId} />}
+      {tab === 'invoices' && <InvoicesSection jobSiteId={jobSiteId} clientId={clientId} />}
     </div>
   )
 }
@@ -295,6 +306,48 @@ function QuoteSection({ jobSiteId, clientId }: { jobSiteId: string; clientId: st
             >
               <span className="text-sm text-gray-900">${q.amount}</span>
               <StatusBadge status={q.status} />
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function InvoicesSection({ jobSiteId, clientId }: { jobSiteId: string; clientId: string }) {
+  const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    setLoading(true)
+    listInvoicesForJobSite(jobSiteId)
+      .then(setInvoices)
+      .finally(() => setLoading(false))
+  }, [jobSiteId])
+
+  if (loading) return <p className="text-sm text-gray-500">Loading...</p>
+
+  return (
+    <div className="space-y-3">
+      <div className="flex justify-end">
+        <Link to={`/clients/${clientId}/job-sites/${jobSiteId}/invoice/new`}>
+          <Button>New Invoice</Button>
+        </Link>
+      </div>
+      {invoices.length === 0 ? (
+        <p className="text-sm text-gray-500">No invoices yet.</p>
+      ) : (
+        <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
+          {invoices.map((inv) => (
+            <Link
+              key={inv.id}
+              to={`/clients/${clientId}/job-sites/${jobSiteId}/invoice/${inv.id}`}
+              className="flex items-center justify-between p-3 hover:bg-gray-50"
+            >
+              <span className="text-sm text-gray-900">
+                {inv.period_start} — {inv.period_end} · ${inv.amount}
+              </span>
+              <StatusBadge status={inv.status} />
             </Link>
           ))}
         </div>

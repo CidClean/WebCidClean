@@ -520,6 +520,106 @@ export type Database = {
         }
         Relationships: []
       }
+      invoice_line_items: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          sort_order: number
+          taxable: boolean
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description: string
+          id?: string
+          invoice_id: string
+          sort_order?: number
+          taxable?: boolean
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          sort_order?: number
+          taxable?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_line_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          amount: number
+          created_at: string
+          due_date: string | null
+          id: string
+          job_site_id: string
+          notes: string | null
+          paid_at: string | null
+          pdf_url: string | null
+          period_end: string
+          period_start: string
+          sent_at: string | null
+          share_token: string
+          status: Database["public"]["Enums"]["invoice_status"]
+          tax_amount: number
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          job_site_id: string
+          notes?: string | null
+          paid_at?: string | null
+          pdf_url?: string | null
+          period_end: string
+          period_start: string
+          sent_at?: string | null
+          share_token?: string
+          status?: Database["public"]["Enums"]["invoice_status"]
+          tax_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          job_site_id?: string
+          notes?: string | null
+          paid_at?: string | null
+          pdf_url?: string | null
+          period_end?: string
+          period_start?: string
+          sent_at?: string | null
+          share_token?: string
+          status?: Database["public"]["Enums"]["invoice_status"]
+          tax_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_job_site_id_fkey"
+            columns: ["job_site_id"]
+            isOneToOne: false
+            referencedRelation: "job_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_site_areas: {
         Row: {
           condition: Database["public"]["Enums"]["area_condition"]
@@ -3931,6 +4031,7 @@ export type Database = {
         | "biweekly"
         | "monthly"
         | "custom"
+      invoice_status: "draft" | "sent" | "paid" | "void"
       job_site_status:
         | "new"
         | "pending"
@@ -4097,6 +4198,7 @@ export const Constants = {
         "monthly",
         "custom",
       ],
+      invoice_status: ["draft", "sent", "paid", "void"],
       job_site_status: [
         "new",
         "pending",

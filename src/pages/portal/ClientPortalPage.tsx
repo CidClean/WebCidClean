@@ -4,12 +4,14 @@ import { PortalShell } from '../../components/layout/PortalShell'
 import {
   getMyDocumentUrl,
   listMyDocuments,
+  listMyInvoices,
   listMyJobSites,
   listMyQuotes,
   listMyRequests,
   signMyDocument,
   submitMyRequest,
   uploadMyIdentificationDocument,
+  type MyInvoice,
   type MyQuote,
 } from '../../api/clientPortal'
 import type { ClientDocument, JobSite, PortalRequest } from '../../types/models'
@@ -17,7 +19,7 @@ import { Button } from '../../components/ui/Button'
 import { Textarea } from '../../components/ui/Input'
 import { StatusBadge } from '../../components/ui/StatusBadge'
 
-type Tab = 'jobSites' | 'quotes' | 'documents' | 'requests'
+type Tab = 'jobSites' | 'quotes' | 'invoices' | 'documents' | 'requests'
 
 export function ClientPortalPage() {
   const [tab, setTab] = useState<Tab>('jobSites')
@@ -29,6 +31,7 @@ export function ClientPortalPage() {
           [
             ['jobSites', 'Job Sites'],
             ['quotes', 'Quotes'],
+            ['invoices', 'Invoices'],
             ['documents', 'Documents'],
             ['requests', 'Request Changes'],
           ] as [Tab, string][]
@@ -47,6 +50,7 @@ export function ClientPortalPage() {
 
       {tab === 'jobSites' && <JobSitesTab />}
       {tab === 'quotes' && <QuotesTab />}
+      {tab === 'invoices' && <InvoicesTab />}
       {tab === 'documents' && <DocumentsTab />}
       {tab === 'requests' && <RequestsTab />}
     </PortalShell>
@@ -110,6 +114,43 @@ function QuotesTab() {
             <StatusBadge status={q.status} />
             {q.pdf_url && (
               <a href={q.pdf_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline">
+                View PDF
+              </a>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function InvoicesTab() {
+  const [invoices, setInvoices] = useState<MyInvoice[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    listMyInvoices()
+      .then(setInvoices)
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) return <p className="text-sm text-gray-500">Loading...</p>
+  if (invoices.length === 0) return <p className="text-sm text-gray-500">No invoices yet.</p>
+
+  return (
+    <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
+      {invoices.map((inv) => (
+        <div key={inv.id} className="p-4 flex items-center justify-between">
+          <div>
+            <span className="text-sm font-medium text-gray-900">{inv.job_sites?.name ?? 'Job site'}</span>
+            <span className="text-sm text-gray-500 ml-2">
+              {inv.period_start} – {inv.period_end} · ${inv.amount.toFixed(2)}
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <StatusBadge status={inv.status} />
+            {inv.pdf_url && (
+              <a href={inv.pdf_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline">
                 View PDF
               </a>
             )}

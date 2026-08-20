@@ -23,6 +23,8 @@ export type ExpenseCategory = Tables['expense_categories']['Row']
 export type Expense = Tables['expenses']['Row']
 export type StaffDocument = Tables['staff_documents']['Row']
 export type PortalRequest = Tables['portal_requests']['Row']
+export type Invoice = Tables['invoices']['Row']
+export type InvoiceLineItem = Tables['invoice_line_items']['Row']
 
 export type ClientStatus = Client['status']
 export type JobSiteStatus = JobSite['status']
@@ -36,6 +38,7 @@ export type StaffType = Staff['type']
 export type StaffStatus = Staff['status']
 export type CatalogItemKind = CatalogItem['kind']
 export type DiscountType = Discount['type']
+export type InvoiceStatus = Invoice['status']
 
 export type PaymentType = 'monthly' | 'per_day' | 'per_hour'
 export const PAYMENT_TYPES: PaymentType[] = ['monthly', 'per_day', 'per_hour']
@@ -108,3 +111,5 @@ export const AREA_CONDITIONS: AreaCondition[] = ['good', 'normal', 'bad']
 export const STAFF_TYPES: StaffType[] = ['employee', 'contractor']
 export const CATALOG_ITEM_KINDS: CatalogItemKind[] = ['service', 'addon']
 export const DISCOUNT_TYPES: DiscountType[] = ['percentage', 'fixed']
+
+export const INVOICE_STATUSES: InvoiceStatus[] = ['draft', 'sent', 'paid', 'void']

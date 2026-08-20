@@ -12,6 +12,7 @@ import { ClientDetailPage } from './pages/ClientDetailPage'
 import { JobsListPage } from './pages/JobsListPage'
 import { JobSiteDetailPage } from './pages/JobSiteDetailPage'
 import { QuoteEditorPage } from './pages/QuoteEditorPage'
+import { InvoiceDetailPage } from './pages/InvoiceDetailPage'
 import { StaffListPage } from './pages/StaffListPage'
 import { StaffDetailPage } from './pages/StaffDetailPage'
 import { CalendarPage } from './pages/CalendarPage'
@@ -53,6 +54,10 @@ export default function App() {
           <Route
             path="/clients/:clientId/job-sites/:jobSiteId/quote/:quoteId"
             element={<Protected><QuoteEditorPage /></Protected>}
+          />
+          <Route
+            path="/clients/:clientId/job-sites/:jobSiteId/invoice/:invoiceId"
+            element={<Protected><InvoiceDetailPage /></Protected>}
           />
           <Route path="/staff" element={<Protected><StaffListPage /></Protected>} />
           <Route path="/staff/:staffId" element={<Protected><StaffDetailPage /></Protected>} />
