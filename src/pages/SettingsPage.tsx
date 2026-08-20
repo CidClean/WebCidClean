@@ -14,12 +14,13 @@ import {
   deleteExpenseCategory,
   listExpenseCategories,
 } from '../api/expenses'
+import { enrollTotp, listMfaFactors, unenrollFactor, verifyTotpCode, type MfaFactor } from '../api/mfa'
 import type { CatalogItem, CatalogItemKind, Discount, DiscountType, ExpenseCategory } from '../types/models'
 import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 
-type Tab = 'catalog' | 'discounts' | 'expense-categories' | 'tax'
+type Tab = 'catalog' | 'discounts' | 'expense-categories' | 'tax' | 'security'
 
 export function SettingsPage() {
   const [tab, setTab] = useState<Tab>('catalog')
@@ -35,6 +36,7 @@ export function SettingsPage() {
             ['discounts', 'Discounts'],
             ['expense-categories', 'Expense Categories'],
             ['tax', 'Tax Rate'],
+            ['security', 'Security'],
           ] as [Tab, string][]
         ).map(([value, label]) => (
           <button
@@ -53,6 +55,7 @@ export function SettingsPage() {
       {tab === 'discounts' && <DiscountsTab />}
       {tab === 'expense-categories' && <ExpenseCategoriesTab />}
       {tab === 'tax' && <TaxRateTab />}
+      {tab === 'security' && <SecurityTab />}
     </div>
   )
 }
@@ -398,6 +401,143 @@ function ExpenseCategoryForm({
       <Button type="submit" disabled={submitting}>
         {submitting ? 'Saving...' : 'Save'}
       </Button>
+    </form>
+  )
+}
+
+function SecurityTab() {
+  const [factors, setFactors] = useState<MfaFactor[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [enrolling, setEnrolling] = useState<{ factorId: string; qrCode: string; secret: string } | null>(null)
+
+  function refresh() {
+    setLoading(true)
+    listMfaFactors()
+      .then(setFactors)
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(refresh, [])
+
+  const verifiedFactors = factors.filter((f) => f.status === 'verified')
+
+  async function startEnrollment() {
+    setError(null)
+    try {
+      // Clean up any abandoned unverified factors from a previous attempt
+      // before starting a new one.
+      for (const f of factors.filter((x) => x.status === 'unverified')) {
+        await unenrollFactor(f.id)
+      }
+      const enrollment = await enrollTotp()
+      setEnrolling(enrollment)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to start enrollment')
+    }
+  }
+
+  async function handleDisable(factorId: string) {
+    if (!confirm('Disable two-factor authentication for this account?')) return
+    setError(null)
+    try {
+      await unenrollFactor(factorId)
+      refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to disable')
+    }
+  }
+
+  return (
+    <div className="bg-white rounded border border-gray-200 p-4 space-y-4 max-w-lg">
+      <div>
+        <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-1">
+          Two-Factor Authentication
+        </h2>
+        <p className="text-xs text-gray-500">
+          Required for admin accounts. Adds a 6-digit code from an authenticator app (like Google Authenticator or
+          Authy) on top of your password.
+        </p>
+      </div>
+
+      {error && <p className="text-sm text-red-600">{error}</p>}
+
+      {loading ? (
+        <p className="text-sm text-gray-500">Loading...</p>
+      ) : enrolling ? (
+        <TotpEnrollmentForm
+          enrollment={enrolling}
+          onDone={() => {
+            setEnrolling(null)
+            refresh()
+          }}
+          onCancel={() => setEnrolling(null)}
+        />
+      ) : verifiedFactors.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-sm text-green-700">Two-factor authentication is enabled.</p>
+          {verifiedFactors.map((f) => (
+            <div key={f.id} className="flex items-center justify-between text-sm">
+              <span className="text-gray-600">Authenticator app</span>
+              <button onClick={() => handleDisable(f.id)} className="text-xs text-red-600 hover:underline">
+                Disable
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <Button onClick={startEnrollment}>Enable Two-Factor Authentication</Button>
+      )}
+    </div>
+  )
+}
+
+function TotpEnrollmentForm({
+  enrollment,
+  onDone,
+  onCancel,
+}: {
+  enrollment: { factorId: string; qrCode: string; secret: string }
+  onDone: () => void
+  onCancel: () => void
+}) {
+  const [code, setCode] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    setSubmitting(true)
+    setError(null)
+    try {
+      await verifyTotpCode(enrollment.factorId, code)
+      onDone()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Invalid code')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <p className="text-sm text-gray-700">Scan this QR code with your authenticator app:</p>
+      <img src={enrollment.qrCode} alt="TOTP QR code" className="w-40 h-40 border border-gray-200 rounded" />
+      <p className="text-xs text-gray-500">
+        Can't scan it? Enter this code manually: <code className="font-mono">{enrollment.secret}</code>
+      </p>
+      <Field label="Enter the 6-digit code from the app to confirm">
+        <Input value={code} onChange={(e) => setCode(e.target.value)} inputMode="numeric" pattern="[0-9]*" required />
+      </Field>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      <div className="flex gap-2">
+        <Button type="submit" disabled={submitting}>
+          {submitting ? 'Verifying...' : 'Verify & Enable'}
+        </Button>
+        <Button type="button" variant="secondary" onClick={onCancel}>
+          Cancel
+        </Button>
+      </div>
     </form>
   )
 }

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { getAssuranceLevel } from '../api/mfa'
 
 export type PortalRole = 'admin' | 'client' | 'staff' | null
 
@@ -11,6 +12,9 @@ interface AuthContextValue {
   roleLoading: boolean
   clientId: string | null
   staffId: string | null
+  mfaPending: boolean
+  mfaLoading: boolean
+  markMfaVerified: () => void
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
 }
@@ -36,6 +40,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roleLoading, setRoleLoading] = useState(true)
   const [clientId, setClientId] = useState<string | null>(null)
   const [staffId, setStaffId] = useState<string | null>(null)
+  const [mfaPending, setMfaPending] = useState(false)
+  const [mfaLoading, setMfaLoading] = useState(true)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -67,6 +73,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
   }, [session])
 
+  useEffect(() => {
+    if (!session) {
+      setMfaPending(false)
+      setMfaLoading(false)
+      return
+    }
+    setMfaLoading(true)
+    getAssuranceLevel()
+      .then(({ currentLevel, nextLevel }) => setMfaPending(currentLevel === 'aal1' && nextLevel === 'aal2'))
+      .finally(() => setMfaLoading(false))
+  }, [session])
+
+  function markMfaVerified() {
+    setMfaPending(false)
+  }
+
   async function signIn(email: string, password: string) {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
@@ -77,7 +99,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ session, loading, role, roleLoading, clientId, staffId, signIn, signOut }}>
+    <AuthContext.Provider
+      value={{
+        session,
+        loading,
+        role,
+        roleLoading,
+        clientId,
+        staffId,
+        mfaPending,
+        mfaLoading,
+        markMfaVerified,
+        signIn,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )

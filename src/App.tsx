@@ -4,6 +4,7 @@ import { AuthProvider } from './auth/AuthContext'
 import { ProtectedRoute, ClientPortalRoute, StaffPortalRoute } from './auth/ProtectedRoute'
 import { AppShell } from './components/layout/AppShell'
 import { LoginPage } from './pages/LoginPage'
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { SetPasswordPage } from './pages/SetPasswordPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { ClientsListPage } from './pages/ClientsListPage'
@@ -34,6 +35,7 @@ export default function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/set-password" element={<SetPasswordPage />} />
           <Route path="/q/:token" element={<PublicQuotePage />} />
 

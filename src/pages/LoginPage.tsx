@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
@@ -44,6 +44,9 @@ export function LoginPage() {
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? 'Signing in...' : 'Sign in'}
         </Button>
+        <Link to="/forgot-password" className="block text-sm text-blue-600 hover:underline text-center">
+          Forgot password?
+        </Link>
       </form>
     </div>
   )

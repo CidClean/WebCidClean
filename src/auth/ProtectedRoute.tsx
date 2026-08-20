@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from './AuthContext'
+import { MfaChallengeScreen } from './MfaChallengeScreen'
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { session, loading, role, roleLoading } = useAuth()
+  const { session, loading, role, roleLoading, mfaPending, mfaLoading } = useAuth()
 
   if (loading || (session && roleLoading)) {
     return <div className="p-8 text-gray-500">Loading...</div>
@@ -16,6 +17,11 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   if (role === 'client') return <Navigate to="/portal/client" replace />
   if (role === 'staff') return <Navigate to="/portal/staff" replace />
   if (role !== 'admin') return <Navigate to="/login" replace />
+
+  // MFA is mandatory for admins once enrolled — block access to admin pages
+  // until the TOTP challenge is completed for this session.
+  if (mfaLoading) return <div className="p-8 text-gray-500">Loading...</div>
+  if (mfaPending) return <MfaChallengeScreen />
 
   return <>{children}</>
 }

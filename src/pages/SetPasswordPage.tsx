@@ -21,7 +21,7 @@ export function SetPasswordPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-8">
         <p className="text-sm text-gray-600">
-          This invite link is invalid or has expired. Ask the admin to send you a new one.
+          This link is invalid or has expired. Request a new invite or password reset link.
         </p>
       </div>
     )
@@ -60,7 +60,7 @@ export function SetPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <form onSubmit={handleSubmit} className="bg-white p-8 rounded shadow-sm w-full max-w-sm space-y-4">
         <h1 className="text-lg font-semibold text-gray-900">Set your password</h1>
-        <p className="text-sm text-gray-500">Choose a password to finish setting up your account.</p>
+        <p className="text-sm text-gray-500">Choose a password for your account.</p>
         <Field label="Password">
           <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         </Field>
