@@ -82,6 +82,17 @@ export async function sendQuote(quoteId: string, pdfUrl: string): Promise<void> 
   if (error) throw error
 }
 
+/**
+ * Notifies the client by email that their quote is ready. Best-effort: the
+ * quote itself is already sent via the RPC regardless of this succeeding, so
+ * callers should treat a thrown error here as non-fatal (e.g. fall back to
+ * sharing the link manually) rather than as a failed "Send Quote" action.
+ */
+export async function sendQuoteEmail(quoteId: string): Promise<void> {
+  const { error } = await supabase.functions.invoke('send-quote-email', { body: { quoteId } })
+  if (error) throw error
+}
+
 export async function listQuoteResponses(quoteId: string): Promise<QuoteResponse[]> {
   const { data, error } = await supabase
     .from('quote_responses')

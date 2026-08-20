@@ -11,6 +11,7 @@ import {
   listQuoteResponses,
   replaceQuoteLineItems,
   sendQuote,
+  sendQuoteEmail,
   uploadQuotePdf,
 } from '../api/quotes'
 import { renderQuotePdfBlob } from '../lib/pdf'
@@ -34,6 +35,7 @@ export function QuoteEditorPage() {
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [sending, setSending] = useState(false)
+  const [emailWarning, setEmailWarning] = useState<string | null>(null)
 
   useEffect(() => {
     if (!jobSiteId || !clientId) return
@@ -99,6 +101,7 @@ export function QuoteEditorPage() {
   async function handleSendQuote() {
     setSending(true)
     setError(null)
+    setEmailWarning(null)
     try {
       const parsed = parseItems()
       if (parsed.length === 0) {
@@ -123,6 +126,14 @@ export function QuoteEditorPage() {
       await sendQuote(quote!.id, pdfUrl)
       const refreshed = await getQuote(quote!.id)
       setQuote(refreshed)
+      try {
+        await sendQuoteEmail(quote!.id)
+      } catch {
+        // The quote itself is already sent (status updated, link live) —
+        // email delivery failing shouldn't block that. Most likely cause
+        // right now: RESEND_API_KEY isn't configured yet.
+        setEmailWarning('Quote sent, but the notification email could not be delivered — share the link below manually.')
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send quote')
     } finally {
@@ -168,6 +179,7 @@ export function QuoteEditorPage() {
       {quote.status !== 'draft' && (
         <div className="bg-white rounded border border-gray-200 p-4 max-w-xl space-y-2">
           <h2 className="text-sm font-semibold text-gray-700">Share Link</h2>
+          {emailWarning && <p className="text-sm text-amber-600">{emailWarning}</p>}
           <ShareLinkRow shareToken={quote.share_token} />
           {quote.pdf_url && (
             <a href={quote.pdf_url} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline">
