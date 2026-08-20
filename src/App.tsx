@@ -13,6 +13,7 @@ import { JobsListPage } from './pages/JobsListPage'
 import { JobSiteDetailPage } from './pages/JobSiteDetailPage'
 import { QuoteEditorPage } from './pages/QuoteEditorPage'
 import { InvoiceDetailPage } from './pages/InvoiceDetailPage'
+import { InvoicesListPage } from './pages/InvoicesListPage'
 import { StaffListPage } from './pages/StaffListPage'
 import { StaffDetailPage } from './pages/StaffDetailPage'
 import { CalendarPage } from './pages/CalendarPage'
@@ -60,6 +61,7 @@ export default function App() {
             element={<Protected><InvoiceDetailPage /></Protected>}
           />
           <Route path="/staff" element={<Protected><StaffListPage /></Protected>} />
+          <Route path="/invoices" element={<Protected><InvoicesListPage /></Protected>} />
           <Route path="/staff/:staffId" element={<Protected><StaffDetailPage /></Protected>} />
           <Route path="/calendar" element={<Protected><CalendarPage /></Protected>} />
           <Route path="/accounting" element={<Protected><AccountingPage /></Protected>} />

@@ -2,7 +2,12 @@ import { supabase } from '../lib/supabase'
 import type { Invoice, InvoiceLineItem } from '../types/models'
 
 export interface InvoiceWithJobSite extends Invoice {
-  job_sites: { id: string; name: string; client_id: string } | null
+  job_sites: {
+    id: string
+    name: string
+    client_id: string
+    clients: { first_name: string; last_name: string; company: string | null } | null
+  } | null
 }
 
 export async function listInvoicesForJobSite(jobSiteId: string): Promise<Invoice[]> {
@@ -18,7 +23,7 @@ export async function listInvoicesForJobSite(jobSiteId: string): Promise<Invoice
 export async function listAllInvoices(): Promise<InvoiceWithJobSite[]> {
   const { data, error } = await supabase
     .from('invoices')
-    .select('*, job_sites(id, name, client_id)')
+    .select('*, job_sites(id, name, client_id, clients(first_name, last_name, company))')
     .order('created_at', { ascending: false })
   if (error) throw error
   return data as unknown as InvoiceWithJobSite[]

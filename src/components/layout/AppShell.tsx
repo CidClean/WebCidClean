@@ -8,6 +8,7 @@ const navItems = [
   { to: '/clients', label: 'Clients' },
   { to: '/jobs', label: 'Jobs' },
   { to: '/staff', label: 'Staff' },
+  { to: '/invoices', label: 'Invoices' },
   { to: '/calendar', label: 'Calendar' },
   { to: '/accounting', label: 'Accounting' },
   { to: '/settings', label: 'Settings' },

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { supabase } from '../lib/supabase'
+import { passwordMeetsRequirements, PasswordRequirementsList } from '../components/auth/PasswordRequirements'
 import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
 
@@ -33,24 +34,21 @@ export function SetPasswordPage() {
     return <Navigate to="/" replace />
   }
 
+  const requirementsMet = passwordMeetsRequirements(password)
+  const passwordsMatch = confirm.length > 0 && password === confirm
+  const canSubmit = requirementsMet && passwordsMatch
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters.')
-      return
-    }
-    if (password !== confirm) {
-      setError('Passwords do not match.')
-      return
-    }
+    if (!canSubmit) return
     setSubmitting(true)
     try {
       const { error: updateError } = await supabase.auth.updateUser({ password })
       if (updateError) throw updateError
       setDone(true)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to set password')
+    } catch {
+      setError('Could not set password. Please try again.')
     } finally {
       setSubmitting(false)
     }
@@ -64,11 +62,13 @@ export function SetPasswordPage() {
         <Field label="Password">
           <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         </Field>
+        <PasswordRequirementsList password={password} />
         <Field label="Confirm Password">
           <Input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
         </Field>
+        {confirm.length > 0 && !passwordsMatch && <p className="text-sm text-red-600">Passwords do not match.</p>}
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <Button type="submit" className="w-full" disabled={submitting}>
+        <Button type="submit" className="w-full" disabled={submitting || !canSubmit}>
           {submitting ? 'Saving...' : 'Set Password'}
         </Button>
       </form>

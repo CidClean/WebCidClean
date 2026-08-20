@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { assignStaffToJob, listAssignmentsForStaff, listStaff, type JobStaffAssignmentWithStaff } from '../../api/staff'
 import { findScheduleConflict } from '../../lib/availability'
 import { todayDateOnly } from '../../lib/accrual'
+import { floorToCents } from '../../lib/money'
 import { PAYMENT_TYPE_LABELS, PAYMENT_TYPES, type JobSite, type PaymentType, type Staff } from '../../types/models'
 import { Button } from '../ui/Button'
 import { Field, Input } from '../ui/Input'
@@ -47,7 +48,7 @@ export function AssignStaffForm({
 
   useEffect(() => {
     if (paymentType !== 'monthly' || staffPaymentAmount === null) return
-    const evenShare = staffPaymentAmount / (monthlyAssignments.length + 1)
+    const evenShare = floorToCents(staffPaymentAmount / (monthlyAssignments.length + 1))
     setAmount(evenShare > 0 ? evenShare.toFixed(2) : '')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentType, staffPaymentAmount, monthlyAssignments.length])
@@ -85,12 +86,12 @@ export function AssignStaffForm({
       // from the even split. Only applies among monthly-rate assignments —
       // per_day/per_hour staff aren't part of the monthly budget split.
       if (paymentType === 'monthly' && staffPaymentAmount !== null) {
-        const evenShare = staffPaymentAmount / (monthlyAssignments.length + 1)
+        const evenShare = floorToCents(staffPaymentAmount / (monthlyAssignments.length + 1))
         const isEvenSplit = Math.abs(Number(amount) - evenShare) < 0.01
         if (isEvenSplit) {
           for (const a of monthlyAssignments) {
             if (Math.abs(a.payment_amount - evenShare) > 0.01) {
-              await assignStaffToJob(jobSite.id, a.staff_id, Number(evenShare.toFixed(2)), a.start_date, 'monthly')
+              await assignStaffToJob(jobSite.id, a.staff_id, evenShare, a.start_date, 'monthly')
             }
           }
         }

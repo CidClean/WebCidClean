@@ -8,6 +8,7 @@ import { listQuotesForJobSite } from '../api/quotes'
 import { listInvoicesForJobSite } from '../api/invoices'
 import { assignStaffToJob, listAssignmentsForJobSite, removeAssignment } from '../api/staff'
 import type { JobStaffAssignmentWithStaff } from '../api/staff'
+import { floorToCents } from '../lib/money'
 import {
   PAYMENT_TYPES,
   PAYMENT_TYPE_LABELS,
@@ -439,10 +440,10 @@ function StaffAssignmentsSection({ jobSite, onUpdated }: { jobSite: JobSite; onU
       (a) => a.id !== assignment.id && (a.payment_type as PaymentType) === 'monthly',
     )
     if (jobSite.staff_payment_amount !== null && remainingMonthly.length > 0) {
-      const evenShare = jobSite.staff_payment_amount / remainingMonthly.length
+      const evenShare = floorToCents(jobSite.staff_payment_amount / remainingMonthly.length)
       for (const a of remainingMonthly) {
         if (Math.abs(a.payment_amount - evenShare) > 0.01) {
-          await assignStaffToJob(jobSite.id, a.staff_id, Number(evenShare.toFixed(2)), a.start_date, 'monthly')
+          await assignStaffToJob(jobSite.id, a.staff_id, evenShare, a.start_date, 'monthly')
         }
       }
     }
