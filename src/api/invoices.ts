@@ -105,6 +105,16 @@ export async function markInvoiceSent(invoiceId: string, pdfUrl: string): Promis
   if (error) throw error
 }
 
+/**
+ * Notifies the client by email that their invoice is ready. Best-effort: the
+ * invoice itself is already marked sent regardless of this succeeding, so
+ * callers should treat a thrown error here as non-fatal.
+ */
+export async function sendInvoiceEmail(invoiceId: string): Promise<void> {
+  const { error } = await supabase.functions.invoke('send-invoice-email', { body: { invoiceId } })
+  if (error) throw error
+}
+
 export async function markInvoicePaid(invoiceId: string): Promise<void> {
   const { error } = await supabase
     .from('invoices')

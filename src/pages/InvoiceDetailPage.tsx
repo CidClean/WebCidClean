@@ -10,6 +10,7 @@ import {
   markInvoicePaid,
   markInvoiceSent,
   replaceInvoiceLineItems,
+  sendInvoiceEmail,
   uploadInvoicePdf,
   voidInvoice,
 } from '../api/invoices'
@@ -44,6 +45,7 @@ export function InvoiceDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [sending, setSending] = useState(false)
+  const [emailWarning, setEmailWarning] = useState<string | null>(null)
 
   const [periodStart, setPeriodStart] = useState(firstOfMonth())
   const [periodEnd, setPeriodEnd] = useState(lastOfMonth())
@@ -171,6 +173,7 @@ export function InvoiceDetailPage() {
   async function handleMarkSent() {
     setSending(true)
     setError(null)
+    setEmailWarning(null)
     try {
       const parsed = parseItems()
       if (parsed.length === 0) {
@@ -197,6 +200,11 @@ export function InvoiceDetailPage() {
       await markInvoiceSent(invoice!.id, pdfUrl)
       const refreshed = await getInvoice(invoice!.id)
       setInvoice(refreshed)
+      try {
+        await sendInvoiceEmail(invoice!.id)
+      } catch {
+        setEmailWarning('Invoice sent, but the notification email could not be delivered.')
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send invoice')
     } finally {
@@ -252,6 +260,7 @@ export function InvoiceDetailPage() {
           taxRate={taxRate}
         />
         {error && <p className="text-sm text-red-600">{error}</p>}
+        {emailWarning && <p className="text-sm text-amber-600">{emailWarning}</p>}
         <div className="flex gap-2 flex-wrap">
           {editable && (
             <>
