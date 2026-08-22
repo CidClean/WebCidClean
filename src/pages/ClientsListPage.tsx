@@ -1,5 +1,5 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { createClient, listClients } from '../api/clients'
 import { listCatalogItems } from '../api/settings'
 import type { CatalogItem, Client, FacilityType } from '../types/models'
@@ -9,12 +9,14 @@ import { Field, Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 import { StatusBadge } from '../components/ui/StatusBadge'
 import { ArchivedSection } from '../components/ui/ArchivedSection'
+import { ListToolbar } from '../components/ui/ListToolbar'
 
 export function ClientsListPage() {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [search, setSearch] = useState('')
 
   function refresh() {
     setLoading(true)
@@ -26,15 +28,23 @@ export function ClientsListPage() {
 
   useEffect(refresh, [])
 
-  const activeClients = clients.filter((c) => c.status !== 'archived')
-  const archivedClients = clients.filter((c) => c.status === 'archived')
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return clients
+    return clients.filter((c) =>
+      `${c.first_name} ${c.last_name} ${c.company ?? ''} ${c.role ?? ''}`.toLowerCase().includes(q),
+    )
+  }, [clients, search])
+
+  const activeClients = filtered.filter((c) => c.status !== 'archived')
+  const archivedClients = filtered.filter((c) => c.status === 'archived')
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Clients</h1>
+      <ListToolbar title="Clients" count={clients.length}>
+        <Input placeholder="Search clients..." value={search} onChange={(e) => setSearch(e.target.value)} />
         <Button onClick={() => setShowForm((v) => !v)}>{showForm ? 'Cancel' : 'New Client'}</Button>
-      </div>
+      </ListToolbar>
 
       {showForm && (
         <NewClientForm
@@ -50,16 +60,35 @@ export function ClientsListPage() {
         <p className="text-sm text-gray-500">Loading...</p>
       ) : (
         <>
-          <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
-            {activeClients.length === 0 && <p className="p-4 text-sm text-gray-500">No clients yet.</p>}
-            {activeClients.map((client) => (
-              <ClientRow key={client.id} client={client} />
-            ))}
+          <div className="bg-white rounded border border-gray-200 overflow-x-auto">
+            {activeClients.length === 0 ? (
+              <p className="p-4 text-sm text-gray-500">No clients match.</p>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs uppercase tracking-wide text-gray-400 border-b border-gray-200">
+                    <th className="px-4 py-2 font-medium">Client</th>
+                    <th className="px-4 py-2 font-medium">Facility Type</th>
+                    <th className="px-4 py-2 font-medium">Contact</th>
+                    <th className="px-4 py-2 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {activeClients.map((client) => (
+                    <ClientRow key={client.id} client={client} />
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
           <ArchivedSection count={archivedClients.length}>
-            {archivedClients.map((client) => (
-              <ClientRow key={client.id} client={client} />
-            ))}
+            <table className="w-full text-sm">
+              <tbody className="divide-y divide-gray-100">
+                {archivedClients.map((client) => (
+                  <ClientRow key={client.id} client={client} />
+                ))}
+              </tbody>
+            </table>
           </ArchivedSection>
         </>
       )}
@@ -68,17 +97,24 @@ export function ClientsListPage() {
 }
 
 function ClientRow({ client }: { client: Client }) {
+  const navigate = useNavigate()
   return (
-    <Link to={`/clients/${client.id}`} className="flex items-center justify-between p-4 hover:bg-gray-50">
-      <div>
+    <tr
+      onClick={() => navigate(`/clients/${client.id}`)}
+      className="cursor-pointer hover:bg-gray-50"
+    >
+      <td className="px-4 py-3">
         <div className="font-medium text-gray-900">
           {client.first_name} {client.last_name}
-          {client.company ? ` — ${client.company}` : ''}
         </div>
-        <div className="text-sm text-gray-500">{client.role}</div>
-      </div>
-      <StatusBadge status={client.status} />
-    </Link>
+        {client.company && <div className="text-sm text-gray-500">{client.company}</div>}
+      </td>
+      <td className="px-4 py-3 text-gray-500">{client.facility_type || '—'}</td>
+      <td className="px-4 py-3 text-gray-500">{client.email || client.phone || '—'}</td>
+      <td className="px-4 py-3">
+        <StatusBadge status={client.status} />
+      </td>
+    </tr>
   )
 }
 

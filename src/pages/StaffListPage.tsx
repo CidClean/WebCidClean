@@ -1,5 +1,5 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { createStaff, listStaff } from '../api/staff'
 import type { Staff, StaffType } from '../types/models'
 import { STAFF_TYPES } from '../types/models'
@@ -8,11 +8,13 @@ import { Field, Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 import { StatusBadge } from '../components/ui/StatusBadge'
 import { ArchivedSection } from '../components/ui/ArchivedSection'
+import { ListToolbar } from '../components/ui/ListToolbar'
 
 export function StaffListPage() {
   const [staff, setStaff] = useState<Staff[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [search, setSearch] = useState('')
 
   function refresh() {
     setLoading(true)
@@ -23,15 +25,21 @@ export function StaffListPage() {
 
   useEffect(refresh, [])
 
-  const activeStaff = staff.filter((s) => s.status !== 'archived')
-  const archivedStaff = staff.filter((s) => s.status === 'archived')
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return staff
+    return staff.filter((s) => `${s.first_name} ${s.last_name} ${s.type}`.toLowerCase().includes(q))
+  }, [staff, search])
+
+  const activeStaff = filtered.filter((s) => s.status !== 'archived')
+  const archivedStaff = filtered.filter((s) => s.status === 'archived')
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Staff</h1>
+      <ListToolbar title="Staff" count={staff.length}>
+        <Input placeholder="Search staff..." value={search} onChange={(e) => setSearch(e.target.value)} />
         <Button onClick={() => setShowForm((v) => !v)}>{showForm ? 'Cancel' : 'New Staff'}</Button>
-      </div>
+      </ListToolbar>
 
       {showForm && (
         <NewStaffForm
@@ -46,16 +54,35 @@ export function StaffListPage() {
         <p className="text-sm text-gray-500">Loading...</p>
       ) : (
         <>
-          <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
-            {activeStaff.length === 0 && <p className="p-4 text-sm text-gray-500">No staff yet.</p>}
-            {activeStaff.map((s) => (
-              <StaffRow key={s.id} staff={s} />
-            ))}
+          <div className="bg-white rounded border border-gray-200 overflow-x-auto">
+            {activeStaff.length === 0 ? (
+              <p className="p-4 text-sm text-gray-500">No staff match.</p>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs uppercase tracking-wide text-gray-400 border-b border-gray-200">
+                    <th className="px-4 py-2 font-medium">Name</th>
+                    <th className="px-4 py-2 font-medium">Type</th>
+                    <th className="px-4 py-2 font-medium">Contact</th>
+                    <th className="px-4 py-2 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {activeStaff.map((s) => (
+                    <StaffRow key={s.id} staff={s} />
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
           <ArchivedSection count={archivedStaff.length}>
-            {archivedStaff.map((s) => (
-              <StaffRow key={s.id} staff={s} />
-            ))}
+            <table className="w-full text-sm">
+              <tbody className="divide-y divide-gray-100">
+                {archivedStaff.map((s) => (
+                  <StaffRow key={s.id} staff={s} />
+                ))}
+              </tbody>
+            </table>
           </ArchivedSection>
         </>
       )}
@@ -64,16 +91,18 @@ export function StaffListPage() {
 }
 
 function StaffRow({ staff: s }: { staff: Staff }) {
+  const navigate = useNavigate()
   return (
-    <Link key={s.id} to={`/staff/${s.id}`} className="flex items-center justify-between p-4 hover:bg-gray-50">
-      <span className="font-medium text-gray-900">
+    <tr onClick={() => navigate(`/staff/${s.id}`)} className="cursor-pointer hover:bg-gray-50">
+      <td className="px-4 py-3 font-medium text-gray-900">
         {s.first_name} {s.last_name}
-      </span>
-      <div className="flex items-center gap-3">
-        <span className="text-sm text-gray-500 capitalize">{s.type}</span>
+      </td>
+      <td className="px-4 py-3 text-gray-500 capitalize">{s.type}</td>
+      <td className="px-4 py-3 text-gray-500">{s.email || s.phone || '—'}</td>
+      <td className="px-4 py-3">
         <StatusBadge status={s.status} />
-      </div>
-    </Link>
+      </td>
+    </tr>
   )
 }
 

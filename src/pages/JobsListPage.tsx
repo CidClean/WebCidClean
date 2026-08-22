@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { listAllJobSites, type SchedulableJobSite } from '../api/jobSites'
 import { JOB_SITE_STATUSES } from '../types/models'
 import { Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 import { StatusBadge } from '../components/ui/StatusBadge'
 import { ArchivedSection } from '../components/ui/ArchivedSection'
+import { ListToolbar } from '../components/ui/ListToolbar'
 
 const FILTERABLE_STATUSES = JOB_SITE_STATUSES.filter((s) => s !== 'archived')
 
@@ -52,17 +53,13 @@ export function JobsListPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-gray-900">Jobs</h1>
-
-      <div className="flex flex-wrap gap-3 items-end">
-        <div className="flex-1 min-w-[200px]">
-          <Input
-            placeholder="Search by job name, address, or client..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <div className="w-48">
+      <ListToolbar title="Job Sites" count={jobSites.length}>
+        <Input
+          placeholder="Search by job name, address, or client..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <div className="w-44">
           <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}>
             <option value="all">All statuses</option>
             {FILTERABLE_STATUSES.map((s) => (
@@ -72,26 +69,42 @@ export function JobsListPage() {
             ))}
           </Select>
         </div>
-      </div>
+      </ListToolbar>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
       {loading ? (
         <p className="text-sm text-gray-500">Loading...</p>
       ) : (
         <>
-          {filtered.length === 0 ? (
-            <p className="text-sm text-gray-500">No job sites match.</p>
-          ) : (
-            <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
-              {filtered.map((js) => (
-                <JobRow key={js.id} jobSite={js} />
-              ))}
-            </div>
-          )}
+          <div className="bg-white rounded border border-gray-200 overflow-x-auto">
+            {filtered.length === 0 ? (
+              <p className="p-4 text-sm text-gray-500">No job sites match.</p>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs uppercase tracking-wide text-gray-400 border-b border-gray-200">
+                    <th className="px-4 py-2 font-medium">Job Site</th>
+                    <th className="px-4 py-2 font-medium">Client</th>
+                    <th className="px-4 py-2 font-medium">Frequency</th>
+                    <th className="px-4 py-2 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filtered.map((js) => (
+                    <JobRow key={js.id} jobSite={js} />
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
           <ArchivedSection count={archived.length}>
-            {archived.map((js) => (
-              <JobRow key={js.id} jobSite={js} />
-            ))}
+            <table className="w-full text-sm">
+              <tbody className="divide-y divide-gray-100">
+                {archived.map((js) => (
+                  <JobRow key={js.id} jobSite={js} />
+                ))}
+              </tbody>
+            </table>
           </ArchivedSection>
         </>
       )}
@@ -100,21 +113,18 @@ export function JobsListPage() {
 }
 
 function JobRow({ jobSite: js }: { jobSite: SchedulableJobSite }) {
+  const navigate = useNavigate()
   return (
-    <Link
-      to={`/clients/${js.client_id}/job-sites/${js.id}`}
-      className="flex items-center justify-between p-4 hover:bg-gray-50"
-    >
-      <div>
+    <tr onClick={() => navigate(`/clients/${js.client_id}/job-sites/${js.id}`)} className="cursor-pointer hover:bg-gray-50">
+      <td className="px-4 py-3">
         <div className="font-medium text-gray-900">{js.name}</div>
-        <div className="text-sm text-gray-500">
-          {clientLabel(js.clients)} — {js.address}
-        </div>
-      </div>
-      <div className="flex items-center gap-3">
-        <span className="text-sm text-gray-500 capitalize">{js.frequency.replace('_', ' ')}</span>
+        <div className="text-sm text-gray-500">{js.address}</div>
+      </td>
+      <td className="px-4 py-3 text-gray-500">{clientLabel(js.clients)}</td>
+      <td className="px-4 py-3 text-gray-500 capitalize">{js.frequency.replace('_', ' ')}</td>
+      <td className="px-4 py-3">
         <StatusBadge status={js.status} />
-      </div>
-    </Link>
+      </td>
+    </tr>
   )
 }

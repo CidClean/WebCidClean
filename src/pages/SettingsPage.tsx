@@ -29,33 +29,37 @@ export function SettingsPage() {
     <div className="space-y-6">
       <h1 className="text-xl font-semibold text-gray-900">Settings</h1>
 
-      <div className="border-b border-gray-200 flex gap-4">
-        {(
-          [
-            ['catalog', 'Services & Add-ons'],
-            ['discounts', 'Discounts'],
-            ['expense-categories', 'Expense Categories'],
-            ['tax', 'Tax Rate'],
-            ['security', 'Security'],
-          ] as [Tab, string][]
-        ).map(([value, label]) => (
-          <button
-            key={value}
-            onClick={() => setTab(value)}
-            className={`pb-2 text-sm font-medium border-b-2 -mb-px ${
-              tab === value ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <div className="flex flex-col sm:flex-row gap-6">
+        <nav className="flex flex-row sm:flex-col gap-1 sm:w-48 shrink-0 overflow-x-auto">
+          {(
+            [
+              ['catalog', 'Services & Add-ons'],
+              ['discounts', 'Discounts'],
+              ['expense-categories', 'Expense Categories'],
+              ['tax', 'Tax Rate'],
+              ['security', 'Security'],
+            ] as [Tab, string][]
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              onClick={() => setTab(value)}
+              className={`text-left px-3 py-1.5 rounded text-sm font-medium whitespace-nowrap ${
+                tab === value ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
 
-      {tab === 'catalog' && <CatalogTab />}
-      {tab === 'discounts' && <DiscountsTab />}
-      {tab === 'expense-categories' && <ExpenseCategoriesTab />}
-      {tab === 'tax' && <TaxRateTab />}
-      {tab === 'security' && <SecurityTab />}
+        <div className="flex-1 min-w-0">
+          {tab === 'catalog' && <CatalogTab />}
+          {tab === 'discounts' && <DiscountsTab />}
+          {tab === 'expense-categories' && <ExpenseCategoriesTab />}
+          {tab === 'tax' && <TaxRateTab />}
+          {tab === 'security' && <SecurityTab />}
+        </div>
+      </div>
     </div>
   )
 }

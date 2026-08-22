@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { listAllInvoices, type InvoiceWithJobSite } from '../api/invoices'
 import { INVOICE_STATUSES } from '../types/models'
 import { Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 import { StatusBadge } from '../components/ui/StatusBadge'
+import { ListToolbar } from '../components/ui/ListToolbar'
 
 function clientLabel(jobSites: InvoiceWithJobSite['job_sites']): string {
   const c = jobSites?.clients
@@ -38,17 +39,13 @@ export function InvoicesListPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-gray-900">Invoices</h1>
-
-      <div className="flex flex-wrap gap-3 items-end">
-        <div className="flex-1 min-w-[200px]">
-          <Input
-            placeholder="Search by job site or client..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <div className="w-48">
+      <ListToolbar title="Invoices" count={invoices.length}>
+        <Input
+          placeholder="Search by job site or client..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <div className="w-44">
           <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}>
             <option value="all">All statuses</option>
             {INVOICE_STATUSES.map((s) => (
@@ -58,7 +55,7 @@ export function InvoicesListPage() {
             ))}
           </Select>
         </div>
-      </div>
+      </ListToolbar>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
       {loading ? (
@@ -66,31 +63,45 @@ export function InvoicesListPage() {
       ) : filtered.length === 0 ? (
         <p className="text-sm text-gray-500">No invoices match. Generate one from a job site's Invoices tab.</p>
       ) : (
-        <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
-          {filtered.map((inv) => (
-            <Link
-              key={inv.id}
-              to={
-                inv.job_sites
-                  ? `/clients/${inv.job_sites.client_id}/job-sites/${inv.job_sites.id}/invoice/${inv.id}`
-                  : '#'
-              }
-              className="flex items-center justify-between p-4 hover:bg-gray-50"
-            >
-              <div>
-                <div className="font-medium text-gray-900">{inv.job_sites?.name ?? 'Unknown job site'}</div>
-                <div className="text-sm text-gray-500">
-                  {clientLabel(inv.job_sites)} — {inv.period_start} to {inv.period_end}
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-700">${inv.amount.toFixed(2)}</span>
-                <StatusBadge status={inv.status} />
-              </div>
-            </Link>
-          ))}
+        <div className="bg-white rounded border border-gray-200 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs uppercase tracking-wide text-gray-400 border-b border-gray-200">
+                <th className="px-4 py-2 font-medium">Job Site</th>
+                <th className="px-4 py-2 font-medium">Client</th>
+                <th className="px-4 py-2 font-medium">Period</th>
+                <th className="px-4 py-2 font-medium">Amount</th>
+                <th className="px-4 py-2 font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filtered.map((inv) => (
+                <InvoiceRow key={inv.id} invoice={inv} />
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
+  )
+}
+
+function InvoiceRow({ invoice: inv }: { invoice: InvoiceWithJobSite }) {
+  const navigate = useNavigate()
+  const to = inv.job_sites
+    ? `/clients/${inv.job_sites.client_id}/job-sites/${inv.job_sites.id}/invoice/${inv.id}`
+    : null
+  return (
+    <tr onClick={() => to && navigate(to)} className={to ? 'cursor-pointer hover:bg-gray-50' : ''}>
+      <td className="px-4 py-3 font-medium text-gray-900">{inv.job_sites?.name ?? 'Unknown job site'}</td>
+      <td className="px-4 py-3 text-gray-500">{clientLabel(inv.job_sites)}</td>
+      <td className="px-4 py-3 text-gray-500">
+        {inv.period_start} to {inv.period_end}
+      </td>
+      <td className="px-4 py-3 text-gray-700">${inv.amount.toFixed(2)}</td>
+      <td className="px-4 py-3">
+        <StatusBadge status={inv.status} />
+      </td>
+    </tr>
   )
 }

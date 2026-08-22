@@ -13,6 +13,7 @@ import type { ExpenseCategory } from '../types/models'
 import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
+import { StatCard } from '../components/ui/StatCard'
 
 function toDateOnly(d: Date): string {
   return d.toISOString().slice(0, 10)
@@ -110,10 +111,12 @@ export function AccountingPage() {
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      <section className="bg-white rounded border border-gray-200 p-4 flex items-center justify-between">
-        <span className="text-sm font-semibold text-gray-700">Net Profit (all accounts − general expenses)</span>
-        <span className="text-lg font-semibold text-gray-900">${netProfit.toFixed(2)}</span>
-      </section>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <StatCard label="Revenue" value={`$${totals.service.toFixed(2)}`} />
+        <StatCard label="Staff + Job Cost" value={`$${(totals.staffCost + totals.jobExpenses).toFixed(2)}`} />
+        <StatCard label="General Expenses" value={`$${generalTotal.toFixed(2)}`} />
+        <StatCard label="Net Profit" value={`$${netProfit.toFixed(2)}`} warn={netProfit < 0} />
+      </div>
 
       <div className="border-b border-gray-200 flex gap-4">
         {(
