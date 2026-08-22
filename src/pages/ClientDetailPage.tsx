@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { BackLink } from '../components/ui/BackLink'
 import { archiveClient, getClient, markClientContacted, markClientInProcess, updateClient } from '../api/clients'
 import { listJobSitesForClient } from '../api/jobSites'
 import { invitePortalUser } from '../api/portal'
@@ -68,9 +69,7 @@ export function ClientDetailPage() {
   return (
     <div className="space-y-6">
       <div>
-        <Link to="/clients" className="text-sm text-blue-600 hover:underline">
-          &larr; Back to clients
-        </Link>
+        <BackLink to="/clients" label="Back to clients" />
       </div>
 
       <div className="flex items-start justify-between">

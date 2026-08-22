@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { BackLink } from '../components/ui/BackLink'
 import { getStaffMember, listAssignmentsForStaff, updateStaff, type JobStaffAssignmentWithJobSite } from '../api/staff'
 import { listWorkLogsForStaff, type StaffWorkLogEntry } from '../api/workLogs'
 import { invitePortalUser } from '../api/portal'
@@ -42,9 +43,7 @@ export function StaffDetailPage() {
   return (
     <div className="space-y-6">
       <div>
-        <Link to="/staff" className="text-sm text-blue-600 hover:underline">
-          &larr; Back to staff
-        </Link>
+        <BackLink to="/staff" label="Back to staff" />
       </div>
       <div className="flex items-start justify-between">
         <div>

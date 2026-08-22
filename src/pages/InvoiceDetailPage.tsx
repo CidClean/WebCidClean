@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
+import { BackLink } from '../components/ui/BackLink'
 import { getClient } from '../api/clients'
 import { getJobSite } from '../api/jobSites'
 import { getAppSettings, listCatalogItems, listDiscounts } from '../api/settings'
@@ -120,9 +121,7 @@ export function InvoiceDetailPage() {
     return (
       <div className="space-y-6">
         <div>
-          <Link to={`/clients/${clientId}/job-sites/${jobSiteId}`} className="text-sm text-blue-600 hover:underline">
-            &larr; Back to job site
-          </Link>
+          <BackLink to={`/clients/${clientId}/job-sites/${jobSiteId}`} label="Back to job site" />
         </div>
         <h1 className="text-xl font-semibold text-gray-900">New Invoice — {jobSite.name}</h1>
         <form onSubmit={handleCreate} className="bg-white rounded border border-gray-200 p-4 space-y-3 max-w-md">
@@ -238,9 +237,7 @@ export function InvoiceDetailPage() {
   return (
     <div className="space-y-6">
       <div>
-        <Link to={`/clients/${clientId}/job-sites/${jobSiteId}`} className="text-sm text-blue-600 hover:underline">
-          &larr; Back to job site
-        </Link>
+        <BackLink to={`/clients/${clientId}/job-sites/${jobSiteId}`} label="Back to job site" />
       </div>
 
       <div className="flex items-center justify-between">

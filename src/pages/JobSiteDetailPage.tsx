@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { BackLink } from '../components/ui/BackLink'
 import { getClientBillingInfo, listClientDocuments } from '../api/clients'
 import { activateJob, getJobSite, updateJobSite } from '../api/jobSites'
 import { getJobSiteClosingSummary, type JobSiteClosingSummary } from '../api/accounting'
@@ -91,9 +92,7 @@ export function JobSiteDetailPage() {
   return (
     <div className="space-y-6">
       <div>
-        <Link to={`/clients/${clientId}`} className="text-sm text-blue-600 hover:underline">
-          &larr; Back to client
-        </Link>
+        <BackLink to={`/clients/${clientId}`} label="Back to client" />
       </div>
 
       <div className="flex items-start justify-between">
