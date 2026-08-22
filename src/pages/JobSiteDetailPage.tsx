@@ -2,11 +2,12 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getClientBillingInfo, listClientDocuments } from '../api/clients'
 import { activateJob, getJobSite, updateJobSite } from '../api/jobSites'
-import { getJobSiteClosingSummary } from '../api/accounting'
+import { getJobSiteClosingSummary, type JobSiteClosingSummary } from '../api/accounting'
+import { todayDateOnly } from '../lib/accrual'
 import { listAreasForJobSite } from '../api/areas'
 import { listQuotesForJobSite } from '../api/quotes'
 import { listInvoicesForJobSite } from '../api/invoices'
-import { assignStaffToJob, listAssignmentsForJobSite, removeAssignment } from '../api/staff'
+import { assignStaffToJob, endStaffAssignment, listAssignmentsForJobSite } from '../api/staff'
 import type { JobStaffAssignmentWithStaff } from '../api/staff'
 import { floorToCents } from '../lib/money'
 import {
@@ -22,6 +23,7 @@ import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 import { StatusBadge } from '../components/ui/StatusBadge'
+import { ArchivedSection } from '../components/ui/ArchivedSection'
 import { AreaForm } from '../components/areas/AreaForm'
 import { AreaCard } from '../components/areas/AreaCard'
 import { AssignStaffForm } from '../components/staff/AssignStaffForm'
@@ -35,6 +37,9 @@ export function JobSiteDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [tab, setTab] = useState<Tab>('info')
+  const [pendingStatus, setPendingStatus] = useState<'paused' | 'archived' | null>(null)
+  const [pendingEndDate, setPendingEndDate] = useState(todayDateOnly())
+  const [closingSummary, setClosingSummary] = useState<JobSiteClosingSummary | null>(null)
 
   function refresh() {
     if (!jobSiteId) return
@@ -45,32 +50,38 @@ export function JobSiteDetailPage() {
 
   useEffect(refresh, [jobSiteId])
 
-  async function runStatusAction(status: JobSite['status']) {
-    if (!jobSiteId) return
+  function startStatusAction(status: 'paused' | 'archived') {
+    setActionError(null)
+    setPendingStatus(status)
+    setPendingEndDate(todayDateOnly())
+    setClosingSummary(null)
+    if (jobSiteId) {
+      getJobSiteClosingSummary(jobSiteId)
+        .then(setClosingSummary)
+        .catch((err) => setActionError(err instanceof Error ? err.message : 'Failed to load closing summary'))
+    }
+  }
+
+  async function confirmStatusAction() {
+    if (!jobSiteId || !pendingStatus) return
     setActionError(null)
     try {
-      await updateJobSite(jobSiteId, { status })
+      await updateJobSite(jobSiteId, { status: pendingStatus, end_date: pendingEndDate || null })
+      setPendingStatus(null)
       refresh()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Action failed')
     }
   }
 
-  async function handleArchive() {
+  async function handleReactivate() {
     if (!jobSiteId) return
     setActionError(null)
     try {
-      const summary = await getJobSiteClosingSummary(jobSiteId)
-      const confirmed = confirm(
-        `Closing summary for this job site (to date):\n\n` +
-          `Staff payments accrued: $${summary.staffCostToDate.toFixed(2)}\n` +
-          `Expenses logged: $${summary.expensesToDate.toFixed(2)}\n\n` +
-          `Make sure these are settled before archiving. Archive this job site?`,
-      )
-      if (!confirmed) return
-      await runStatusAction('archived')
+      await updateJobSite(jobSiteId, { status: 'active', end_date: null })
+      refresh()
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Failed to prepare closing summary')
+      setActionError(err instanceof Error ? err.message : 'Action failed')
     }
   }
 
@@ -95,23 +106,52 @@ export function JobSiteDetailPage() {
         </div>
         <div className="flex gap-2">
           {(jobSite.status === 'active' || jobSite.status === 'approved') && (
-            <Button variant="secondary" onClick={() => runStatusAction('paused')}>
+            <Button variant="secondary" onClick={() => startStatusAction('paused')}>
               Pause
             </Button>
           )}
           {(jobSite.status === 'paused' || jobSite.status === 'archived') && (
-            <Button variant="secondary" onClick={() => runStatusAction('active')}>
+            <Button variant="secondary" onClick={handleReactivate}>
               Reactivate
             </Button>
           )}
           {jobSite.status !== 'archived' && (
-            <Button variant="danger" onClick={handleArchive}>
+            <Button variant="danger" onClick={() => startStatusAction('archived')}>
               Archive
             </Button>
           )}
         </div>
       </div>
       {actionError && <p className="text-sm text-red-600">{actionError}</p>}
+
+      {pendingStatus && (
+        <div className="bg-white rounded border border-gray-200 p-4 space-y-3 max-w-md">
+          <p className="text-sm font-medium text-gray-900">
+            {pendingStatus === 'archived' ? 'Archive' : 'Pause'} this job site
+          </p>
+          <Field label="Last Active Day">
+            <Input type="date" value={pendingEndDate} onChange={(e) => setPendingEndDate(e.target.value)} />
+          </Field>
+          <p className="text-xs text-gray-500">
+            Days on or before this date still count toward staff pay and accounting — this only stops the schedule
+            going forward. Editable later from the Info tab if it turns out to be wrong.
+          </p>
+          {closingSummary && (
+            <p className="text-xs text-gray-500">
+              Accrued to date: staff ${closingSummary.staffCostToDate.toFixed(2)}, expenses $
+              {closingSummary.expensesToDate.toFixed(2)}.
+            </p>
+          )}
+          <div className="flex gap-2">
+            <Button variant={pendingStatus === 'archived' ? 'danger' : 'secondary'} onClick={confirmStatusAction}>
+              Confirm {pendingStatus === 'archived' ? 'Archive' : 'Pause'}
+            </Button>
+            <Button variant="secondary" onClick={() => setPendingStatus(null)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="border-b border-gray-200 flex gap-4">
         {(
@@ -215,6 +255,12 @@ function InfoTab({ jobSite, onUpdated }: { jobSite: JobSite; onUpdated: () => vo
               <dt className="text-gray-500">Start Date</dt>
               <dd className="text-gray-900">{jobSite.start_date || '—'}</dd>
             </div>
+            {(jobSite.status === 'paused' || jobSite.status === 'archived') && (
+              <div>
+                <dt className="text-gray-500">Last Active Day</dt>
+                <dd className="text-gray-900">{jobSite.end_date || '—'}</dd>
+              </div>
+            )}
             {jobSite.service_amount !== null && (
               <div>
                 <dt className="text-gray-500">Service Amount</dt>
@@ -434,10 +480,10 @@ function StaffAssignmentsSection({ jobSite, onUpdated }: { jobSite: JobSite; onU
     onUpdated()
   }
 
-  async function handleRemove(assignment: JobStaffAssignmentWithStaff) {
-    await removeAssignment(assignment.id)
+  async function handleEnd(assignment: JobStaffAssignmentWithStaff, endDate: string) {
+    await endStaffAssignment(assignment.id, endDate)
     const remainingMonthly = assignments.filter(
-      (a) => a.id !== assignment.id && (a.payment_type as PaymentType) === 'monthly',
+      (a) => a.id !== assignment.id && !a.end_date && (a.payment_type as PaymentType) === 'monthly',
     )
     if (jobSite.staff_payment_amount !== null && remainingMonthly.length > 0) {
       const evenShare = floorToCents(jobSite.staff_payment_amount / remainingMonthly.length)
@@ -450,6 +496,9 @@ function StaffAssignmentsSection({ jobSite, onUpdated }: { jobSite: JobSite; onU
     refreshAll()
   }
 
+  const activeAssignments = assignments.filter((a) => !a.end_date)
+  const endedAssignments = assignments.filter((a) => a.end_date)
+
   return (
     <div className="space-y-6">
       <Section title="Staff Payment Budget">
@@ -457,17 +506,26 @@ function StaffAssignmentsSection({ jobSite, onUpdated }: { jobSite: JobSite; onU
       </Section>
 
       <Section title="Assignments">
-        <AssignStaffForm jobSite={jobSite} existingAssignments={assignments} onAssigned={refreshAll} />
+        <AssignStaffForm jobSite={jobSite} existingAssignments={activeAssignments} onAssigned={refreshAll} />
         {loading ? (
           <p className="text-sm text-gray-500">Loading...</p>
-        ) : assignments.length === 0 ? (
-          <p className="text-sm text-gray-500">No staff assigned yet.</p>
         ) : (
-          <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
-            {assignments.map((a) => (
-              <AssignmentRow key={a.id} assignment={a} onChanged={refreshAll} onRemove={() => handleRemove(a)} />
-            ))}
-          </div>
+          <>
+            {activeAssignments.length === 0 ? (
+              <p className="text-sm text-gray-500">No staff assigned yet.</p>
+            ) : (
+              <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
+                {activeAssignments.map((a) => (
+                  <AssignmentRow key={a.id} assignment={a} onChanged={refreshAll} onEnd={(endDate) => handleEnd(a, endDate)} />
+                ))}
+              </div>
+            )}
+            <ArchivedSection count={endedAssignments.length} label="Ended">
+              {endedAssignments.map((a) => (
+                <AssignmentRow key={a.id} assignment={a} onChanged={refreshAll} onEnd={() => {}} />
+              ))}
+            </ArchivedSection>
+          </>
         )}
       </Section>
     </div>
@@ -508,13 +566,15 @@ function StaffPaymentBudgetEditor({ jobSite, onUpdated }: { jobSite: JobSite; on
 function AssignmentRow({
   assignment,
   onChanged,
-  onRemove,
+  onEnd,
 }: {
   assignment: JobStaffAssignmentWithStaff
   onChanged: () => void
-  onRemove: () => void
+  onEnd: (endDate: string) => void
 }) {
   const [editing, setEditing] = useState(false)
+  const [ending, setEnding] = useState(false)
+  const [endDate, setEndDate] = useState(todayDateOnly())
   const [amount, setAmount] = useState(String(assignment.payment_amount))
   const [paymentType, setPaymentType] = useState<PaymentType>(assignment.payment_type as PaymentType)
   const [startDate, setStartDate] = useState(assignment.start_date)
@@ -536,6 +596,7 @@ function AssignmentRow({
   }
 
   const suffix = { monthly: '/mo', per_day: '/day', per_hour: '/hr' }[assignment.payment_type as PaymentType]
+  const isEnded = !!assignment.end_date
 
   return (
     <div className="p-3">
@@ -544,7 +605,28 @@ function AssignmentRow({
           {assignment.staff?.first_name} {assignment.staff?.last_name} ({assignment.staff?.type})
         </span>
         <div className="flex items-center gap-3">
-          {editing ? (
+          {isEnded ? (
+            <span className="text-sm text-gray-500">
+              ${assignment.payment_amount}
+              {suffix} <span className="text-gray-400">{assignment.start_date} – {assignment.end_date}</span>
+            </span>
+          ) : ending ? (
+            <>
+              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-36" />
+              <button
+                onClick={() => {
+                  onEnd(endDate)
+                  setEnding(false)
+                }}
+                className="text-xs text-red-600 hover:underline"
+              >
+                Confirm End
+              </button>
+              <button onClick={() => setEnding(false)} className="text-xs text-gray-500 hover:underline">
+                Cancel
+              </button>
+            </>
+          ) : editing ? (
             <>
               <Select
                 value={paymentType}
@@ -582,8 +664,14 @@ function AssignmentRow({
               <button onClick={() => setEditing(true)} className="text-xs text-blue-600 hover:underline">
                 Edit
               </button>
-              <button onClick={onRemove} className="text-xs text-red-600 hover:underline">
-                Remove
+              <button
+                onClick={() => {
+                  setEndDate(todayDateOnly())
+                  setEnding(true)
+                }}
+                className="text-xs text-red-600 hover:underline"
+              >
+                End
               </button>
             </>
           )}

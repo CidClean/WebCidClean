@@ -20,11 +20,16 @@ export async function listJobAccounting(from: string, to: string): Promise<Accou
     supabase
       .from('job_sites')
       .select(
-        'id, name, service_amount, client_id, status, frequency, frequency_days, start_date, estimated_duration_minutes, clients(first_name, last_name, company)',
+        'id, name, service_amount, client_id, status, end_date, frequency, frequency_days, start_date, estimated_duration_minutes, clients(first_name, last_name, company)',
       )
-      .in('status', ['active', 'paused'])
+      // Includes archived/paused too — a job that closed mid-range should
+      // still show whatever it accrued before its end_date, not vanish from
+      // the period's report entirely.
+      .neq('status', 'new')
+      .neq('status', 'pending')
+      .neq('status', 'approved')
       .order('name', { ascending: true }),
-    supabase.from('job_staff_assignments').select('job_site_id, staff_id, payment_amount, payment_type, start_date'),
+    supabase.from('job_staff_assignments').select('job_site_id, staff_id, payment_amount, payment_type, start_date, end_date'),
     supabase.from('work_logs').select('job_site_id, staff_id, work_date, excluded').gte('work_date', from).lte('work_date', to),
     supabase
       .from('expenses')
@@ -92,9 +97,10 @@ export interface JobSiteClosingSummary {
 
 /**
  * What's accrued/logged for a job site over its whole lifetime (start_date
- * through today), regardless of its current status — used to show the admin
- * what's outstanding before they archive it, so pausing beforehand doesn't
- * hide days that already accrued while it was active.
+ * through today) — used to show the admin what's outstanding before they
+ * archive it. Relies on computeOccurrences correctly stopping at the job's
+ * end_date rather than at "today", so a job already paused/archived earlier
+ * still reports the real total instead of freezing at zero.
  */
 export async function getJobSiteClosingSummary(jobSiteId: string): Promise<JobSiteClosingSummary> {
   const jobSite = await getJobSite(jobSiteId)
@@ -110,7 +116,8 @@ export async function getJobSiteClosingSummary(jobSiteId: string): Promise<JobSi
 
   const accrualJobSite: AccrualJobSite = {
     id: jobSite.id,
-    status: 'active',
+    status: jobSite.status,
+    end_date: jobSite.end_date,
     frequency: jobSite.frequency,
     frequency_days: jobSite.frequency_days,
     start_date: jobSite.start_date,
@@ -122,6 +129,7 @@ export async function getJobSiteClosingSummary(jobSiteId: string): Promise<JobSi
     payment_amount: a.payment_amount,
     payment_type: a.payment_type as AssignmentForAccrual['payment_type'],
     start_date: a.start_date,
+    end_date: a.end_date,
   }))
 
   const entries = computeAccrual([accrualJobSite], accrualAssignments, overridesRes.data as WorkLogOverride[], from, today)

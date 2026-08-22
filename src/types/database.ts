@@ -679,6 +679,7 @@ export type Database = {
           contact_phone: string | null
           contact_role: string | null
           created_at: string
+          end_date: string | null
           estimated_duration_minutes: number
           frequency: Database["public"]["Enums"]["frequency_type"]
           frequency_days: Database["public"]["Enums"]["weekday"][] | null
@@ -701,6 +702,7 @@ export type Database = {
           contact_phone?: string | null
           contact_role?: string | null
           created_at?: string
+          end_date?: string | null
           estimated_duration_minutes?: number
           frequency: Database["public"]["Enums"]["frequency_type"]
           frequency_days?: Database["public"]["Enums"]["weekday"][] | null
@@ -723,6 +725,7 @@ export type Database = {
           contact_phone?: string | null
           contact_role?: string | null
           created_at?: string
+          end_date?: string | null
           estimated_duration_minutes?: number
           frequency?: Database["public"]["Enums"]["frequency_type"]
           frequency_days?: Database["public"]["Enums"]["weekday"][] | null
@@ -750,6 +753,7 @@ export type Database = {
       job_staff_assignments: {
         Row: {
           created_at: string
+          end_date: string | null
           id: string
           job_site_id: string
           payment_amount: number
@@ -759,6 +763,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          end_date?: string | null
           id?: string
           job_site_id: string
           payment_amount: number
@@ -768,6 +773,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          end_date?: string | null
           id?: string
           job_site_id?: string
           payment_amount?: number
@@ -3840,6 +3846,7 @@ export type Database = {
       }
       assign_staff_to_job: {
         Args: {
+          p_end_date?: string
           p_job_site_id: string
           p_payment_amount: number
           p_payment_type?: string

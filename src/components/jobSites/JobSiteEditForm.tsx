@@ -17,6 +17,7 @@ export function JobSiteEditForm({ jobSite, onSaved, onCancel }: { jobSite: JobSi
   const [startTime, setStartTime] = useState(jobSite.preferred_start_time)
   const [endTime, setEndTime] = useState(jobSite.preferred_end_time ?? '')
   const [startDate, setStartDate] = useState(jobSite.start_date ?? '')
+  const [endDate, setEndDate] = useState(jobSite.end_date ?? '')
   const [estimatedDuration, setEstimatedDuration] = useState(String(jobSite.estimated_duration_minutes))
   const [notes, setNotes] = useState(jobSite.notes ?? '')
   const [submitting, setSubmitting] = useState(false)
@@ -39,6 +40,7 @@ export function JobSiteEditForm({ jobSite, onSaved, onCancel }: { jobSite: JobSi
         preferred_start_time: startTime,
         preferred_end_time: endTime || null,
         start_date: startDate,
+        end_date: jobSite.status === 'paused' || jobSite.status === 'archived' ? endDate || null : jobSite.end_date,
         estimated_duration_minutes: Number(estimatedDuration) || 60,
         notes: notes || null,
       })
@@ -94,11 +96,18 @@ export function JobSiteEditForm({ jobSite, onSaved, onCancel }: { jobSite: JobSi
         <Field label="Start Date">
           <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
         </Field>
+        {(jobSite.status === 'paused' || jobSite.status === 'archived') && (
+          <Field label="Last Active Day">
+            <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+          </Field>
+        )}
       </div>
       <p className="text-xs text-gray-500 -mt-2">
         Estimated duration is how long the visit actually takes — used to check staff scheduling conflicts and (later)
         hourly pay. The preferred window above is just the client's requested time slot. Start date anchors the
         recurring schedule and staff pay only accrues for visits on or after it.
+        {(jobSite.status === 'paused' || jobSite.status === 'archived') &&
+          ' Last Active Day is the cutoff for schedule and pay — days on or before it still count.'}
       </p>
 
       <Field label="Notes">

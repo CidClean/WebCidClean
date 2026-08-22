@@ -56,8 +56,11 @@ export async function listWorkLogsForStaff(staffId: string, from: string, to: st
   ])
   if (overridesRes.error) throw overridesRes.error
 
+  // Includes archived job sites too — a job that closed mid-range should
+  // still show whatever this staff member accrued on it before its
+  // end_date, not vanish from their payment history entirely.
   const schedulable = assignments.filter(
-    (a) => a.job_sites && (a.job_sites.status === 'active' || a.job_sites.status === 'paused'),
+    (a) => a.job_sites && ['active', 'paused', 'archived'].includes(a.job_sites.status),
   )
   const jobSites = schedulable.map(
     (a) => a.job_sites as unknown as AccrualJobSite & { name: string; client_id: string },
@@ -70,6 +73,7 @@ export async function listWorkLogsForStaff(staffId: string, from: string, to: st
     payment_amount: a.payment_amount,
     payment_type: a.payment_type as AssignmentForAccrual['payment_type'],
     start_date: a.start_date,
+    end_date: a.end_date,
   }))
 
   const entries = computeAccrual(jobSites, accrualAssignments, overridesRes.data as WorkLogOverride[], from, to)

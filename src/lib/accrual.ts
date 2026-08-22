@@ -30,6 +30,7 @@ export interface AssignmentForAccrual {
   payment_amount: number
   payment_type: PaymentType
   start_date: string
+  end_date: string | null
 }
 
 /**
@@ -51,7 +52,13 @@ export function computeDailyRate(
   if (assignment.payment_type === 'per_day') return assignment.payment_amount
   if (assignment.payment_type === 'per_hour') return assignment.payment_amount * (jobSite.estimated_duration_minutes / 60)
   const [monthStart, monthEnd] = monthBounds(monthKey(date))
-  const daysInMonth = computeOccurrences(jobSite, monthStart, monthEnd).length
+  // ignoreEndCutoff: the rate basis is "how many days would a full month have
+  // had", not "how many happened before this job paused/archived" — that
+  // narrower count is what the caller's occurrence loop already handles for
+  // which days actually get paid. Keeping the denominator at the full-month
+  // count is what makes a partial month prorate instead of always paying out
+  // the whole monthly amount for however few days actually occurred.
+  const daysInMonth = computeOccurrences(jobSite, monthStart, monthEnd, { ignoreEndCutoff: true }).length
   return daysInMonth > 0 ? assignment.payment_amount / daysInMonth : 0
 }
 
@@ -85,7 +92,10 @@ export interface AccrualEntry {
  * this up in batches, often after the fact (e.g. recording today who's been
  * working a job since the 1st), so this date should reflect when the staff
  * member actually started, and can be backdated to retroactively fill in
- * already-elapsed scheduled days.
+ * already-elapsed scheduled days. Likewise, an assignment's end_date (set
+ * when someone stops working a job, e.g. replaced mid-month) only stops
+ * *future* accrual — days already worked up to and including end_date still
+ * count, so a mid-month staff change doesn't erase either person's history.
  */
 export function computeAccrual(
   jobSites: AccrualJobSite[],
@@ -120,6 +130,7 @@ export function computeAccrual(
       const defaultIncluded = date < today
       for (const a of jsAssignments) {
         if (date < a.start_date) continue
+        if (a.end_date && date > a.end_date) continue
         const override = overrideMap.get(`${js.id}|${a.staff_id}|${date}`)
         const included = override ? !override.excluded : defaultIncluded
         if (!included) continue
