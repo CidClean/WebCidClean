@@ -5,6 +5,9 @@ import { JOB_SITE_STATUSES } from '../types/models'
 import { Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 import { StatusBadge } from '../components/ui/StatusBadge'
+import { ArchivedSection } from '../components/ui/ArchivedSection'
+
+const FILTERABLE_STATUSES = JOB_SITE_STATUSES.filter((s) => s !== 'archived')
 
 function clientLabel(clients: SchedulableJobSite['clients']): string {
   if (!clients) return 'Unknown client'
@@ -25,15 +28,27 @@ export function JobsListPage() {
       .finally(() => setLoading(false))
   }, [])
 
+  const matchesSearch = (js: SchedulableJobSite, q: string) => {
+    if (!q) return true
+    const haystack = `${js.name} ${js.address} ${clientLabel(js.clients)}`.toLowerCase()
+    return haystack.includes(q)
+  }
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return jobSites.filter((js) => {
+      if (js.status === 'archived') return false
       if (statusFilter !== 'all' && js.status !== statusFilter) return false
-      if (!q) return true
-      const haystack = `${js.name} ${js.address} ${clientLabel(js.clients)}`.toLowerCase()
-      return haystack.includes(q)
+      return matchesSearch(js, q)
     })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobSites, search, statusFilter])
+
+  const archived = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return jobSites.filter((js) => js.status === 'archived' && matchesSearch(js, q))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobSites, search])
 
   return (
     <div className="space-y-6">
@@ -50,7 +65,7 @@ export function JobsListPage() {
         <div className="w-48">
           <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}>
             <option value="all">All statuses</option>
-            {JOB_SITE_STATUSES.map((s) => (
+            {FILTERABLE_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s.replace('_', ' ')}
               </option>
@@ -62,30 +77,44 @@ export function JobsListPage() {
       {error && <p className="text-sm text-red-600">{error}</p>}
       {loading ? (
         <p className="text-sm text-gray-500">Loading...</p>
-      ) : filtered.length === 0 ? (
-        <p className="text-sm text-gray-500">No job sites match.</p>
       ) : (
-        <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
-          {filtered.map((js) => (
-            <Link
-              key={js.id}
-              to={`/clients/${js.client_id}/job-sites/${js.id}`}
-              className="flex items-center justify-between p-4 hover:bg-gray-50"
-            >
-              <div>
-                <div className="font-medium text-gray-900">{js.name}</div>
-                <div className="text-sm text-gray-500">
-                  {clientLabel(js.clients)} — {js.address}
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-500 capitalize">{js.frequency.replace('_', ' ')}</span>
-                <StatusBadge status={js.status} />
-              </div>
-            </Link>
-          ))}
-        </div>
+        <>
+          {filtered.length === 0 ? (
+            <p className="text-sm text-gray-500">No job sites match.</p>
+          ) : (
+            <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
+              {filtered.map((js) => (
+                <JobRow key={js.id} jobSite={js} />
+              ))}
+            </div>
+          )}
+          <ArchivedSection count={archived.length}>
+            {archived.map((js) => (
+              <JobRow key={js.id} jobSite={js} />
+            ))}
+          </ArchivedSection>
+        </>
       )}
     </div>
+  )
+}
+
+function JobRow({ jobSite: js }: { jobSite: SchedulableJobSite }) {
+  return (
+    <Link
+      to={`/clients/${js.client_id}/job-sites/${js.id}`}
+      className="flex items-center justify-between p-4 hover:bg-gray-50"
+    >
+      <div>
+        <div className="font-medium text-gray-900">{js.name}</div>
+        <div className="text-sm text-gray-500">
+          {clientLabel(js.clients)} — {js.address}
+        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-gray-500 capitalize">{js.frequency.replace('_', ' ')}</span>
+        <StatusBadge status={js.status} />
+      </div>
+    </Link>
   )
 }

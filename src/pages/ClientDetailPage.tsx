@@ -7,6 +7,7 @@ import type { Client, JobSite } from '../types/models'
 import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
 import { StatusBadge } from '../components/ui/StatusBadge'
+import { ArchivedSection } from '../components/ui/ArchivedSection'
 import { BillingInfoForm } from '../components/clients/BillingInfoForm'
 import { DocumentUploadList } from '../components/clients/DocumentUploadList'
 import { JobSiteForm } from '../components/jobSites/JobSiteForm'
@@ -343,6 +344,8 @@ function JobSitesTab({ client }: { client: Client }) {
   // reached in_process the first time, adding more stays open regardless of
   // how far along any individual job site (or the client's overall status) is.
   const canAdd = !['prospect', 'contacted', 'archived'].includes(client.status)
+  const activeJobSites = jobSites.filter((js) => js.status !== 'archived')
+  const archivedJobSites = jobSites.filter((js) => js.status === 'archived')
 
   return (
     <div className="space-y-4">
@@ -368,23 +371,35 @@ function JobSitesTab({ client }: { client: Client }) {
       {loading ? (
         <p className="text-sm text-gray-500">Loading...</p>
       ) : (
-        <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
-          {jobSites.length === 0 && <p className="p-4 text-sm text-gray-500">No job sites yet.</p>}
-          {jobSites.map((js) => (
-            <Link
-              key={js.id}
-              to={`/clients/${client.id}/job-sites/${js.id}`}
-              className="flex items-center justify-between p-4 hover:bg-gray-50"
-            >
-              <div>
-                <div className="font-medium text-gray-900">{js.name}</div>
-                <div className="text-sm text-gray-500">{js.address}</div>
-              </div>
-              <StatusBadge status={js.status} />
-            </Link>
-          ))}
-        </div>
+        <>
+          <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
+            {activeJobSites.length === 0 && <p className="p-4 text-sm text-gray-500">No job sites yet.</p>}
+            {activeJobSites.map((js) => (
+              <JobSiteRow key={js.id} clientId={client.id} jobSite={js} />
+            ))}
+          </div>
+          <ArchivedSection count={archivedJobSites.length}>
+            {archivedJobSites.map((js) => (
+              <JobSiteRow key={js.id} clientId={client.id} jobSite={js} />
+            ))}
+          </ArchivedSection>
+        </>
       )}
     </div>
+  )
+}
+
+function JobSiteRow({ clientId, jobSite: js }: { clientId: string; jobSite: JobSite }) {
+  return (
+    <Link
+      to={`/clients/${clientId}/job-sites/${js.id}`}
+      className="flex items-center justify-between p-4 hover:bg-gray-50"
+    >
+      <div>
+        <div className="font-medium text-gray-900">{js.name}</div>
+        <div className="text-sm text-gray-500">{js.address}</div>
+      </div>
+      <StatusBadge status={js.status} />
+    </Link>
   )
 }

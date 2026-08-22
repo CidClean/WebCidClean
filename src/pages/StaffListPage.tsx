@@ -7,6 +7,7 @@ import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 import { StatusBadge } from '../components/ui/StatusBadge'
+import { ArchivedSection } from '../components/ui/ArchivedSection'
 
 export function StaffListPage() {
   const [staff, setStaff] = useState<Staff[]>([])
@@ -21,6 +22,9 @@ export function StaffListPage() {
   }
 
   useEffect(refresh, [])
+
+  const activeStaff = staff.filter((s) => s.status !== 'archived')
+  const archivedStaff = staff.filter((s) => s.status === 'archived')
 
   return (
     <div className="space-y-6">
@@ -41,22 +45,35 @@ export function StaffListPage() {
       {loading ? (
         <p className="text-sm text-gray-500">Loading...</p>
       ) : (
-        <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
-          {staff.length === 0 && <p className="p-4 text-sm text-gray-500">No staff yet.</p>}
-          {staff.map((s) => (
-            <Link key={s.id} to={`/staff/${s.id}`} className="flex items-center justify-between p-4 hover:bg-gray-50">
-              <span className="font-medium text-gray-900">
-                {s.first_name} {s.last_name}
-              </span>
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-500 capitalize">{s.type}</span>
-                <StatusBadge status={s.status} />
-              </div>
-            </Link>
-          ))}
-        </div>
+        <>
+          <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
+            {activeStaff.length === 0 && <p className="p-4 text-sm text-gray-500">No staff yet.</p>}
+            {activeStaff.map((s) => (
+              <StaffRow key={s.id} staff={s} />
+            ))}
+          </div>
+          <ArchivedSection count={archivedStaff.length}>
+            {archivedStaff.map((s) => (
+              <StaffRow key={s.id} staff={s} />
+            ))}
+          </ArchivedSection>
+        </>
       )}
     </div>
+  )
+}
+
+function StaffRow({ staff: s }: { staff: Staff }) {
+  return (
+    <Link key={s.id} to={`/staff/${s.id}`} className="flex items-center justify-between p-4 hover:bg-gray-50">
+      <span className="font-medium text-gray-900">
+        {s.first_name} {s.last_name}
+      </span>
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-gray-500 capitalize">{s.type}</span>
+        <StatusBadge status={s.status} />
+      </div>
+    </Link>
   )
 }
 

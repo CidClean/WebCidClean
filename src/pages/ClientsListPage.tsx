@@ -8,6 +8,7 @@ import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 import { StatusBadge } from '../components/ui/StatusBadge'
+import { ArchivedSection } from '../components/ui/ArchivedSection'
 
 export function ClientsListPage() {
   const [clients, setClients] = useState<Client[]>([])
@@ -24,6 +25,9 @@ export function ClientsListPage() {
   }
 
   useEffect(refresh, [])
+
+  const activeClients = clients.filter((c) => c.status !== 'archived')
+  const archivedClients = clients.filter((c) => c.status === 'archived')
 
   return (
     <div className="space-y-6">
@@ -45,27 +49,36 @@ export function ClientsListPage() {
       {loading ? (
         <p className="text-sm text-gray-500">Loading...</p>
       ) : (
-        <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
-          {clients.length === 0 && <p className="p-4 text-sm text-gray-500">No clients yet.</p>}
-          {clients.map((client) => (
-            <Link
-              key={client.id}
-              to={`/clients/${client.id}`}
-              className="flex items-center justify-between p-4 hover:bg-gray-50"
-            >
-              <div>
-                <div className="font-medium text-gray-900">
-                  {client.first_name} {client.last_name}
-                  {client.company ? ` — ${client.company}` : ''}
-                </div>
-                <div className="text-sm text-gray-500">{client.role}</div>
-              </div>
-              <StatusBadge status={client.status} />
-            </Link>
-          ))}
-        </div>
+        <>
+          <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
+            {activeClients.length === 0 && <p className="p-4 text-sm text-gray-500">No clients yet.</p>}
+            {activeClients.map((client) => (
+              <ClientRow key={client.id} client={client} />
+            ))}
+          </div>
+          <ArchivedSection count={archivedClients.length}>
+            {archivedClients.map((client) => (
+              <ClientRow key={client.id} client={client} />
+            ))}
+          </ArchivedSection>
+        </>
       )}
     </div>
+  )
+}
+
+function ClientRow({ client }: { client: Client }) {
+  return (
+    <Link to={`/clients/${client.id}`} className="flex items-center justify-between p-4 hover:bg-gray-50">
+      <div>
+        <div className="font-medium text-gray-900">
+          {client.first_name} {client.last_name}
+          {client.company ? ` — ${client.company}` : ''}
+        </div>
+        <div className="text-sm text-gray-500">{client.role}</div>
+      </div>
+      <StatusBadge status={client.status} />
+    </Link>
   )
 }
 
