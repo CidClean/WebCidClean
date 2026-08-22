@@ -8,6 +8,7 @@ import type { Client, JobSite } from '../types/models'
 import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
 import { StatusBadge } from '../components/ui/StatusBadge'
+import { SummaryCard } from '../components/ui/SummaryCard'
 import { ArchivedSection } from '../components/ui/ArchivedSection'
 import { BillingInfoForm } from '../components/clients/BillingInfoForm'
 import { DocumentUploadList } from '../components/clients/DocumentUploadList'
@@ -19,6 +20,8 @@ export function ClientDetailPage() {
   const { clientId } = useParams<{ clientId: string }>()
   const navigate = useNavigate()
   const [client, setClient] = useState<Client | null>(null)
+  const [jobSites, setJobSites] = useState<JobSite[]>([])
+  const [jobSitesLoading, setJobSitesLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [tab, setTab] = useState<Tab>('info')
@@ -30,7 +33,16 @@ export function ClientDetailPage() {
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load client'))
   }
 
+  function refreshJobSites() {
+    if (!clientId) return
+    setJobSitesLoading(true)
+    listJobSitesForClient(clientId)
+      .then(setJobSites)
+      .finally(() => setJobSitesLoading(false))
+  }
+
   useEffect(refresh, [clientId])
+  useEffect(refreshJobSites, [clientId])
 
   async function runAction(fn: () => Promise<void>) {
     setActionError(null)
@@ -72,58 +84,64 @@ export function ClientDetailPage() {
         <BackLink to="/clients" label="Back to clients" />
       </div>
 
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">
-            {client.first_name} {client.last_name}
-            {client.company ? ` — ${client.company}` : ''}
-          </h1>
-          <p className="text-sm text-gray-500">{client.role}</p>
-          <div className="mt-2">
-            <StatusBadge status={client.status} />
-          </div>
-        </div>
-        <div className="flex gap-2">
-          {client.status === 'prospect' && (
-            <Button onClick={() => runAction(() => markClientContacted(clientId))}>Mark Contacted</Button>
-          )}
-          {client.status === 'contacted' && (
-            <Button onClick={() => runAction(() => markClientInProcess(clientId))}>Move to In Process</Button>
-          )}
-          {client.status !== 'archived' && (
-            <Button variant="danger" onClick={handleArchiveClient}>
-              Archive
-            </Button>
-          )}
-        </div>
-      </div>
       {actionError && <p className="text-sm text-red-600">{actionError}</p>}
 
-      <div className="border-b border-gray-200 flex gap-4">
-        {(
-          [
-            ['info', 'Info'],
-            ['jobSites', 'Job Sites'],
-            ['billing', 'Billing'],
-            ['documents', 'Documents'],
-          ] as [Tab, string][]
-        ).map(([value, label]) => (
-          <button
-            key={value}
-            onClick={() => setTab(value)}
-            className={`pb-2 text-sm font-medium border-b-2 -mb-px ${
-              tab === value ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <div className="flex flex-col sm:flex-row gap-4 items-start">
+        <SummaryCard
+          title={`${client.first_name} ${client.last_name}`}
+          subtitle={client.company || client.role || undefined}
+          status={<StatusBadge status={client.status} />}
+          stats={[
+            { label: 'Job Sites', value: String(jobSites.filter((js) => js.status !== 'archived').length) },
+            { label: 'Total', value: String(jobSites.length) },
+          ]}
+          actions={
+            <>
+              {client.status === 'prospect' && (
+                <Button onClick={() => runAction(() => markClientContacted(clientId))}>Mark Contacted</Button>
+              )}
+              {client.status === 'contacted' && (
+                <Button onClick={() => runAction(() => markClientInProcess(clientId))}>Move to In Process</Button>
+              )}
+              {client.status !== 'archived' && (
+                <Button variant="danger" onClick={handleArchiveClient}>
+                  Archive
+                </Button>
+              )}
+            </>
+          }
+        />
 
-      {tab === 'info' && <InfoTab client={client} onUpdated={refresh} />}
-      {tab === 'jobSites' && <JobSitesTab client={client} />}
-      {tab === 'billing' && <BillingInfoForm clientId={clientId} client={client} />}
-      {tab === 'documents' && <DocumentUploadList clientId={clientId} />}
+        <div className="flex-1 min-w-0 space-y-6">
+          <div className="border-b border-gray-200 flex gap-4">
+            {(
+              [
+                ['info', 'Info'],
+                ['jobSites', 'Job Sites'],
+                ['billing', 'Billing'],
+                ['documents', 'Documents'],
+              ] as [Tab, string][]
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                onClick={() => setTab(value)}
+                className={`pb-2 text-sm font-medium border-b-2 -mb-px ${
+                  tab === value ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {tab === 'info' && <InfoTab client={client} onUpdated={refresh} />}
+          {tab === 'jobSites' && (
+            <JobSitesTab client={client} jobSites={jobSites} loading={jobSitesLoading} onUpdated={refreshJobSites} />
+          )}
+          {tab === 'billing' && <BillingInfoForm clientId={clientId} client={client} />}
+          {tab === 'documents' && <DocumentUploadList clientId={clientId} />}
+        </div>
+      </div>
     </div>
   )
 }
@@ -325,19 +343,18 @@ function PortalInviteSection({ client }: { client: Client }) {
   )
 }
 
-function JobSitesTab({ client }: { client: Client }) {
-  const [jobSites, setJobSites] = useState<JobSite[]>([])
-  const [loading, setLoading] = useState(true)
+function JobSitesTab({
+  client,
+  jobSites,
+  loading,
+  onUpdated,
+}: {
+  client: Client
+  jobSites: JobSite[]
+  loading: boolean
+  onUpdated: () => void
+}) {
   const [showForm, setShowForm] = useState(false)
-
-  function refresh() {
-    setLoading(true)
-    listJobSitesForClient(client.id)
-      .then(setJobSites)
-      .finally(() => setLoading(false))
-  }
-
-  useEffect(refresh, [client.id])
 
   // A client can have several job sites at different stages, so once they've
   // reached in_process the first time, adding more stays open regardless of
@@ -363,7 +380,7 @@ function JobSitesTab({ client }: { client: Client }) {
           client={client}
           onCreated={() => {
             setShowForm(false)
-            refresh()
+            onUpdated()
           }}
         />
       )}

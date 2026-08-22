@@ -24,6 +24,7 @@ import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 import { StatusBadge } from '../components/ui/StatusBadge'
+import { SummaryCard } from '../components/ui/SummaryCard'
 import { ArchivedSection } from '../components/ui/ArchivedSection'
 import { AreaForm } from '../components/areas/AreaForm'
 import { AreaCard } from '../components/areas/AreaCard'
@@ -41,12 +42,16 @@ export function JobSiteDetailPage() {
   const [pendingStatus, setPendingStatus] = useState<'paused' | 'archived' | null>(null)
   const [pendingEndDate, setPendingEndDate] = useState(todayDateOnly())
   const [closingSummary, setClosingSummary] = useState<JobSiteClosingSummary | null>(null)
+  const [staffCount, setStaffCount] = useState<number | null>(null)
 
   function refresh() {
     if (!jobSiteId) return
     getJobSite(jobSiteId)
       .then(setJobSite)
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load job site'))
+    listAssignmentsForJobSite(jobSiteId).then((assignments) =>
+      setStaffCount(assignments.filter((a) => a.end_date === null).length),
+    )
   }
 
   useEffect(refresh, [jobSiteId])
@@ -95,90 +100,97 @@ export function JobSiteDetailPage() {
         <BackLink to={`/clients/${clientId}`} label="Back to client" />
       </div>
 
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">{jobSite.name}</h1>
-          <p className="text-sm text-gray-500">{jobSite.address}</p>
-          <div className="mt-2">
-            <StatusBadge status={jobSite.status} />
-          </div>
-        </div>
-        <div className="flex gap-2">
-          {(jobSite.status === 'active' || jobSite.status === 'approved') && (
-            <Button variant="secondary" onClick={() => startStatusAction('paused')}>
-              Pause
-            </Button>
-          )}
-          {(jobSite.status === 'paused' || jobSite.status === 'archived') && (
-            <Button variant="secondary" onClick={handleReactivate}>
-              Reactivate
-            </Button>
-          )}
-          {jobSite.status !== 'archived' && (
-            <Button variant="danger" onClick={() => startStatusAction('archived')}>
-              Archive
-            </Button>
-          )}
-        </div>
-      </div>
       {actionError && <p className="text-sm text-red-600">{actionError}</p>}
 
-      {pendingStatus && (
-        <div className="bg-white rounded border border-gray-200 p-4 space-y-3 max-w-md">
-          <p className="text-sm font-medium text-gray-900">
-            {pendingStatus === 'archived' ? 'Archive' : 'Pause'} this job site
-          </p>
-          <Field label="Last Active Day">
-            <Input type="date" value={pendingEndDate} onChange={(e) => setPendingEndDate(e.target.value)} />
-          </Field>
-          <p className="text-xs text-gray-500">
-            Days on or before this date still count toward staff pay and accounting — this only stops the schedule
-            going forward. Editable later from the Info tab if it turns out to be wrong.
-          </p>
-          {closingSummary && (
-            <p className="text-xs text-gray-500">
-              Accrued to date: staff ${closingSummary.staffCostToDate.toFixed(2)}, expenses $
-              {closingSummary.expensesToDate.toFixed(2)}.
-            </p>
+      <div className="flex flex-col sm:flex-row gap-4 items-start">
+        <SummaryCard
+          title={jobSite.name}
+          subtitle={jobSite.address}
+          status={<StatusBadge status={jobSite.status} />}
+          stats={[
+            { label: 'Monthly', value: jobSite.service_amount === null ? '—' : `$${jobSite.service_amount}` },
+            { label: 'Staff', value: staffCount === null ? '—' : String(staffCount) },
+          ]}
+          actions={
+            <>
+              {(jobSite.status === 'active' || jobSite.status === 'approved') && (
+                <Button variant="secondary" onClick={() => startStatusAction('paused')}>
+                  Pause
+                </Button>
+              )}
+              {(jobSite.status === 'paused' || jobSite.status === 'archived') && (
+                <Button variant="secondary" onClick={handleReactivate}>
+                  Reactivate
+                </Button>
+              )}
+              {jobSite.status !== 'archived' && (
+                <Button variant="danger" onClick={() => startStatusAction('archived')}>
+                  Archive
+                </Button>
+              )}
+            </>
+          }
+        />
+
+        <div className="flex-1 min-w-0 space-y-6">
+          {pendingStatus && (
+            <div className="bg-white rounded border border-gray-200 p-4 space-y-3 max-w-md">
+              <p className="text-sm font-medium text-gray-900">
+                {pendingStatus === 'archived' ? 'Archive' : 'Pause'} this job site
+              </p>
+              <Field label="Last Active Day">
+                <Input type="date" value={pendingEndDate} onChange={(e) => setPendingEndDate(e.target.value)} />
+              </Field>
+              <p className="text-xs text-gray-500">
+                Days on or before this date still count toward staff pay and accounting — this only stops the
+                schedule going forward. Editable later from the Info tab if it turns out to be wrong.
+              </p>
+              {closingSummary && (
+                <p className="text-xs text-gray-500">
+                  Accrued to date: staff ${closingSummary.staffCostToDate.toFixed(2)}, expenses $
+                  {closingSummary.expensesToDate.toFixed(2)}.
+                </p>
+              )}
+              <div className="flex gap-2">
+                <Button variant={pendingStatus === 'archived' ? 'danger' : 'secondary'} onClick={confirmStatusAction}>
+                  Confirm {pendingStatus === 'archived' ? 'Archive' : 'Pause'}
+                </Button>
+                <Button variant="secondary" onClick={() => setPendingStatus(null)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
           )}
-          <div className="flex gap-2">
-            <Button variant={pendingStatus === 'archived' ? 'danger' : 'secondary'} onClick={confirmStatusAction}>
-              Confirm {pendingStatus === 'archived' ? 'Archive' : 'Pause'}
-            </Button>
-            <Button variant="secondary" onClick={() => setPendingStatus(null)}>
-              Cancel
-            </Button>
+
+          <div className="border-b border-gray-200 flex gap-4">
+            {(
+              [
+                ['info', 'Info'],
+                ['areas', 'Areas'],
+                ['staff', 'Staff'],
+                ['quote', 'Quote'],
+                ['invoices', 'Invoices'],
+              ] as [Tab, string][]
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                onClick={() => setTab(value)}
+                className={`pb-2 text-sm font-medium border-b-2 -mb-px ${
+                  tab === value ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
+
+          {tab === 'info' && <InfoTab jobSite={jobSite} onUpdated={refresh} />}
+          {tab === 'areas' && <AreasSection jobSiteId={jobSiteId} />}
+          {tab === 'staff' && <StaffAssignmentsSection jobSite={jobSite} onUpdated={refresh} />}
+          {tab === 'quote' && <QuoteSection jobSiteId={jobSiteId} clientId={clientId} />}
+          {tab === 'invoices' && <InvoicesSection jobSiteId={jobSiteId} clientId={clientId} />}
         </div>
-      )}
-
-      <div className="border-b border-gray-200 flex gap-4">
-        {(
-          [
-            ['info', 'Info'],
-            ['areas', 'Areas'],
-            ['staff', 'Staff'],
-            ['quote', 'Quote'],
-            ['invoices', 'Invoices'],
-          ] as [Tab, string][]
-        ).map(([value, label]) => (
-          <button
-            key={value}
-            onClick={() => setTab(value)}
-            className={`pb-2 text-sm font-medium border-b-2 -mb-px ${
-              tab === value ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
       </div>
-
-      {tab === 'info' && <InfoTab jobSite={jobSite} onUpdated={refresh} />}
-      {tab === 'areas' && <AreasSection jobSiteId={jobSiteId} />}
-      {tab === 'staff' && <StaffAssignmentsSection jobSite={jobSite} onUpdated={refresh} />}
-      {tab === 'quote' && <QuoteSection jobSiteId={jobSiteId} clientId={clientId} />}
-      {tab === 'invoices' && <InvoicesSection jobSiteId={jobSiteId} clientId={clientId} />}
     </div>
   )
 }
