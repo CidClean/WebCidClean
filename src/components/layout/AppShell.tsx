@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
+import { Wordmark } from './Wordmark'
 
 interface NavItemDef {
   to: string
@@ -73,7 +74,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Desktop sidebar */}
       <aside className="hidden md:flex md:flex-col w-56 shrink-0 bg-white border-r border-gray-200">
         <div className="h-14 flex items-center px-4 border-b border-gray-200">
-          <span className="font-semibold text-gray-900">Cid Clean</span>
+          <Wordmark />
         </div>
         <SidebarNav />
         <div className="p-3 border-t border-gray-200">
@@ -92,7 +93,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="fixed inset-0 bg-black/30" onClick={() => setMenuOpen(false)} />
           <aside className="relative flex flex-col w-64 bg-white h-full border-r border-gray-200">
             <div className="h-14 flex items-center justify-between px-4 border-b border-gray-200">
-              <span className="font-semibold text-gray-900">Cid Clean</span>
+              <Wordmark />
               <button onClick={() => setMenuOpen(false)} className="p-1 text-gray-500" aria-label="Close menu">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -118,7 +119,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Mobile top bar */}
         <header className="md:hidden bg-white border-b border-gray-200 h-14 flex items-center justify-between px-4">
-          <span className="font-semibold text-gray-900">Cid Clean</span>
+          <Wordmark />
           <button onClick={() => setMenuOpen(true)} className="p-2 -mr-2 text-gray-600" aria-label="Open menu">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />

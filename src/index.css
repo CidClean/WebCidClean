@@ -1,26 +1,56 @@
 @import "tailwindcss";
 
 /*
- * Provisional Cid Clean visual direction (per UX-001 brief, section 4):
- * no definitive logo, palette or typeface exists yet, so this stands in
- * until a real brand is approved — sober neutral structure (Tailwind's
- * default gray scale, left untouched) plus a single accent tied to
- * cleanliness, trust and freshness. Overriding Tailwind's "blue" scale
- * means every existing bg-blue, text-blue and border-blue utility across
- * the app picks this up automatically, without touching each component.
+ * Cid Clean's real visual identity, ported from cidclean-portal (the
+ * marketing site + internal portal, which already has an approved logo,
+ * color system and typography). Overriding Tailwind's "blue", "gray" and
+ * "red" scales means every existing bg-blue, text-gray, border-red, etc.
+ * utility across the whole app picks this up automatically, without
+ * touching each component:
+ *   blue -> Cid Clean's teal accent
+ *   gray -> Cid Clean's warm cream/ink neutral
+ *   red  -> Cid Clean's muted brick-red danger color
+ * Shade 100/600/700 (blue) and 100/600 (red) are the exact brand hex
+ * values; the rest of each ramp is interpolated to stay smooth while
+ * keeping WCAG AA contrast at the shades used for text/buttons.
  */
 @theme {
-  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-serif: 'Instrument Serif', Georgia, serif;
 
-  --color-blue-50: #eefaf8;
-  --color-blue-100: #d3f2ee;
-  --color-blue-200: #a8e6dd;
-  --color-blue-300: #7fd6ca;
-  --color-blue-400: #45bcae;
-  --color-blue-500: #1f9d90;
-  --color-blue-600: #127a70;
-  --color-blue-700: #0e625a;
-  --color-blue-800: #0f4f49;
-  --color-blue-900: #0c3733;
-  --color-blue-950: #082523;
+  --color-blue-50: #effaf9;
+  --color-blue-100: #d8efeb;
+  --color-blue-200: #b5e3de;
+  --color-blue-300: #81dad1;
+  --color-blue-400: #2dd2c2;
+  --color-blue-500: #17a193;
+  --color-blue-600: #0d7d72;
+  --color-blue-700: #0a5d55;
+  --color-blue-800: #08443e;
+  --color-blue-900: #062d29;
+  --color-blue-950: #051a18;
+
+  --color-gray-50: #f7f5f0;
+  --color-gray-100: #efebe3;
+  --color-gray-200: #e5e1d8;
+  --color-gray-300: #d4cfc2;
+  --color-gray-400: #b1ac9e;
+  --color-gray-500: #8a877f;
+  --color-gray-600: #6a6860;
+  --color-gray-700: #4a4842;
+  --color-gray-800: #302e2a;
+  --color-gray-900: #161513;
+  --color-gray-950: #090807;
+
+  --color-red-50: #fcf3f3;
+  --color-red-100: #f3dada;
+  --color-red-200: #eec4c4;
+  --color-red-300: #e29c9c;
+  --color-red-400: #d16161;
+  --color-red-500: #b83d3d;
+  --color-red-600: #a83232;
+  --color-red-700: #7a2929;
+  --color-red-800: #632121;
+  --color-red-900: #4b1b1b;
+  --color-red-950: #341414;
 }
