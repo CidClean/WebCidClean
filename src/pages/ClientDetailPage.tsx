@@ -324,10 +324,12 @@ function PortalInviteSection({ client }: { client: Client }) {
         </p>
       ) : (
         <InviteForm
-          defaultEmail={status?.email ?? client.email ?? ''}
+          contactEmail={client.email}
+          invitedEmail={status?.email}
           pending={!!status}
-          onSubmit={async (email) => {
-            await invitePortalUser({ email, portalRole: 'client', clientId: client.id })
+          onSubmit={async () => {
+            if (!client.email) return
+            await invitePortalUser({ email: client.email, portalRole: 'client', clientId: client.id })
           }}
         />
       )}

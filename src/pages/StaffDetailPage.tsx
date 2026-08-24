@@ -145,10 +145,12 @@ function PortalInviteSection({ staff }: { staff: Staff }) {
         </p>
       ) : (
         <InviteForm
-          defaultEmail={status?.email ?? staff.email ?? ''}
+          contactEmail={staff.email}
+          invitedEmail={status?.email}
           pending={!!status}
-          onSubmit={async (email) => {
-            await invitePortalUser({ email, portalRole: staff.type, staffId: staff.id })
+          onSubmit={async () => {
+            if (!staff.email) return
+            await invitePortalUser({ email: staff.email, portalRole: staff.type, staffId: staff.id })
           }}
         />
       )}
