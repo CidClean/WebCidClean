@@ -3895,6 +3895,10 @@ export type Database = {
       }
       current_client_id: { Args: never; Returns: string }
       current_staff_id: { Args: never; Returns: string }
+      get_portal_account_status: {
+        Args: { p_auth_user_id: string }
+        Returns: Json
+      }
       get_public_prospect_notification_context: {
         Args: { p_prospect_id: string }
         Returns: Json

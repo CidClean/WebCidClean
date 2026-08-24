@@ -3,10 +3,11 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { BackLink } from '../components/ui/BackLink'
 import { archiveClient, getClient, markClientContacted, markClientInProcess, updateClient } from '../api/clients'
 import { listJobSitesForClient } from '../api/jobSites'
-import { invitePortalUser } from '../api/portal'
+import { getPortalAccountStatus, invitePortalUser, type PortalAccountStatus } from '../api/portal'
 import type { Client, JobSite } from '../types/models'
 import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
+import { InviteForm } from '../components/ui/InviteForm'
 import { StatusBadge } from '../components/ui/StatusBadge'
 import { SummaryCard } from '../components/ui/SummaryCard'
 import { ArchivedSection } from '../components/ui/ArchivedSection'
@@ -301,43 +302,34 @@ function ClientEditForm({
 }
 
 function PortalInviteSection({ client }: { client: Client }) {
-  const [email, setEmail] = useState(client.email ?? '')
-  const [sending, setSending] = useState(false)
-  const [sent, setSent] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [status, setStatus] = useState<PortalAccountStatus | null | undefined>(undefined)
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault()
-    setSending(true)
-    setError(null)
-    try {
-      await invitePortalUser({ email, portalRole: 'client', clientId: client.id })
-      setSent(true)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send invite')
-    } finally {
-      setSending(false)
+  useEffect(() => {
+    if (!client.auth_user_id) {
+      setStatus(null)
+      return
     }
-  }
+    setStatus(undefined)
+    getPortalAccountStatus(client.auth_user_id).then(setStatus)
+  }, [client.auth_user_id])
 
   return (
     <div className="max-w-lg">
       <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">Portal Access</h2>
-      {client.auth_user_id ? (
+      {status === undefined ? (
+        <p className="text-sm text-gray-500">Checking...</p>
+      ) : status?.confirmed ? (
         <p className="text-sm text-green-700 bg-white rounded border border-gray-200 p-4">
           This client has an active portal account and can log in to see their job sites, quotes, and documents.
         </p>
       ) : (
-        <form onSubmit={handleSubmit} className="bg-white rounded border border-gray-200 p-4 flex items-end gap-2">
-          <Field label="Invite Email">
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </Field>
-          <Button type="submit" disabled={sending}>
-            {sending ? 'Sending...' : 'Invite to Portal'}
-          </Button>
-          {sent && <p className="text-sm text-green-600">Invite sent.</p>}
-          {error && <p className="text-sm text-red-600">{error}</p>}
-        </form>
+        <InviteForm
+          defaultEmail={status?.email ?? client.email ?? ''}
+          pending={!!status}
+          onSubmit={async (email) => {
+            await invitePortalUser({ email, portalRole: 'client', clientId: client.id })
+          }}
+        />
       )}
     </div>
   )
