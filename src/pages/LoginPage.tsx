@@ -9,7 +9,7 @@ type Mode = 'password' | 'otp-request' | 'otp-verify'
 
 export function LoginPage() {
   const { session, role, roleLoading, signIn } = useAuth()
-  const [mode, setMode] = useState<Mode>('password')
+  const [mode, setMode] = useState<Mode>('otp-request')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [code, setCode] = useState('')
@@ -67,37 +67,9 @@ export function LoginPage() {
       <div className="bg-white p-8 rounded shadow-sm w-full max-w-sm space-y-4">
         <h1 className="text-lg font-semibold text-gray-900">WebCidClean</h1>
 
-        {mode === 'password' && (
-          <form onSubmit={handlePasswordSubmit} className="space-y-4">
-            <Field label="Email">
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            </Field>
-            <Field label="Password">
-              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-            </Field>
-            {error && <p className="text-sm text-red-600">{error}</p>}
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign in'}
-            </Button>
-            <Link to="/forgot-password" className="block text-sm text-blue-600 hover:underline text-center">
-              Forgot password?
-            </Link>
-            <button
-              type="button"
-              onClick={() => {
-                setError(null)
-                setMode('otp-request')
-              }}
-              className="block text-sm text-blue-600 hover:underline text-center w-full"
-            >
-              Client or staff? Sign in with an email code instead
-            </button>
-          </form>
-        )}
-
         {mode === 'otp-request' && (
           <form onSubmit={handleSendCode} className="space-y-4">
-            <p className="text-sm text-gray-500">We'll email you a 6-digit code — no password needed.</p>
+            <p className="text-sm text-gray-500">Enter your email and we'll send you a code to sign in.</p>
             <Field label="Email">
               <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />
             </Field>
@@ -105,16 +77,6 @@ export function LoginPage() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Sending...' : 'Send code'}
             </Button>
-            <button
-              type="button"
-              onClick={() => {
-                setError(null)
-                setMode('password')
-              }}
-              className="block text-sm text-gray-500 hover:underline text-center w-full"
-            >
-              Back to password sign in
-            </button>
           </form>
         )}
 
@@ -149,6 +111,47 @@ export function LoginPage() {
               Use a different email
             </button>
           </form>
+        )}
+
+        {mode === 'password' && (
+          <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            <Field label="Email">
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />
+            </Field>
+            <Field label="Password">
+              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            </Field>
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Signing in...' : 'Sign in'}
+            </Button>
+            <Link to="/forgot-password" className="block text-sm text-blue-600 hover:underline text-center">
+              Forgot password?
+            </Link>
+            <button
+              type="button"
+              onClick={() => {
+                setError(null)
+                setMode('otp-request')
+              }}
+              className="block text-sm text-gray-500 hover:underline text-center w-full"
+            >
+              Back
+            </button>
+          </form>
+        )}
+
+        {mode === 'otp-request' && (
+          <button
+            type="button"
+            onClick={() => {
+              setError(null)
+              setMode('password')
+            }}
+            className="block text-xs text-gray-400 hover:text-gray-500 hover:underline text-center w-full"
+          >
+            Admin sign in
+          </button>
         )}
       </div>
     </div>
