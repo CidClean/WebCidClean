@@ -20,8 +20,16 @@ import { CalendarPage } from './pages/CalendarPage'
 import { AccountingPage } from './pages/AccountingPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { PublicQuotePage } from './pages/PublicQuotePage'
-import { ClientPortalPage } from './pages/portal/ClientPortalPage'
-import { StaffPortalPage } from './pages/portal/StaffPortalPage'
+import { ClientHomePage } from './pages/portal/client/ClientHomePage'
+import { ClientJobSitesPage } from './pages/portal/client/ClientJobSitesPage'
+import { ClientBillingPage } from './pages/portal/client/ClientBillingPage'
+import { ClientDocumentsPage } from './pages/portal/client/ClientDocumentsPage'
+import { ClientProfilePage } from './pages/portal/client/ClientProfilePage'
+import { StaffHomePage } from './pages/portal/staff/StaffHomePage'
+import { StaffSchedulePage } from './pages/portal/staff/StaffSchedulePage'
+import { StaffPaymentsPage } from './pages/portal/staff/StaffPaymentsPage'
+import { StaffDocumentsPage } from './pages/portal/staff/StaffDocumentsPage'
+import { StaffProfilePage } from './pages/portal/staff/StaffProfilePage'
 
 function Protected({ children }: { children: ReactNode }) {
   return (
@@ -41,8 +49,17 @@ export default function App() {
           <Route path="/set-password" element={<SetPasswordPage />} />
           <Route path="/q/:token" element={<PublicQuotePage />} />
 
-          <Route path="/portal/client" element={<ClientPortalRoute><ClientPortalPage /></ClientPortalRoute>} />
-          <Route path="/portal/staff" element={<StaffPortalRoute><StaffPortalPage /></StaffPortalRoute>} />
+          <Route path="/portal/client" element={<ClientPortalRoute><ClientHomePage /></ClientPortalRoute>} />
+          <Route path="/portal/client/job-sites" element={<ClientPortalRoute><ClientJobSitesPage /></ClientPortalRoute>} />
+          <Route path="/portal/client/billing" element={<ClientPortalRoute><ClientBillingPage /></ClientPortalRoute>} />
+          <Route path="/portal/client/documents" element={<ClientPortalRoute><ClientDocumentsPage /></ClientPortalRoute>} />
+          <Route path="/portal/client/profile" element={<ClientPortalRoute><ClientProfilePage /></ClientPortalRoute>} />
+
+          <Route path="/portal/staff" element={<StaffPortalRoute><StaffHomePage /></StaffPortalRoute>} />
+          <Route path="/portal/staff/schedule" element={<StaffPortalRoute><StaffSchedulePage /></StaffPortalRoute>} />
+          <Route path="/portal/staff/payments" element={<StaffPortalRoute><StaffPaymentsPage /></StaffPortalRoute>} />
+          <Route path="/portal/staff/documents" element={<StaffPortalRoute><StaffDocumentsPage /></StaffPortalRoute>} />
+          <Route path="/portal/staff/profile" element={<StaffPortalRoute><StaffProfilePage /></StaffPortalRoute>} />
 
           <Route path="/" element={<Protected><DashboardPage /></Protected>} />
           <Route path="/clients" element={<Protected><ClientsListPage /></Protected>} />

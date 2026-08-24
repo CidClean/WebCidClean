@@ -4023,6 +4023,10 @@ export type Database = {
         }
         Returns: Json
       }
+      update_my_client_contact: {
+        Args: { p_email: string; p_phone: string }
+        Returns: undefined
+      }
     }
     Enums: {
       area_condition: "good" | "normal" | "bad"

@@ -1,8 +1,14 @@
 import { supabase } from '../lib/supabase'
-import type { ClientDocument, Invoice, JobSite, PortalRequest, Quote } from '../types/models'
+import type { Client, ClientDocument, Invoice, JobSite, Quote } from '../types/models'
 
 // RLS scopes every query here to the signed-in client's own rows automatically —
 // no client_id filters needed (or trusted) client-side.
+
+export async function getMyClient(): Promise<Client> {
+  const { data, error } = await supabase.from('clients').select('*').single()
+  if (error) throw error
+  return data
+}
 
 export async function listMyJobSites(): Promise<JobSite[]> {
   const { data, error } = await supabase.from('job_sites').select('*').order('created_at', { ascending: false })
@@ -71,18 +77,7 @@ export async function signMyDocument(documentId: string, signedByName: string): 
   if (error) throw error
 }
 
-export async function submitMyRequest(clientId: string, message: string): Promise<PortalRequest> {
-  const { data, error } = await supabase
-    .from('portal_requests')
-    .insert({ client_id: clientId, message })
-    .select()
-    .single()
+export async function updateMyClientContact(phone: string | null, email: string | null): Promise<void> {
+  const { error } = await supabase.rpc('update_my_client_contact', { p_phone: phone as string, p_email: email as string })
   if (error) throw error
-  return data
-}
-
-export async function listMyRequests(): Promise<PortalRequest[]> {
-  const { data, error } = await supabase.from('portal_requests').select('*').order('created_at', { ascending: false })
-  if (error) throw error
-  return data
 }

@@ -34,6 +34,7 @@ export async function updateStaff(id: string, patch: Partial<Staff>): Promise<St
 export interface AssignedJobSiteSchedule {
   id: string
   name: string
+  address: string
   status: string
   client_id: string
   frequency: string
@@ -52,7 +53,7 @@ export async function listAssignmentsForStaff(staffId: string): Promise<JobStaff
   const { data, error } = await supabase
     .from('job_staff_assignments')
     .select(
-      '*, job_sites(id, name, status, client_id, frequency, frequency_days, start_date, end_date, preferred_start_time, estimated_duration_minutes)',
+      '*, job_sites(id, name, address, status, client_id, frequency, frequency_days, start_date, end_date, preferred_start_time, estimated_duration_minutes)',
     )
     .eq('staff_id', staffId)
     .order('created_at', { ascending: false })
