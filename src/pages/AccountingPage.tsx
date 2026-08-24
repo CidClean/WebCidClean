@@ -153,9 +153,9 @@ export function AccountingPage() {
                   <tr className="border-b border-gray-200 text-left text-gray-500">
                     <th className="p-3 font-medium">Client</th>
                     <th className="p-3 font-medium">Job Site</th>
-                    <th className="p-3 font-medium text-right">Service Amount</th>
-                    <th className="p-3 font-medium text-right">Staff Cost</th>
-                    <th className="p-3 font-medium text-right">Job Expenses</th>
+                    <th className="p-3 font-medium text-right hidden sm:table-cell">Service Amount</th>
+                    <th className="p-3 font-medium text-right hidden sm:table-cell">Staff Cost</th>
+                    <th className="p-3 font-medium text-right hidden sm:table-cell">Job Expenses</th>
                     <th className="p-3 font-medium text-right">Profit</th>
                   </tr>
                 </thead>
@@ -175,9 +175,9 @@ export function AccountingPage() {
                           {row.job_site_name}
                         </Link>
                       </td>
-                      <td className="p-3 text-right">${row.service_amount.toFixed(2)}</td>
-                      <td className="p-3 text-right">${row.staff_cost.toFixed(2)}</td>
-                      <td className="p-3 text-right">${row.job_expenses.toFixed(2)}</td>
+                      <td className="p-3 text-right hidden sm:table-cell">${row.service_amount.toFixed(2)}</td>
+                      <td className="p-3 text-right hidden sm:table-cell">${row.staff_cost.toFixed(2)}</td>
+                      <td className="p-3 text-right hidden sm:table-cell">${row.job_expenses.toFixed(2)}</td>
                       <td className="p-3 text-right font-medium">${row.profit.toFixed(2)}</td>
                     </tr>
                   ))}
@@ -187,9 +187,9 @@ export function AccountingPage() {
                     <td className="p-3" colSpan={2}>
                       Total
                     </td>
-                    <td className="p-3 text-right">${totals.service.toFixed(2)}</td>
-                    <td className="p-3 text-right">${totals.staffCost.toFixed(2)}</td>
-                    <td className="p-3 text-right">${totals.jobExpenses.toFixed(2)}</td>
+                    <td className="p-3 text-right hidden sm:table-cell">${totals.service.toFixed(2)}</td>
+                    <td className="p-3 text-right hidden sm:table-cell">${totals.staffCost.toFixed(2)}</td>
+                    <td className="p-3 text-right hidden sm:table-cell">${totals.jobExpenses.toFixed(2)}</td>
                     <td className="p-3 text-right">${totals.profit.toFixed(2)}</td>
                   </tr>
                 </tfoot>

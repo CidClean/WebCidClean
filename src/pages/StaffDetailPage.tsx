@@ -1,12 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { BackLink } from '../components/ui/BackLink'
 import { getStaffMember, listAssignmentsForStaff, updateStaff, type JobStaffAssignmentWithJobSite } from '../api/staff'
 import { listWorkLogsForStaff, type StaffWorkLogEntry } from '../api/workLogs'
 import { getPortalAccountStatus, invitePortalUser, type PortalAccountStatus } from '../api/portal'
-import type { Staff } from '../types/models'
+import type { Staff, StaffType } from '../types/models'
+import { STAFF_TYPES } from '../types/models'
 import { Button } from '../components/ui/Button'
+import { Field, Input } from '../components/ui/Input'
 import { InviteForm } from '../components/ui/InviteForm'
+import { Select } from '../components/ui/Select'
 import { StatusBadge } from '../components/ui/StatusBadge'
 import { SummaryCard } from '../components/ui/SummaryCard'
 
@@ -90,6 +93,8 @@ export function StaffDetailPage() {
         />
 
         <div className="flex-1 min-w-0 space-y-6">
+          <StaffInfoSection staff={staff} onUpdated={refresh} />
+
           <div className="space-y-3">
             <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Job Site Assignments</h2>
             {assignments.length === 0 ? (
@@ -119,6 +124,131 @@ export function StaffDetailPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+function StaffInfoSection({ staff, onUpdated }: { staff: Staff; onUpdated: () => void }) {
+  const [editing, setEditing] = useState(false)
+
+  return (
+    <div className="space-y-3 max-w-lg">
+      <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Staff Info</h2>
+      {editing ? (
+        <StaffEditForm
+          staff={staff}
+          onSaved={() => {
+            setEditing(false)
+            onUpdated()
+          }}
+          onCancel={() => setEditing(false)}
+        />
+      ) : (
+        <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
+          <div className="flex justify-end">
+            <button onClick={() => setEditing(true)} className="text-sm text-blue-600 hover:underline">
+              Edit
+            </button>
+          </div>
+          <dl className="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <dt className="text-gray-500">First Name</dt>
+              <dd className="text-gray-900">{staff.first_name}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">Last Name</dt>
+              <dd className="text-gray-900">{staff.last_name}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">Type</dt>
+              <dd className="text-gray-900 capitalize">{staff.type}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">Email</dt>
+              <dd className="text-gray-900">{staff.email || '—'}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">Phone</dt>
+              <dd className="text-gray-900">{staff.phone || '—'}</dd>
+            </div>
+          </dl>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function StaffEditForm({
+  staff,
+  onSaved,
+  onCancel,
+}: {
+  staff: Staff
+  onSaved: () => void
+  onCancel: () => void
+}) {
+  const [firstName, setFirstName] = useState(staff.first_name)
+  const [lastName, setLastName] = useState(staff.last_name)
+  const [type, setType] = useState<StaffType>(staff.type)
+  const [email, setEmail] = useState(staff.email ?? '')
+  const [phone, setPhone] = useState(staff.phone ?? '')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    setSaving(true)
+    setError(null)
+    try {
+      await updateStaff(staff.id, {
+        first_name: firstName,
+        last_name: lastName,
+        type,
+        email: email || null,
+        phone: phone || null,
+      })
+      onSaved()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="First Name">
+          <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+        </Field>
+        <Field label="Last Name">
+          <Input value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+        </Field>
+        <Field label="Type">
+          <Select value={type} onChange={(e) => setType(e.target.value as StaffType)}>
+            {STAFF_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Email">
+          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        </Field>
+        <Field label="Phone">
+          <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+        </Field>
+      </div>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      <div className="flex gap-2">
+        <Button type="submit" disabled={saving}>
+          {saving ? 'Saving...' : 'Save'}
+        </Button>
+        <Button type="button" variant="secondary" onClick={onCancel}>
+          Cancel
+        </Button>
+      </div>
+    </form>
   )
 }
 
