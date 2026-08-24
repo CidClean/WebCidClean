@@ -1,6 +1,7 @@
 import { useEffect, useState, type ChangeEvent } from 'react'
 import { getAreaPictureUrl, listAreaPictures, uploadAreaPicture } from '../../api/areas'
 import type { AreaPicture } from '../../types/models'
+import { FileButton } from '../ui/FileButton'
 
 export function AreaPictureUpload({ areaId }: { areaId: string }) {
   const [pictures, setPictures] = useState<AreaPicture[]>([])
@@ -43,8 +44,9 @@ export function AreaPictureUpload({ areaId }: { areaId: string }) {
 
   return (
     <div className="space-y-2">
-      <input type="file" accept="image/*" onChange={handleFileChange} disabled={uploading} className="text-xs" />
-      {uploading && <p className="text-xs text-gray-500">Uploading...</p>}
+      <FileButton onChange={handleFileChange} disabled={uploading} accept="image/*">
+        {uploading ? 'Uploading...' : 'Add photo'}
+      </FileButton>
       {error && <p className="text-xs text-red-600">{error}</p>}
       {pictures.length > 0 && (
         <div className="flex gap-2 flex-wrap">

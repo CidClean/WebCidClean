@@ -3,6 +3,7 @@ import { createArea, uploadAreaPicture } from '../../api/areas'
 import { AREA_CONDITIONS, AREA_SIZES, AREA_TYPES, FREQUENCY_TYPES } from '../../types/models'
 import type { AreaCondition, AreaSize, AreaType, FrequencyType, JobSiteArea } from '../../types/models'
 import { Button } from '../ui/Button'
+import { FileButton } from '../ui/FileButton'
 import { Field, Textarea, Input } from '../ui/Input'
 import { Select } from '../ui/Select'
 
@@ -119,7 +120,9 @@ export function AreaForm({ jobSiteId, existingAreas, onCreated }: AreaFormProps)
         <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
       </Field>
       <Field label="Photos (optional)">
-        <input key={photosKey} type="file" accept="image/*" multiple onChange={handlePhotosChange} className="text-sm" />
+        <FileButton onChange={handlePhotosChange} accept="image/*" multiple resetKey={photosKey}>
+          {photos.length > 0 ? `${photos.length} photo${photos.length > 1 ? 's' : ''} selected` : 'Choose photos'}
+        </FileButton>
       </Field>
       {error && <p className="text-sm text-red-600">{error}</p>}
       {justAdded && (

@@ -68,8 +68,8 @@ export function ClientsListPage() {
                 <thead>
                   <tr className="text-left text-xs uppercase tracking-wide text-gray-400 border-b border-gray-200">
                     <th className="px-4 py-2 font-medium">Client</th>
-                    <th className="px-4 py-2 font-medium">Facility Type</th>
-                    <th className="px-4 py-2 font-medium">Contact</th>
+                    <th className="px-4 py-2 font-medium hidden sm:table-cell">Facility Type</th>
+                    <th className="px-4 py-2 font-medium hidden sm:table-cell">Contact</th>
                     <th className="px-4 py-2 font-medium">Status</th>
                   </tr>
                 </thead>
@@ -109,8 +109,8 @@ function ClientRow({ client }: { client: Client }) {
         </div>
         {client.company && <div className="text-sm text-gray-500">{client.company}</div>}
       </td>
-      <td className="px-4 py-3 text-gray-500">{client.facility_type || '—'}</td>
-      <td className="px-4 py-3 text-gray-500">{client.email || client.phone || '—'}</td>
+      <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{client.facility_type || '—'}</td>
+      <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{client.email || client.phone || '—'}</td>
       <td className="px-4 py-3">
         <StatusBadge status={client.status} />
       </td>

@@ -62,8 +62,8 @@ export function StaffListPage() {
                 <thead>
                   <tr className="text-left text-xs uppercase tracking-wide text-gray-400 border-b border-gray-200">
                     <th className="px-4 py-2 font-medium">Name</th>
-                    <th className="px-4 py-2 font-medium">Type</th>
-                    <th className="px-4 py-2 font-medium">Contact</th>
+                    <th className="px-4 py-2 font-medium hidden sm:table-cell">Type</th>
+                    <th className="px-4 py-2 font-medium hidden sm:table-cell">Contact</th>
                     <th className="px-4 py-2 font-medium">Status</th>
                   </tr>
                 </thead>
@@ -97,8 +97,8 @@ function StaffRow({ staff: s }: { staff: Staff }) {
       <td className="px-4 py-3 font-medium text-gray-900">
         {s.first_name} {s.last_name}
       </td>
-      <td className="px-4 py-3 text-gray-500 capitalize">{s.type}</td>
-      <td className="px-4 py-3 text-gray-500">{s.email || s.phone || '—'}</td>
+      <td className="px-4 py-3 text-gray-500 capitalize hidden sm:table-cell">{s.type}</td>
+      <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{s.email || s.phone || '—'}</td>
       <td className="px-4 py-3">
         <StatusBadge status={s.status} />
       </td>

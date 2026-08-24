@@ -84,8 +84,8 @@ export function JobsListPage() {
                 <thead>
                   <tr className="text-left text-xs uppercase tracking-wide text-gray-400 border-b border-gray-200">
                     <th className="px-4 py-2 font-medium">Job Site</th>
-                    <th className="px-4 py-2 font-medium">Client</th>
-                    <th className="px-4 py-2 font-medium">Frequency</th>
+                    <th className="px-4 py-2 font-medium hidden sm:table-cell">Client</th>
+                    <th className="px-4 py-2 font-medium hidden sm:table-cell">Frequency</th>
                     <th className="px-4 py-2 font-medium">Status</th>
                   </tr>
                 </thead>
@@ -120,8 +120,8 @@ function JobRow({ jobSite: js }: { jobSite: SchedulableJobSite }) {
         <div className="font-medium text-gray-900">{js.name}</div>
         <div className="text-sm text-gray-500">{js.address}</div>
       </td>
-      <td className="px-4 py-3 text-gray-500">{clientLabel(js.clients)}</td>
-      <td className="px-4 py-3 text-gray-500 capitalize">{js.frequency.replace('_', ' ')}</td>
+      <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{clientLabel(js.clients)}</td>
+      <td className="px-4 py-3 text-gray-500 capitalize hidden sm:table-cell">{js.frequency.replace('_', ' ')}</td>
       <td className="px-4 py-3">
         <StatusBadge status={js.status} />
       </td>

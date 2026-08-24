@@ -2,6 +2,7 @@ import { useEffect, useState, type ChangeEvent } from 'react'
 import { getClientDocumentUrl, listClientDocuments, uploadClientDocument } from '../../api/clients'
 import type { ClientDocument } from '../../types/models'
 import { Button } from '../ui/Button'
+import { FileButton } from '../ui/FileButton'
 
 export function DocumentUploadList({ clientId }: { clientId: string }) {
   const [documents, setDocuments] = useState<ClientDocument[]>([])
@@ -46,11 +47,9 @@ export function DocumentUploadList({ clientId }: { clientId: string }) {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 max-w-lg">
       <div>
-        <label className="inline-block">
-          <span className="sr-only">Upload signed document</span>
-          <input type="file" onChange={handleFileChange} disabled={uploading} className="text-sm" />
-        </label>
-        {uploading && <p className="text-sm text-gray-500 mt-1">Uploading...</p>}
+        <FileButton onChange={handleFileChange} disabled={uploading}>
+          {uploading ? 'Uploading...' : 'Upload signed document'}
+        </FileButton>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       {loading ? (

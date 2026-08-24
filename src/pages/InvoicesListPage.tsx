@@ -68,8 +68,8 @@ export function InvoicesListPage() {
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-gray-400 border-b border-gray-200">
                 <th className="px-4 py-2 font-medium">Job Site</th>
-                <th className="px-4 py-2 font-medium">Client</th>
-                <th className="px-4 py-2 font-medium">Period</th>
+                <th className="px-4 py-2 font-medium hidden sm:table-cell">Client</th>
+                <th className="px-4 py-2 font-medium hidden md:table-cell">Period</th>
                 <th className="px-4 py-2 font-medium">Amount</th>
                 <th className="px-4 py-2 font-medium">Status</th>
               </tr>
@@ -94,8 +94,8 @@ function InvoiceRow({ invoice: inv }: { invoice: InvoiceWithJobSite }) {
   return (
     <tr onClick={() => to && navigate(to)} className={to ? 'cursor-pointer hover:bg-gray-50' : ''}>
       <td className="px-4 py-3 font-medium text-gray-900">{inv.job_sites?.name ?? 'Unknown job site'}</td>
-      <td className="px-4 py-3 text-gray-500">{clientLabel(inv.job_sites)}</td>
-      <td className="px-4 py-3 text-gray-500">
+      <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{clientLabel(inv.job_sites)}</td>
+      <td className="px-4 py-3 text-gray-500 hidden md:table-cell">
         {inv.period_start} to {inv.period_end}
       </td>
       <td className="px-4 py-3 text-gray-700">${inv.amount.toFixed(2)}</td>
