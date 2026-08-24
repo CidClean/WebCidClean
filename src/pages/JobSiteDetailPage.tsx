@@ -228,60 +228,60 @@ function InfoTab({ jobSite, onUpdated }: { jobSite: JobSite; onUpdated: () => vo
           <dl className="bg-white rounded-lg border border-gray-200 p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
             <div>
               <dt className="text-gray-500">Contact</dt>
-              <dd className="text-gray-900">{jobSite.contact_name || '—'}</dd>
+              <dd className="text-gray-900 break-words">{jobSite.contact_name || '—'}</dd>
             </div>
             <div>
               <dt className="text-gray-500">Contact Role</dt>
-              <dd className="text-gray-900">{jobSite.contact_role || '—'}</dd>
+              <dd className="text-gray-900 break-words">{jobSite.contact_role || '—'}</dd>
             </div>
             <div>
               <dt className="text-gray-500">Contact Email</dt>
-              <dd className="text-gray-900">{jobSite.contact_email || '—'}</dd>
+              <dd className="text-gray-900 break-words">{jobSite.contact_email || '—'}</dd>
             </div>
             <div>
               <dt className="text-gray-500">Contact Phone</dt>
-              <dd className="text-gray-900">{jobSite.contact_phone || '—'}</dd>
+              <dd className="text-gray-900 break-words">{jobSite.contact_phone || '—'}</dd>
             </div>
             <div>
               <dt className="text-gray-500">Frequency</dt>
-              <dd className="text-gray-900">{jobSite.frequency.replace('_', ' ')}</dd>
+              <dd className="text-gray-900 break-words">{jobSite.frequency.replace('_', ' ')}</dd>
             </div>
             <div>
               <dt className="text-gray-500">Days</dt>
-              <dd className="text-gray-900">{jobSite.frequency_days?.join(', ') || '—'}</dd>
+              <dd className="text-gray-900 break-words">{jobSite.frequency_days?.join(', ') || '—'}</dd>
             </div>
             <div>
               <dt className="text-gray-500">Start Time</dt>
-              <dd className="text-gray-900">{jobSite.preferred_start_time}</dd>
+              <dd className="text-gray-900 break-words">{jobSite.preferred_start_time}</dd>
             </div>
             <div>
               <dt className="text-gray-500">End Time</dt>
-              <dd className="text-gray-900">{jobSite.preferred_end_time || '—'}</dd>
+              <dd className="text-gray-900 break-words">{jobSite.preferred_end_time || '—'}</dd>
             </div>
             <div>
               <dt className="text-gray-500">Estimated Duration</dt>
-              <dd className="text-gray-900">{jobSite.estimated_duration_minutes} min</dd>
+              <dd className="text-gray-900 break-words">{jobSite.estimated_duration_minutes} min</dd>
             </div>
             <div>
               <dt className="text-gray-500">Start Date</dt>
-              <dd className="text-gray-900">{jobSite.start_date || '—'}</dd>
+              <dd className="text-gray-900 break-words">{jobSite.start_date || '—'}</dd>
             </div>
             {(jobSite.status === 'paused' || jobSite.status === 'archived') && (
               <div>
                 <dt className="text-gray-500">Last Active Day</dt>
-                <dd className="text-gray-900">{jobSite.end_date || '—'}</dd>
+                <dd className="text-gray-900 break-words">{jobSite.end_date || '—'}</dd>
               </div>
             )}
             {jobSite.service_amount !== null && (
               <div>
                 <dt className="text-gray-500">Service Amount</dt>
-                <dd className="text-gray-900">${jobSite.service_amount} (from accepted quote)</dd>
+                <dd className="text-gray-900 break-words">${jobSite.service_amount} (from accepted quote)</dd>
               </div>
             )}
             {jobSite.notes && (
               <div className="col-span-2 sm:col-span-4">
                 <dt className="text-gray-500">Notes</dt>
-                <dd className="text-gray-900">{jobSite.notes}</dd>
+                <dd className="text-gray-900 break-words">{jobSite.notes}</dd>
               </div>
             )}
           </dl>
@@ -458,11 +458,11 @@ function ActivateJobPanel({ jobSite, onActivated }: { jobSite: JobSite; onActiva
       <dl className="grid grid-cols-2 gap-3 text-sm">
         <div>
           <dt className="text-gray-500">Service Amount</dt>
-          <dd className="text-gray-900">{jobSite.service_amount !== null ? `$${jobSite.service_amount}` : '—'}</dd>
+          <dd className="text-gray-900 break-words">{jobSite.service_amount !== null ? `$${jobSite.service_amount}` : '—'}</dd>
         </div>
         <div>
           <dt className="text-gray-500">Staff Payment Budget (monthly)</dt>
-          <dd className="text-gray-900">{jobSite.staff_payment_amount !== null ? `$${jobSite.staff_payment_amount}/mo` : '—'}</dd>
+          <dd className="text-gray-900 break-words">{jobSite.staff_payment_amount !== null ? `$${jobSite.staff_payment_amount}/mo` : '—'}</dd>
         </div>
       </dl>
       {error && <p className="text-sm text-red-600">{error}</p>}

@@ -95,21 +95,21 @@ export function ClientProfilePage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <div className="text-[10px] font-bold uppercase tracking-wide text-gray-400">Name</div>
-              <div className="text-sm text-gray-900 mt-0.5">
+              <div className="text-sm text-gray-900 mt-0.5 break-words">
                 {client.first_name} {client.last_name}
               </div>
             </div>
             <div>
               <div className="text-[10px] font-bold uppercase tracking-wide text-gray-400">Role</div>
-              <div className="text-sm text-gray-900 mt-0.5">{client.role || '—'}</div>
+              <div className="text-sm text-gray-900 mt-0.5 break-words">{client.role || '—'}</div>
             </div>
             <div>
               <div className="text-[10px] font-bold uppercase tracking-wide text-gray-400">Email</div>
-              <div className="text-sm text-gray-900 mt-0.5">{client.email || '—'}</div>
+              <div className="text-sm text-gray-900 mt-0.5 break-words">{client.email || '—'}</div>
             </div>
             <div>
               <div className="text-[10px] font-bold uppercase tracking-wide text-gray-400">Phone</div>
-              <div className="text-sm text-gray-900 mt-0.5">{client.phone || '—'}</div>
+              <div className="text-sm text-gray-900 mt-0.5 break-words">{client.phone || '—'}</div>
             </div>
           </div>
         </div>

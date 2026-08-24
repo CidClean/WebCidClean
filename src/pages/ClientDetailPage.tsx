@@ -172,35 +172,35 @@ function InfoTab({ client, onUpdated }: { client: Client; onUpdated: () => void 
             <dl className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <dt className="text-gray-500">First Name</dt>
-                <dd className="text-gray-900">{client.first_name}</dd>
+                <dd className="text-gray-900 break-words">{client.first_name}</dd>
               </div>
               <div>
                 <dt className="text-gray-500">Last Name</dt>
-                <dd className="text-gray-900">{client.last_name}</dd>
+                <dd className="text-gray-900 break-words">{client.last_name}</dd>
               </div>
               <div>
                 <dt className="text-gray-500">Company</dt>
-                <dd className="text-gray-900">{client.company || '—'}</dd>
+                <dd className="text-gray-900 break-words">{client.company || '—'}</dd>
               </div>
               <div>
                 <dt className="text-gray-500">Role</dt>
-                <dd className="text-gray-900">{client.role || '—'}</dd>
+                <dd className="text-gray-900 break-words">{client.role || '—'}</dd>
               </div>
               <div>
                 <dt className="text-gray-500">Email</dt>
-                <dd className="text-gray-900">{client.email || '—'}</dd>
+                <dd className="text-gray-900 break-words">{client.email || '—'}</dd>
               </div>
               <div>
                 <dt className="text-gray-500">Phone</dt>
-                <dd className="text-gray-900">{client.phone || '—'}</dd>
+                <dd className="text-gray-900 break-words">{client.phone || '—'}</dd>
               </div>
               <div>
                 <dt className="text-gray-500">Facility Type</dt>
-                <dd className="text-gray-900">{client.facility_type || '—'}</dd>
+                <dd className="text-gray-900 break-words">{client.facility_type || '—'}</dd>
               </div>
               <div className="col-span-2">
                 <dt className="text-gray-500">Services Required</dt>
-                <dd className="text-gray-900">{client.services_required?.join(', ') || '—'}</dd>
+                <dd className="text-gray-900 break-words">{client.services_required?.join(', ') || '—'}</dd>
               </div>
             </dl>
           </div>

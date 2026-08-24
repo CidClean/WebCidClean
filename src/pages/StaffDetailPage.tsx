@@ -152,23 +152,23 @@ function StaffInfoSection({ staff, onUpdated }: { staff: Staff; onUpdated: () =>
           <dl className="grid grid-cols-2 gap-3 text-sm">
             <div>
               <dt className="text-gray-500">First Name</dt>
-              <dd className="text-gray-900">{staff.first_name}</dd>
+              <dd className="text-gray-900 break-words">{staff.first_name}</dd>
             </div>
             <div>
               <dt className="text-gray-500">Last Name</dt>
-              <dd className="text-gray-900">{staff.last_name}</dd>
+              <dd className="text-gray-900 break-words">{staff.last_name}</dd>
             </div>
             <div>
               <dt className="text-gray-500">Type</dt>
-              <dd className="text-gray-900 capitalize">{staff.type}</dd>
+              <dd className="text-gray-900 break-words capitalize">{staff.type}</dd>
             </div>
             <div>
               <dt className="text-gray-500">Email</dt>
-              <dd className="text-gray-900">{staff.email || '—'}</dd>
+              <dd className="text-gray-900 break-words">{staff.email || '—'}</dd>
             </div>
             <div>
               <dt className="text-gray-500">Phone</dt>
-              <dd className="text-gray-900">{staff.phone || '—'}</dd>
+              <dd className="text-gray-900 break-words">{staff.phone || '—'}</dd>
             </div>
           </dl>
         </div>

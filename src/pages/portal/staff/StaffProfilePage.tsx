@@ -113,21 +113,21 @@ export function StaffProfilePage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <div className="text-[10px] font-bold uppercase tracking-wide text-gray-400">Name</div>
-              <div className="text-sm text-gray-900 mt-0.5">
+              <div className="text-sm text-gray-900 mt-0.5 break-words">
                 {staff.first_name} {staff.last_name}
               </div>
             </div>
             <div>
               <div className="text-[10px] font-bold uppercase tracking-wide text-gray-400">Type</div>
-              <div className="text-sm text-gray-900 mt-0.5">{staff.type === 'employee' ? 'Employee' : 'Contractor'}</div>
+              <div className="text-sm text-gray-900 mt-0.5 break-words">{staff.type === 'employee' ? 'Employee' : 'Contractor'}</div>
             </div>
             <div>
               <div className="text-[10px] font-bold uppercase tracking-wide text-gray-400">Email</div>
-              <div className="text-sm text-gray-900 mt-0.5">{staff.email || '—'}</div>
+              <div className="text-sm text-gray-900 mt-0.5 break-words">{staff.email || '—'}</div>
             </div>
             <div>
               <div className="text-[10px] font-bold uppercase tracking-wide text-gray-400">Phone</div>
-              <div className="text-sm text-gray-900 mt-0.5">{staff.phone || '—'}</div>
+              <div className="text-sm text-gray-900 mt-0.5 break-words">{staff.phone || '—'}</div>
             </div>
           </div>
         </div>
