@@ -1,13 +1,19 @@
-import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
+import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
+import { LOGO_DATA_URI } from '../../assets/logoDataUri'
+
+const BRAND = '#0d7d72'
 
 const styles = StyleSheet.create({
   page: { padding: 32, fontSize: 11, fontFamily: 'Helvetica' },
-  title: { fontSize: 20, marginBottom: 4 },
-  subtitle: { fontSize: 11, color: '#555', marginBottom: 16 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
+  logo: { width: 96, height: 81 },
+  title: { fontSize: 22, color: BRAND, textAlign: 'right' },
+  subtitle: { fontSize: 11, color: '#555', textAlign: 'right', marginTop: 2 },
+  divider: { borderBottomWidth: 2, borderBottomColor: BRAND, marginBottom: 16 },
   section: { marginBottom: 12 },
-  sectionTitle: { fontSize: 12, marginBottom: 4, fontWeight: 700 },
+  sectionTitle: { fontSize: 11, marginBottom: 4, fontWeight: 700, color: BRAND, textTransform: 'uppercase', letterSpacing: 0.5 },
   row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 8, fontWeight: 700 },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 8, paddingHorizontal: 8, marginTop: 4, backgroundColor: '#effaf9', fontWeight: 700, color: BRAND },
   label: { color: '#555' },
 })
 
@@ -41,10 +47,16 @@ export function InvoicePdfDocument({
   return (
     <Document>
       <Page size="LETTER" style={styles.page}>
-        <Text style={styles.title}>Invoice</Text>
-        <Text style={styles.subtitle}>
-          {companyName ?? 'Client'} — {jobSiteName}
-        </Text>
+        <View style={styles.header}>
+          <Image style={styles.logo} src={LOGO_DATA_URI} />
+          <View>
+            <Text style={styles.title}>Invoice</Text>
+            <Text style={styles.subtitle}>
+              {companyName ?? 'Client'} — {jobSiteName}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.divider} />
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Job Site</Text>
