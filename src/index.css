@@ -1,1 +1,26 @@
 @import "tailwindcss";
+
+/*
+ * Provisional Cid Clean visual direction (per UX-001 brief, section 4):
+ * no definitive logo, palette or typeface exists yet, so this stands in
+ * until a real brand is approved — sober neutral structure (Tailwind's
+ * default gray scale, left untouched) plus a single accent tied to
+ * cleanliness, trust and freshness. Overriding Tailwind's "blue" scale
+ * means every existing bg-blue, text-blue and border-blue utility across
+ * the app picks this up automatically, without touching each component.
+ */
+@theme {
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --color-blue-50: #eefaf8;
+  --color-blue-100: #d3f2ee;
+  --color-blue-200: #a8e6dd;
+  --color-blue-300: #7fd6ca;
+  --color-blue-400: #45bcae;
+  --color-blue-500: #1f9d90;
+  --color-blue-600: #127a70;
+  --color-blue-700: #0e625a;
+  --color-blue-800: #0f4f49;
+  --color-blue-900: #0c3733;
+  --color-blue-950: #082523;
+}

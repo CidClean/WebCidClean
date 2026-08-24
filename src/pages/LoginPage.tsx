@@ -65,7 +65,7 @@ export function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="bg-white p-8 rounded shadow-sm w-full max-w-sm space-y-4">
-        <h1 className="text-lg font-semibold text-gray-900">WebCidClean</h1>
+        <h1 className="text-lg font-semibold text-gray-900">Cid Clean</h1>
 
         {mode === 'otp-request' && (
           <form onSubmit={handleSendCode} className="space-y-4">
