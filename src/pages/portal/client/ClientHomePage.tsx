@@ -74,7 +74,7 @@ export function ClientHomePage() {
       {nextVisit ? (
         <HeroCard
           label="Next visit"
-          title={`${new Date(nextVisit.date + 'T00:00:00Z').toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}, ${nextVisit.startTime}`}
+          title={`${new Date(nextVisit.date + 'T00:00:00Z').toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'UTC' })}, ${nextVisit.startTime}`}
           subtitle={nextVisit.jobSiteName}
         />
       ) : (

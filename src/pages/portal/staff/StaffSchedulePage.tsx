@@ -57,7 +57,7 @@ export function StaffSchedulePage() {
           {[...grouped.entries()].map(([date, dayVisits]) => (
             <div key={date}>
               <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-1.5">
-                {new Date(date + 'T00:00:00Z').toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+                {new Date(date + 'T00:00:00Z').toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'UTC' })}
               </h3>
               <div className="bg-white border border-gray-200 rounded-lg divide-y divide-gray-100">
                 {dayVisits.map((v, i) => (

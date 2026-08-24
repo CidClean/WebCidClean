@@ -81,7 +81,7 @@ export function StaffHomePage() {
         <HeroCard
           label="Next visit"
           title={`${next.jobSiteName} · ${next.startTime}`}
-          subtitle={`${next.address} — ${new Date(next.date + 'T00:00:00Z').toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}`}
+          subtitle={`${next.address} — ${new Date(next.date + 'T00:00:00Z').toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'UTC' })}`}
         />
       ) : (
         <HeroCard label="Next visit" title="Nothing scheduled" subtitle="No visits in the next 7 days" />
