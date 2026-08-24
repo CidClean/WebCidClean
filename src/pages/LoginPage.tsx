@@ -83,7 +83,7 @@ export function LoginPage() {
         {mode === 'otp-verify' && (
           <form onSubmit={handleVerifyCode} className="space-y-4">
             <p className="text-sm text-gray-500">
-              Enter the 6-digit code we sent to <span className="font-medium text-gray-700">{email}</span>.
+              Enter the code we sent to <span className="font-medium text-gray-700">{email}</span>.
             </p>
             <Field label="Code">
               <Input
