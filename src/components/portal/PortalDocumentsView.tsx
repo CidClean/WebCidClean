@@ -127,7 +127,7 @@ export function PortalDocumentsView<T extends PortalDocumentLike>({
           {filtered.map((doc) => (
             <div key={doc.id} className="flex gap-3 bg-white border border-gray-200 rounded-lg p-3">
               <div
-                className={`w-8 h-9 rounded shrink-0 relative ${isPdf(doc.name) ? 'bg-orange-50' : 'bg-slate-100'}`}
+                className={`w-8 h-9 rounded-lg shrink-0 relative ${isPdf(doc.name) ? 'bg-orange-50' : 'bg-slate-100'}`}
               >
                 <span
                   className={`absolute inset-x-1.5 top-1.5 h-0.5 ${isPdf(doc.name) ? 'bg-orange-300' : 'bg-slate-300'}`}

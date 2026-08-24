@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext'
 import { MfaChallengeScreen } from '../auth/MfaChallengeScreen'
 import { supabase } from '../lib/supabase'
 import { passwordMeetsRequirements, PasswordRequirementsList } from '../components/auth/PasswordRequirements'
+import { AuthShell } from '../components/layout/AuthShell'
 import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
 
@@ -21,11 +22,11 @@ export function SetPasswordPage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-8">
+      <AuthShell>
         <p className="text-sm text-gray-600">
           This link is invalid or has expired. Request a new invite or password reset link.
         </p>
-      </div>
+      </AuthShell>
     )
   }
 
@@ -64,8 +65,8 @@ export function SetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <form onSubmit={handleSubmit} className="bg-white p-8 rounded shadow-sm w-full max-w-sm space-y-4">
+    <AuthShell>
+      <form onSubmit={handleSubmit} className="space-y-4">
         <h1 className="text-lg font-semibold text-gray-900">Set your password</h1>
         <p className="text-sm text-gray-500">Choose a password for your account.</p>
         <Field label="Password">
@@ -81,6 +82,6 @@ export function SetPasswordPage() {
           {submitting ? 'Saving...' : 'Set Password'}
         </Button>
       </form>
-    </div>
+    </AuthShell>
   )
 }

@@ -41,7 +41,7 @@ export function FrequencyPicker({ frequency, onFrequencyChange, days, onDaysChan
                 type="button"
                 key={day}
                 onClick={() => toggleDay(day)}
-                className={`px-2 py-1 rounded text-xs font-medium border ${
+                className={`px-2 py-1 rounded-lg text-xs font-medium border ${
                   days.includes(day)
                     ? 'bg-blue-600 text-white border-blue-600'
                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'

@@ -67,7 +67,7 @@ export function AreaForm({ jobSiteId, existingAreas, onCreated }: AreaFormProps)
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded border border-gray-200 p-4 space-y-3">
+    <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <Field label="Area Type">
           <Select value={type} onChange={(e) => setType(e.target.value as AreaType)}>

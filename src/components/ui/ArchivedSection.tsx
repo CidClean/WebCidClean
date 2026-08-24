@@ -11,7 +11,7 @@ export function ArchivedSection({
 }) {
   if (count === 0) return null
   return (
-    <details className="bg-white rounded border border-gray-200">
+    <details className="bg-white rounded-lg border border-gray-200">
       <summary className="p-4 text-sm font-medium text-gray-600 cursor-pointer select-none">
         {label} ({count})
       </summary>

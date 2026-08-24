@@ -43,7 +43,7 @@ export function SettingsPage() {
             <button
               key={value}
               onClick={() => setTab(value)}
-              className={`text-left px-3 py-1.5 rounded text-sm font-medium whitespace-nowrap ${
+              className={`text-left px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap ${
                 tab === value ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`}
             >
@@ -99,7 +99,7 @@ function CatalogTab() {
       {loading ? (
         <p className="text-sm text-gray-500">Loading...</p>
       ) : (
-        <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
+        <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
           {items.length === 0 && <p className="p-4 text-sm text-gray-500">No services or add-ons yet.</p>}
           {items.map((item) => (
             <div key={item.id} className="flex items-center justify-between p-3">
@@ -146,7 +146,7 @@ function CatalogItemForm({ onCreated }: { onCreated: () => void }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded border border-gray-200 p-4 space-y-3 max-w-lg">
+    <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 max-w-lg">
       <div className="grid grid-cols-2 gap-3">
         <Field label="Kind">
           <Select value={kind} onChange={(e) => setKind(e.target.value as CatalogItemKind)}>
@@ -210,7 +210,7 @@ function DiscountsTab() {
       {loading ? (
         <p className="text-sm text-gray-500">Loading...</p>
       ) : (
-        <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
+        <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
           {discounts.length === 0 && <p className="p-4 text-sm text-gray-500">No discounts yet.</p>}
           {discounts.map((d) => (
             <div key={d.id} className="flex items-center justify-between p-3">
@@ -254,7 +254,7 @@ function DiscountForm({ onCreated }: { onCreated: () => void }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded border border-gray-200 p-4 space-y-3 max-w-lg">
+    <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 max-w-lg">
       <div className="grid grid-cols-2 gap-3">
         <Field label="Type">
           <Select value={type} onChange={(e) => setType(e.target.value as DiscountType)}>
@@ -330,7 +330,7 @@ function ExpenseCategoriesTab() {
       {loading ? (
         <p className="text-sm text-gray-500">Loading...</p>
       ) : (
-        <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
+        <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
           {topLevel.length === 0 && <p className="p-4 text-sm text-gray-500">No expense categories yet.</p>}
           {topLevel.map((cat) => (
             <div key={cat.id}>
@@ -385,7 +385,7 @@ function ExpenseCategoryForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded border border-gray-200 p-4 space-y-3 max-w-lg">
+    <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 max-w-lg">
       <div className="grid grid-cols-2 gap-3">
         <Field label="Name">
           <Input value={name} onChange={(e) => setName(e.target.value)} required />
@@ -453,7 +453,7 @@ function SecurityTab() {
   }
 
   return (
-    <div className="bg-white rounded border border-gray-200 p-4 space-y-4 max-w-lg">
+    <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-4 max-w-lg">
       <div>
         <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-1">
           Two-Factor Authentication
@@ -526,7 +526,7 @@ function TotpEnrollmentForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <p className="text-sm text-gray-700">Scan this QR code with your authenticator app:</p>
-      <img src={enrollment.qrCode} alt="TOTP QR code" className="w-40 h-40 border border-gray-200 rounded" />
+      <img src={enrollment.qrCode} alt="TOTP QR code" className="w-40 h-40 border border-gray-200 rounded-lg" />
       <p className="text-xs text-gray-500">
         Can't scan it? Enter this code manually: <code className="font-mono">{enrollment.secret}</code>
       </p>
@@ -576,7 +576,7 @@ function TaxRateTab() {
   if (loading) return <p className="text-sm text-gray-500">Loading...</p>
 
   return (
-    <div className="bg-white rounded border border-gray-200 p-4 space-y-3 max-w-xs">
+    <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 max-w-xs">
       <Field label="Tax Rate (%)">
         <Input type="number" step="0.01" min="0" max="100" value={taxRatePercent} onChange={(e) => setTaxRatePercent(e.target.value)} />
       </Field>

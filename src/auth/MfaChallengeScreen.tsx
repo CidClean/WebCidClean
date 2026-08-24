@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { listMfaFactors, verifyTotpCode } from '../api/mfa'
+import { AuthShell } from '../components/layout/AuthShell'
 import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
 import { useAuth } from './AuthContext'
@@ -37,8 +38,8 @@ export function MfaChallengeScreen() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <form onSubmit={handleSubmit} className="bg-white p-8 rounded shadow-sm w-full max-w-sm space-y-4">
+    <AuthShell>
+      <form onSubmit={handleSubmit} className="space-y-4">
         <h1 className="text-lg font-semibold text-gray-900">Two-factor verification</h1>
         <p className="text-sm text-gray-500">Enter the 6-digit code from your authenticator app.</p>
         {loading ? (
@@ -69,6 +70,6 @@ export function MfaChallengeScreen() {
           Sign out
         </button>
       </form>
-    </div>
+    </AuthShell>
   )
 }

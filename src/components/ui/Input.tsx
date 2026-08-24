@@ -7,7 +7,7 @@ export function Label(props: LabelHTMLAttributes<HTMLLabelElement>) {
 export function Input({ className = '', ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
-      className={`border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+      className={`border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
         className || 'w-full'
       }`}
       {...props}
@@ -18,7 +18,7 @@ export function Input({ className = '', ...props }: InputHTMLAttributes<HTMLInpu
 export function Textarea({ className = '', ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
-      className={`border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+      className={`border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
         className || 'w-full'
       }`}
       {...props}

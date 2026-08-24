@@ -54,7 +54,7 @@ export function StaffListPage() {
         <p className="text-sm text-gray-500">Loading...</p>
       ) : (
         <>
-          <div className="bg-white rounded border border-gray-200 overflow-x-auto">
+          <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
             {activeStaff.length === 0 ? (
               <p className="p-4 text-sm text-gray-500">No staff match.</p>
             ) : (
@@ -130,7 +130,7 @@ function NewStaffForm({ onCreated }: { onCreated: () => void }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded border border-gray-200 p-4 space-y-3 max-w-lg">
+    <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 max-w-lg">
       <div className="grid grid-cols-2 gap-3">
         <Field label="First Name">
           <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />

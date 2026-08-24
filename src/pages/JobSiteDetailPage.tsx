@@ -134,7 +134,7 @@ export function JobSiteDetailPage() {
 
         <div className="flex-1 min-w-0 space-y-6">
           {pendingStatus && (
-            <div className="bg-white rounded border border-gray-200 p-4 space-y-3 max-w-md">
+            <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 max-w-md">
               <p className="text-sm font-medium text-gray-900">
                 {pendingStatus === 'archived' ? 'Archive' : 'Pause'} this job site
               </p>
@@ -225,7 +225,7 @@ function InfoTab({ jobSite, onUpdated }: { jobSite: JobSite; onUpdated: () => vo
               Edit
             </Button>
           </div>
-          <dl className="bg-white rounded border border-gray-200 p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+          <dl className="bg-white rounded-lg border border-gray-200 p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
             <div>
               <dt className="text-gray-500">Contact</dt>
               <dd className="text-gray-900">{jobSite.contact_name || '—'}</dd>
@@ -355,7 +355,7 @@ function QuoteSection({ jobSiteId, clientId }: { jobSiteId: string; clientId: st
       {quotes.length === 0 ? (
         <p className="text-sm text-gray-500">No quotes yet.</p>
       ) : (
-        <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
+        <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
           {quotes.map((q) => (
             <Link
               key={q.id}
@@ -395,7 +395,7 @@ function InvoicesSection({ jobSiteId, clientId }: { jobSiteId: string; clientId:
       {invoices.length === 0 ? (
         <p className="text-sm text-gray-500">No invoices yet.</p>
       ) : (
-        <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
+        <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
           {invoices.map((inv) => (
             <Link
               key={inv.id}
@@ -442,7 +442,7 @@ function ActivateJobPanel({ jobSite, onActivated }: { jobSite: JobSite; onActiva
   }
 
   return (
-    <div className="bg-white rounded border border-gray-200 p-4 space-y-3 max-w-md">
+    <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 max-w-md">
       {jobSite.service_amount === null && (
         <p className="text-sm text-red-600">No accepted quote found — the service amount is set automatically when a quote is approved.</p>
       )}
@@ -525,7 +525,7 @@ function StaffAssignmentsSection({ jobSite, onUpdated }: { jobSite: JobSite; onU
             {activeAssignments.length === 0 ? (
               <p className="text-sm text-gray-500">No staff assigned yet.</p>
             ) : (
-              <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
+              <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
                 {activeAssignments.map((a) => (
                   <AssignmentRow key={a.id} assignment={a} onChanged={refreshAll} onEnd={(endDate) => handleEnd(a, endDate)} />
                 ))}
@@ -562,7 +562,7 @@ function StaffPaymentBudgetEditor({ jobSite, onUpdated }: { jobSite: JobSite; on
   }
 
   return (
-    <div className="bg-white rounded border border-gray-200 p-4 flex items-end gap-2 max-w-sm">
+    <div className="bg-white rounded-lg border border-gray-200 p-4 flex items-end gap-2 max-w-sm">
       <Field label="Staff Payment Budget (monthly)">
         <Input type="number" step="0.01" min="0" value={value} onChange={(e) => setValue(e.target.value)} />
       </Field>

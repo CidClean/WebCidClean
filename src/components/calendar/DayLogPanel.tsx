@@ -111,7 +111,7 @@ export function DayLogPanel({ jobSiteId, jobSiteName, date, onClose }: DayLogPan
   }
 
   return (
-    <div className="bg-white rounded border border-gray-200 p-4 space-y-3">
+    <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-900">
           {jobSiteName} — {date}

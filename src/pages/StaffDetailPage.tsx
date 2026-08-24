@@ -95,7 +95,7 @@ export function StaffDetailPage() {
             {assignments.length === 0 ? (
               <p className="text-sm text-gray-500">No assignments yet.</p>
             ) : (
-              <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
+              <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
                 {assignments.map((a) => (
                   <Link
                     key={a.id}
@@ -140,7 +140,7 @@ function PortalInviteSection({ staff }: { staff: Staff }) {
       {status === undefined ? (
         <p className="text-sm text-gray-500">Checking...</p>
       ) : status?.confirmed ? (
-        <p className="text-sm text-green-700 bg-white rounded border border-gray-200 p-4">
+        <p className="text-sm text-green-700 bg-white rounded-lg border border-gray-200 p-4">
           This staff member has an active portal account and can log in to see their schedule and payments.
         </p>
       ) : (
@@ -201,7 +201,7 @@ function PaymentsSection({ staffId }: { staffId: string }) {
             type="date"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
-            className="border border-gray-300 rounded px-2 py-1 text-sm"
+            className="border border-gray-300 rounded-lg px-2 py-1 text-sm"
           />
         </div>
         <div>
@@ -210,7 +210,7 @@ function PaymentsSection({ staffId }: { staffId: string }) {
             type="date"
             value={to}
             onChange={(e) => setTo(e.target.value)}
-            className="border border-gray-300 rounded px-2 py-1 text-sm"
+            className="border border-gray-300 rounded-lg px-2 py-1 text-sm"
           />
         </div>
         <Button variant="secondary" onClick={() => setFrom(startOfWeek())}>
@@ -231,7 +231,7 @@ function PaymentsSection({ staffId }: { staffId: string }) {
       ) : logs.length === 0 ? (
         <p className="text-sm text-gray-500">No accrued work days in this range.</p>
       ) : (
-        <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
+        <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
           {logs.map((l) => (
             <div key={l.id} className="flex items-center justify-between p-3 text-sm">
               <div>

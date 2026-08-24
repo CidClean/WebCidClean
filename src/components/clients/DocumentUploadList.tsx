@@ -44,7 +44,7 @@ export function DocumentUploadList({ clientId }: { clientId: string }) {
   }
 
   return (
-    <div className="bg-white rounded border border-gray-200 p-4 space-y-3 max-w-lg">
+    <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 max-w-lg">
       <div>
         <label className="inline-block">
           <span className="sr-only">Upload signed document</span>

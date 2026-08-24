@@ -53,7 +53,7 @@ export function JobSiteEditForm({ jobSite, onSaved, onCancel }: { jobSite: JobSi
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded border border-gray-200 p-4 space-y-3">
+    <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <Field label="Job Site Name">
           <Input value={name} onChange={(e) => setName(e.target.value)} required />

@@ -26,7 +26,7 @@ export function PublicQuotePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
-      <div className="max-w-2xl mx-auto bg-white rounded border border-gray-200 p-6 space-y-6">
+      <div className="max-w-2xl mx-auto bg-white rounded-lg border border-gray-200 p-6 space-y-6">
         <h1 className="text-xl font-semibold text-gray-900">Cleaning Service Quote</h1>
 
         {error && <p className="text-sm text-red-600">{error}</p>}

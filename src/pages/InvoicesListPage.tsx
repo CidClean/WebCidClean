@@ -63,7 +63,7 @@ export function InvoicesListPage() {
       ) : filtered.length === 0 ? (
         <p className="text-sm text-gray-500">No invoices match. Generate one from a job site's Invoices tab.</p>
       ) : (
-        <div className="bg-white rounded border border-gray-200 overflow-x-auto">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-gray-400 border-b border-gray-200">

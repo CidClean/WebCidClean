@@ -153,7 +153,7 @@ export function QuoteEditorPage() {
         <StatusBadge status={quote.status} />
       </div>
 
-      <div className="bg-white rounded border border-gray-200 p-4 space-y-4 max-w-xl">
+      <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-4 max-w-xl">
         <QuoteLineItemsEditor
           items={items}
           onChange={setItems}
@@ -176,7 +176,7 @@ export function QuoteEditorPage() {
       </div>
 
       {quote.status !== 'draft' && (
-        <div className="bg-white rounded border border-gray-200 p-4 max-w-xl space-y-2">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 max-w-xl space-y-2">
           <h2 className="text-sm font-semibold text-gray-700">Share Link</h2>
           {emailWarning && <p className="text-sm text-amber-600">{emailWarning}</p>}
           <ShareLinkRow shareToken={quote.share_token} />
@@ -189,7 +189,7 @@ export function QuoteEditorPage() {
       )}
 
       {responses.length > 0 && (
-        <div className="bg-white rounded border border-gray-200 p-4 max-w-xl space-y-3">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 max-w-xl space-y-3">
           <h2 className="text-sm font-semibold text-gray-700">Client Responses</h2>
           {responses.map((r) => (
             <div key={r.id} className="text-sm border-b border-gray-100 pb-2 last:border-0">

@@ -89,7 +89,7 @@ export function AccountingPage() {
             type="date"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
-            className="border border-gray-300 rounded px-2 py-1 text-sm"
+            className="border border-gray-300 rounded-lg px-2 py-1 text-sm"
           />
         </div>
         <div>
@@ -98,7 +98,7 @@ export function AccountingPage() {
             type="date"
             value={to}
             onChange={(e) => setTo(e.target.value)}
-            className="border border-gray-300 rounded px-2 py-1 text-sm"
+            className="border border-gray-300 rounded-lg px-2 py-1 text-sm"
           />
         </div>
         <Button variant="secondary" onClick={() => setFrom(startOfWeek())}>
@@ -147,7 +147,7 @@ export function AccountingPage() {
           ) : rows.length === 0 ? (
             <p className="text-sm text-gray-500">No active or paused job sites yet.</p>
           ) : (
-            <div className="bg-white rounded border border-gray-200 overflow-x-auto">
+            <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200 text-left text-gray-500">
@@ -244,7 +244,7 @@ function ExpenseList({
   }
 
   return (
-    <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
+    <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
       {expenses.map((e) => (
         <div key={e.id} className="flex items-center justify-between p-3 text-sm">
           <div>
@@ -307,7 +307,7 @@ function ExpenseForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded border border-gray-200 p-4 space-y-3 max-w-2xl">
+    <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 max-w-2xl">
       <div className="grid grid-cols-2 gap-3">
         <Field label="Category">
           <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>

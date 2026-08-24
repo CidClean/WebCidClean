@@ -12,7 +12,7 @@ export function AreaCard({ area, onUpdated }: { area: JobSiteArea; onUpdated: ()
 
   if (editing) {
     return (
-      <div className="bg-white rounded border border-gray-200 p-3 space-y-3">
+      <div className="bg-white rounded-lg border border-gray-200 p-3 space-y-3">
         <AreaEditForm
           area={area}
           onSaved={() => {
@@ -29,7 +29,7 @@ export function AreaCard({ area, onUpdated }: { area: JobSiteArea; onUpdated: ()
   }
 
   return (
-    <div className="bg-white rounded border border-gray-200 p-3 space-y-2">
+    <div className="bg-white rounded-lg border border-gray-200 p-3 space-y-2">
       <div className="flex items-center justify-between">
         <span className="font-medium text-gray-900">{area.name}</span>
         <div className="flex items-center gap-2">

@@ -124,12 +124,12 @@ export function CalendarPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-semibold text-gray-900">Calendar</h1>
-        <div className="flex items-center gap-1 bg-gray-100 rounded p-0.5">
+        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
           {(['month', 'week', 'day'] as ViewMode[]).map((mode) => (
             <button
               key={mode}
               onClick={() => setViewMode(mode)}
-              className={`px-3 py-1 text-sm rounded capitalize ${
+              className={`px-3 py-1 text-sm rounded-lg capitalize ${
                 viewMode === mode ? 'bg-white shadow-sm text-gray-900' : 'text-gray-600'
               }`}
             >
@@ -161,7 +161,7 @@ export function CalendarPage() {
       ) : viewMode === 'day' ? (
         <DaySchedule date={dayViewDate!} occurrences={occurrencesByDate.get(dayViewDate!) ?? []} />
       ) : (
-        <div className="bg-white rounded border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="grid grid-cols-7 border-b border-gray-200 text-xs font-medium text-gray-500">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
               <div key={d} className="p-2 text-center">
@@ -200,7 +200,7 @@ export function CalendarPage() {
                         <button
                           key={occ.jobSiteId}
                           onClick={() => setSelectedDate(dateStr)}
-                          className="block w-full text-left text-[11px] leading-tight px-1 py-0.5 rounded bg-blue-50 text-blue-800 hover:bg-blue-100 truncate"
+                          className="block w-full text-left text-[11px] leading-tight px-1 py-0.5 rounded-lg bg-blue-50 text-blue-800 hover:bg-blue-100 truncate"
                           title={`${occ.jobSiteName} — ${occ.clientName} @ ${occ.startTime}`}
                         >
                           {viewMode === 'week' ? `${occ.startTime} ${occ.jobSiteName}` : occ.jobSiteName}

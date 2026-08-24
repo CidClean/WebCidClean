@@ -163,7 +163,7 @@ function InfoTab({ client, onUpdated }: { client: Client; onUpdated: () => void 
             onCancel={() => setEditing(false)}
           />
         ) : (
-          <div className="bg-white rounded border border-gray-200 p-4 space-y-3">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
             <div className="flex justify-end">
               <button onClick={() => setEditing(true)} className="text-sm text-blue-600 hover:underline">
                 Edit
@@ -261,7 +261,7 @@ function ClientEditForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded border border-gray-200 p-4 space-y-3">
+    <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <Field label="First Name">
           <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
@@ -319,7 +319,7 @@ function PortalInviteSection({ client }: { client: Client }) {
       {status === undefined ? (
         <p className="text-sm text-gray-500">Checking...</p>
       ) : status?.confirmed ? (
-        <p className="text-sm text-green-700 bg-white rounded border border-gray-200 p-4">
+        <p className="text-sm text-green-700 bg-white rounded-lg border border-gray-200 p-4">
           This client has an active portal account and can log in to see their job sites, quotes, and documents.
         </p>
       ) : (
@@ -382,7 +382,7 @@ function JobSitesTab({
         <p className="text-sm text-gray-500">Loading...</p>
       ) : (
         <>
-          <div className="bg-white rounded border border-gray-200 divide-y divide-gray-100">
+          <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
             {activeJobSites.length === 0 && <p className="p-4 text-sm text-gray-500">No job sites yet.</p>}
             {activeJobSites.map((js) => (
               <JobSiteRow key={js.id} clientId={client.id} jobSite={js} />

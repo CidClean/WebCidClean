@@ -124,7 +124,7 @@ export function InvoiceDetailPage() {
           <BackLink to={`/clients/${clientId}/job-sites/${jobSiteId}`} label="Back to job site" />
         </div>
         <h1 className="text-xl font-semibold text-gray-900">New Invoice — {jobSite.name}</h1>
-        <form onSubmit={handleCreate} className="bg-white rounded border border-gray-200 p-4 space-y-3 max-w-md">
+        <form onSubmit={handleCreate} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 max-w-md">
           <div className="grid grid-cols-2 gap-3">
             <Field label="Period Start">
               <Input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} required />
@@ -247,7 +247,7 @@ export function InvoiceDetailPage() {
         <StatusBadge status={invoice.status} />
       </div>
 
-      <div className="bg-white rounded border border-gray-200 p-4 space-y-4 max-w-xl">
+      <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-4 max-w-xl">
         <QuoteLineItemsEditor
           items={items}
           onChange={setItems}

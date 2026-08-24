@@ -51,9 +51,9 @@ export function AreaPictureUpload({ areaId }: { areaId: string }) {
           {pictures.map((pic) => (
             <a key={pic.id} href={urls[pic.id] ?? '#'} target="_blank" rel="noreferrer">
               {urls[pic.id] ? (
-                <img src={urls[pic.id]} alt="" className="w-16 h-16 object-cover rounded border border-gray-200" />
+                <img src={urls[pic.id]} alt="" className="w-16 h-16 object-cover rounded-lg border border-gray-200" />
               ) : (
-                <div className="w-16 h-16 rounded border border-gray-200 bg-gray-100" />
+                <div className="w-16 h-16 rounded-lg border border-gray-200 bg-gray-100" />
               )}
             </a>
           ))}

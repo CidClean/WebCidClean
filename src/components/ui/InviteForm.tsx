@@ -34,7 +34,7 @@ export function InviteForm({
   return (
     <div className="space-y-2">
       {pending && (
-        <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded p-3">
+        <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
           {staleInvite ? (
             <>
               Invite was sent to <strong>{invitedEmail}</strong>, which no longer matches the contact email on file.
@@ -47,7 +47,7 @@ export function InviteForm({
           )}
         </p>
       )}
-      <div className="bg-white rounded border border-gray-200 p-4 flex items-end gap-2">
+      <div className="bg-white rounded-lg border border-gray-200 p-4 flex items-end gap-2">
         <div className="flex-1">
           <div className="text-xs font-medium text-gray-500 mb-1">Invite Email</div>
           <div className="text-sm text-gray-900">{contactEmail || <span className="text-gray-400">No contact email on file</span>}</div>

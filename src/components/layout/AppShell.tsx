@@ -37,7 +37,7 @@ function NavItem({ to, label, end, onClick }: { to: string; label: string; end?:
       end={end}
       onClick={onClick}
       className={({ isActive }) =>
-        `flex items-center gap-2.5 rounded px-2.5 py-1.5 text-sm font-medium ${
+        `flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm font-medium ${
           isActive ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
         }`
       }
@@ -80,7 +80,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="p-3 border-t border-gray-200">
           <button
             onClick={() => signOut()}
-            className="w-full text-left px-2.5 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded"
+            className="w-full text-left px-2.5 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg"
           >
             Sign out
           </button>
@@ -107,7 +107,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   setMenuOpen(false)
                   signOut()
                 }}
-                className="w-full text-left px-2.5 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded"
+                className="w-full text-left px-2.5 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg"
               >
                 Sign out
               </button>

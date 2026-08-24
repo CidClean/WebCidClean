@@ -54,7 +54,7 @@ export function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2 bg-white rounded border border-gray-200 p-4">
+            <div className="lg:col-span-2 bg-white rounded-lg border border-gray-200 p-4">
               <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">Client Pipeline</h2>
               <div className="space-y-2">
                 {CLIENT_STATUSES.map((status) => {
@@ -64,14 +64,14 @@ export function DashboardPage() {
                     <Link
                       key={status}
                       to="/clients"
-                      className="flex items-center gap-3 hover:bg-gray-50 rounded px-1 py-1 -mx-1"
+                      className="flex items-center gap-3 hover:bg-gray-50 rounded-lg px-1 py-1 -mx-1"
                     >
                       <div className="w-28 shrink-0">
                         <StatusBadge status={status} />
                       </div>
-                      <div className="flex-1 bg-gray-100 rounded h-4 overflow-hidden">
+                      <div className="flex-1 bg-gray-100 rounded-lg h-4 overflow-hidden">
                         <div
-                          className="bg-blue-500 h-full rounded"
+                          className="bg-blue-500 h-full rounded-lg"
                           style={{ width: `${Math.max((count / max) * 100, count > 0 ? 4 : 0)}%` }}
                         />
                       </div>
@@ -82,7 +82,7 @@ export function DashboardPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded border border-gray-200 p-4">
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
               <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">Quick Links</h2>
               <div className="flex flex-col gap-2">
                 <Link to="/clients" className="text-sm text-blue-600 hover:underline">

@@ -66,7 +66,7 @@ export function BillingInfoForm({ clientId, client }: { clientId: string; client
   if (loading) return <p className="text-sm text-gray-500">Loading...</p>
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded border border-gray-200 p-4 space-y-3 max-w-lg">
+    <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 max-w-lg">
       <label className="flex items-center gap-2 text-sm text-gray-700">
         <input type="checkbox" checked={sameAsClient} onChange={(e) => toggleSameAsClient(e.target.checked)} />
         Same as client information
