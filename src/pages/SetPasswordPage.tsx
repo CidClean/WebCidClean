@@ -1,20 +1,21 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { MfaChallengeScreen } from '../auth/MfaChallengeScreen'
 import { supabase } from '../lib/supabase'
 import { passwordMeetsRequirements, PasswordRequirementsList } from '../components/auth/PasswordRequirements'
 import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
 
 export function SetPasswordPage() {
-  const { session, loading, role, roleLoading } = useAuth()
+  const { session, loading, role, roleLoading, mfaPending, mfaLoading } = useAuth()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
 
-  if (loading) {
+  if (loading || (session && mfaLoading)) {
     return <div className="p-8 text-gray-500">Loading...</div>
   }
 
@@ -26,6 +27,14 @@ export function SetPasswordPage() {
         </p>
       </div>
     )
+  }
+
+  // Recovery/invite links only prove email ownership (AAL1). Accounts with
+  // MFA enabled require an elevated AAL2 session before Supabase allows a
+  // password change, so that gate has to happen here too, not just on the
+  // regular protected routes.
+  if (mfaPending) {
+    return <MfaChallengeScreen />
   }
 
   if (done && !roleLoading) {
