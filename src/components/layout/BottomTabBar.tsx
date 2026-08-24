@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router-dom'
+import { TabIcon, type TabIconName } from './TabIcons'
 
 export interface TabItem {
   to: string
   label: string
-  icon: string
+  icon: TabIconName
 }
 
 export function BottomTabBar({ items }: { items: TabItem[] }) {
@@ -21,9 +22,7 @@ export function BottomTabBar({ items }: { items: TabItem[] }) {
               }`
             }
           >
-            <span className="text-lg leading-none" aria-hidden="true">
-              {item.icon}
-            </span>
+            <TabIcon name={item.icon} />
             {item.label}
           </NavLink>
         ))}
