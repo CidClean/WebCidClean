@@ -379,27 +379,6 @@ export type Database = {
         }
         Relationships: []
       }
-      debug_events: {
-        Row: {
-          created_at: string
-          detail: Json | null
-          event: string
-          id: string
-        }
-        Insert: {
-          created_at?: string
-          detail?: Json | null
-          event: string
-          id?: string
-        }
-        Update: {
-          created_at?: string
-          detail?: Json | null
-          event?: string
-          id?: string
-        }
-        Relationships: []
-      }
       discounts: {
         Row: {
           active: boolean
