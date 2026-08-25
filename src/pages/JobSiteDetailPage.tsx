@@ -26,12 +26,22 @@ import { Select } from '../components/ui/Select'
 import { StatusBadge } from '../components/ui/StatusBadge'
 import { SummaryCard } from '../components/ui/SummaryCard'
 import { ArchivedSection } from '../components/ui/ArchivedSection'
+import { TabBar, type TabDef } from '../components/ui/TabBar'
+import { TabIcon } from '../components/layout/TabIcons'
 import { AreaForm } from '../components/areas/AreaForm'
 import { AreaCard } from '../components/areas/AreaCard'
 import { AssignStaffForm } from '../components/staff/AssignStaffForm'
 import { JobSiteEditForm } from '../components/jobSites/JobSiteEditForm'
 
 type Tab = 'info' | 'areas' | 'staff' | 'quote' | 'invoices'
+
+const JOB_SITE_TABS: TabDef<Tab>[] = [
+  { value: 'info', label: 'Info', icon: 'doc' },
+  { value: 'areas', label: 'Areas', icon: 'pin' },
+  { value: 'staff', label: 'Staff', icon: 'user' },
+  { value: 'quote', label: 'Quote', icon: 'cash' },
+  { value: 'invoices', label: 'Invoices', icon: 'wallet' },
+]
 
 export function JobSiteDetailPage() {
   const { clientId, jobSiteId } = useParams<{ clientId: string; jobSiteId: string }>()
@@ -169,27 +179,7 @@ export function JobSiteDetailPage() {
             </div>
           )}
 
-          <div className="border-b border-gray-200 flex gap-4 overflow-x-auto">
-            {(
-              [
-                ['info', 'Info'],
-                ['areas', 'Areas'],
-                ['staff', 'Staff'],
-                ['quote', 'Quote'],
-                ['invoices', 'Invoices'],
-              ] as [Tab, string][]
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                onClick={() => setTab(value)}
-                className={`pb-2 text-sm font-medium border-b-2 -mb-px whitespace-nowrap ${
-                  tab === value ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          <TabBar tabs={JOB_SITE_TABS} active={tab} onChange={setTab} />
 
           {tab === 'info' && <InfoTab jobSite={jobSite} onUpdated={refresh} />}
           {tab === 'areas' && <AreasSection jobSiteId={jobSiteId} />}
@@ -207,6 +197,29 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
     <div className="space-y-3">
       <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">{title}</h2>
       {children}
+    </div>
+  )
+}
+
+function InfoCard({ icon, title, children }: { icon: Parameters<typeof TabIcon>[0]['name']; title: string; children: ReactNode }) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="w-7 h-7 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center [&>svg]:w-4 [&>svg]:h-4">
+          <TabIcon name={icon} />
+        </span>
+        <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400">{title}</h3>
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function IconFieldValue({ label, value }: { label: string; value: string | null | undefined }) {
+  return (
+    <div>
+      <dt className="text-gray-400 text-xs">{label}</dt>
+      <dd className="text-gray-900 break-words">{value || '—'}</dd>
     </div>
   )
 }
@@ -232,66 +245,43 @@ function InfoTab({ jobSite, onUpdated }: { jobSite: JobSite; onUpdated: () => vo
               Edit
             </Button>
           </div>
-          <dl className="bg-white rounded-lg border border-gray-200 p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-            <div>
-              <dt className="text-gray-500">Contact</dt>
-              <dd className="text-gray-900 break-words">{jobSite.contact_name || '—'}</dd>
-            </div>
-            <div>
-              <dt className="text-gray-500">Contact Role</dt>
-              <dd className="text-gray-900 break-words">{jobSite.contact_role || '—'}</dd>
-            </div>
-            <div>
-              <dt className="text-gray-500">Contact Email</dt>
-              <dd className="text-gray-900 break-words">{jobSite.contact_email || '—'}</dd>
-            </div>
-            <div>
-              <dt className="text-gray-500">Contact Phone</dt>
-              <dd className="text-gray-900 break-words">{jobSite.contact_phone || '—'}</dd>
-            </div>
-            <div>
-              <dt className="text-gray-500">Frequency</dt>
-              <dd className="text-gray-900 break-words">{jobSite.frequency.replace('_', ' ')}</dd>
-            </div>
-            <div>
-              <dt className="text-gray-500">Days</dt>
-              <dd className="text-gray-900 break-words">{jobSite.frequency_days?.join(', ') || '—'}</dd>
-            </div>
-            <div>
-              <dt className="text-gray-500">Start Time</dt>
-              <dd className="text-gray-900 break-words">{jobSite.preferred_start_time}</dd>
-            </div>
-            <div>
-              <dt className="text-gray-500">End Time</dt>
-              <dd className="text-gray-900 break-words">{jobSite.preferred_end_time || '—'}</dd>
-            </div>
-            <div>
-              <dt className="text-gray-500">Estimated Duration</dt>
-              <dd className="text-gray-900 break-words">{jobSite.estimated_duration_minutes} min</dd>
-            </div>
-            <div>
-              <dt className="text-gray-500">Start Date</dt>
-              <dd className="text-gray-900 break-words">{jobSite.start_date || '—'}</dd>
-            </div>
-            {(jobSite.status === 'paused' || jobSite.status === 'archived') && (
-              <div>
-                <dt className="text-gray-500">Last Active Day</dt>
-                <dd className="text-gray-900 break-words">{jobSite.end_date || '—'}</dd>
-              </div>
-            )}
-            {jobSite.service_amount !== null && (
-              <div>
-                <dt className="text-gray-500">Service Amount</dt>
-                <dd className="text-gray-900 break-words">${jobSite.service_amount} (from accepted quote)</dd>
-              </div>
-            )}
-            {jobSite.notes && (
-              <div className="col-span-2 sm:col-span-4">
-                <dt className="text-gray-500">Notes</dt>
-                <dd className="text-gray-900 break-words">{jobSite.notes}</dd>
-              </div>
-            )}
-          </dl>
+          <InfoCard icon="user" title="Contact">
+            <dl className="grid grid-cols-2 gap-3 text-sm">
+              <IconFieldValue label="Name" value={jobSite.contact_name} />
+              <IconFieldValue label="Role" value={jobSite.contact_role} />
+              <IconFieldValue label="Email" value={jobSite.contact_email} />
+              <IconFieldValue label="Phone" value={jobSite.contact_phone} />
+            </dl>
+          </InfoCard>
+
+          <InfoCard icon="calendar" title="Schedule">
+            <dl className="grid grid-cols-2 gap-3 text-sm">
+              <IconFieldValue label="Frequency" value={jobSite.frequency.replace('_', ' ')} />
+              <IconFieldValue label="Days" value={jobSite.frequency_days?.join(', ')} />
+              <IconFieldValue label="Start Time" value={jobSite.preferred_start_time} />
+              <IconFieldValue label="End Time" value={jobSite.preferred_end_time} />
+              <IconFieldValue label="Duration" value={`${jobSite.estimated_duration_minutes} min`} />
+              <IconFieldValue label="Start Date" value={jobSite.start_date} />
+              {(jobSite.status === 'paused' || jobSite.status === 'archived') && (
+                <IconFieldValue label="Last Active Day" value={jobSite.end_date} />
+              )}
+            </dl>
+          </InfoCard>
+
+          {jobSite.service_amount !== null && (
+            <InfoCard icon="cash" title="Billing">
+              <dl className="grid grid-cols-2 gap-3 text-sm">
+                <IconFieldValue label="Service Amount" value={`$${jobSite.service_amount} / mo`} />
+              </dl>
+              <p className="text-xs text-gray-400 mt-2">Set automatically from the accepted quote.</p>
+            </InfoCard>
+          )}
+
+          {jobSite.notes && (
+            <InfoCard icon="doc" title="Notes">
+              <p className="text-sm text-gray-900 break-words">{jobSite.notes}</p>
+            </InfoCard>
+          )}
         </div>
       )}
 
