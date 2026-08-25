@@ -1,13 +1,23 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { BackLink } from '../components/ui/BackLink'
-import { archiveClient, getClient, markClientContacted, markClientInProcess, updateClient } from '../api/clients'
+import {
+  archiveClient,
+  changeClientStatus,
+  getClient,
+  listClientStatusHistory,
+  markClientContacted,
+  markClientInProcess,
+  updateClient,
+  type ClientStatusHistoryEntry,
+} from '../api/clients'
 import { listJobSitesForClient } from '../api/jobSites'
 import { getPortalAccountStatus, invitePortalUser, type PortalAccountStatus } from '../api/portal'
-import type { Client, JobSite } from '../types/models'
+import { CLIENT_STATUSES, type Client, type ClientStatus, type JobSite } from '../types/models'
 import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
 import { InviteForm } from '../components/ui/InviteForm'
+import { Select } from '../components/ui/Select'
 import { StatusBadge } from '../components/ui/StatusBadge'
 import { SummaryCard } from '../components/ui/SummaryCard'
 import { ArchivedSection } from '../components/ui/ArchivedSection'
@@ -26,6 +36,7 @@ export function ClientDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [tab, setTab] = useState<Tab>('info')
+  const [showStatusChange, setShowStatusChange] = useState(false)
 
   function refresh() {
     if (!clientId) return
@@ -59,20 +70,17 @@ export function ClientDetailPage() {
     if (!clientId) return
     setActionError(null)
     try {
-      const jobSites = await listJobSitesForClient(clientId)
-      const openJobSites = jobSites.filter((js) => js.status !== 'archived')
-      if (openJobSites.length > 0) {
-        setActionError(
-          `Archive these job sites first (from their own page — each shows a closing summary before archiving): ${openJobSites
-            .map((js) => js.name)
-            .join(', ')}.`,
-        )
-        return
-      }
+      // archive_client checks server-side, atomically, for open job sites —
+      // no client-side list-then-check-then-write race (finding #3). The
+      // RPC's exception message names which condition failed.
       await archiveClient(clientId)
       navigate('/clients')
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Action failed')
+      setActionError(
+        err instanceof Error
+          ? `${err.message} (archive each job site from its own page first — it shows a closing summary before archiving)`
+          : 'Action failed',
+      )
     }
   }
 
@@ -105,6 +113,11 @@ export function ClientDetailPage() {
                 <Button onClick={() => runAction(() => markClientInProcess(clientId))}>Move to In Process</Button>
               )}
               {client.status !== 'archived' && (
+                <Button variant="secondary" onClick={() => setShowStatusChange((v) => !v)}>
+                  Change Status
+                </Button>
+              )}
+              {client.status !== 'archived' && (
                 <Button variant="danger" onClick={handleArchiveClient}>
                   Archive
                 </Button>
@@ -114,6 +127,17 @@ export function ClientDetailPage() {
         />
 
         <div className="flex-1 min-w-0 space-y-6">
+          {showStatusChange && (
+            <ChangeStatusPanel
+              client={client}
+              onDone={() => {
+                setShowStatusChange(false)
+                refresh()
+              }}
+              onCancel={() => setShowStatusChange(false)}
+            />
+          )}
+
           <div className="border-b border-gray-200 flex gap-4">
             {(
               [
@@ -142,6 +166,105 @@ export function ClientDetailPage() {
           {tab === 'billing' && <BillingInfoForm clientId={clientId} client={client} />}
           {tab === 'documents' && <DocumentUploadList clientId={clientId} />}
         </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Finding #2: no UI path previously existed to move a client backward out
+ * of an auto-advanced status (quoted/pending/active) — only "Archive" was
+ * ever shown after that point. Lets the admin set any status directly via
+ * the change_client_status RPC, which records the transition in
+ * client_status_history (shown in StatusHistorySection below).
+ */
+function ChangeStatusPanel({
+  client,
+  onDone,
+  onCancel,
+}: {
+  client: Client
+  onDone: () => void
+  onCancel: () => void
+}) {
+  const [status, setStatus] = useState<ClientStatus>(client.status)
+  const [reason, setReason] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleConfirm() {
+    setSaving(true)
+    setError(null)
+    try {
+      await changeClientStatus(client.id, status, reason || undefined)
+      onDone()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to change status')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 max-w-md">
+      <p className="text-sm font-medium text-gray-900">Change client status</p>
+      <Field label="New Status">
+        <Select value={status} onChange={(e) => setStatus(e.target.value as ClientStatus)}>
+          {CLIENT_STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </Select>
+      </Field>
+      <Field label="Reason (optional)">
+        <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. client asked to pause billing" />
+      </Field>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      <div className="flex gap-2">
+        <Button onClick={handleConfirm} disabled={saving || status === client.status}>
+          {saving ? 'Saving...' : 'Confirm'}
+        </Button>
+        <Button variant="secondary" onClick={onCancel}>
+          Cancel
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function StatusHistorySection({ clientId }: { clientId: string }) {
+  const [entries, setEntries] = useState<ClientStatusHistoryEntry[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setLoading(true)
+    listClientStatusHistory(clientId)
+      .then(setEntries)
+      .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load status history'))
+      .finally(() => setLoading(false))
+  }, [clientId])
+
+  if (loading) return null
+  if (error) return <p className="text-sm text-red-600">{error}</p>
+  if (entries.length === 0) return null
+
+  return (
+    <div className="max-w-lg">
+      <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">Status History</h2>
+      <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
+        {entries.map((e) => (
+          <div key={e.id} className="p-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-900">
+                {e.from_status ? `${e.from_status} → ${e.to_status}` : e.to_status}
+              </span>
+              <span className="text-gray-400 text-xs">{new Date(e.changed_at).toLocaleString()}</span>
+            </div>
+            {e.reason && <p className="text-gray-500 text-xs mt-0.5">{e.reason}</p>}
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -208,6 +331,7 @@ function InfoTab({ client, onUpdated }: { client: Client; onUpdated: () => void 
       </div>
 
       <PortalInviteSection client={client} />
+      <StatusHistorySection clientId={client.id} />
     </div>
   )
 }

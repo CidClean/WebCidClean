@@ -8,6 +8,7 @@ import {
   createInvoice,
   getInvoice,
   listInvoiceLineItems,
+  listInvoicesForJobSite,
   markInvoicePaid,
   markInvoiceSent,
   replaceInvoiceLineItems,
@@ -30,6 +31,35 @@ function firstOfMonth(): string {
 function lastOfMonth(): string {
   const d = new Date()
   return new Date(Date.UTC(d.getFullYear(), d.getMonth() + 1, 0)).toISOString().slice(0, 10)
+}
+
+function daysInclusive(start: string, end: string): number {
+  const [sy, sm, sd] = start.split('-').map(Number)
+  const [ey, em, ed] = end.split('-').map(Number)
+  const startMs = Date.UTC(sy, sm - 1, sd)
+  const endMs = Date.UTC(ey, em - 1, ed)
+  return Math.round((endMs - startMs) / 86400000) + 1
+}
+
+/**
+ * Finding #15: the prefilled line-item amount previously always used the
+ * job site's full flat service_amount regardless of period length — easy to
+ * accidentally send a full month's charge for a deliberately partial
+ * period. Prorate by (period length) / (a standard 30-day month), rounded
+ * to cents. Stays fully editable afterward — this is only a starting point.
+ */
+function prorateServiceAmount(serviceAmount: number, periodStart: string, periodEnd: string): number {
+  const days = daysInclusive(periodStart, periodEnd)
+  if (days <= 0) return serviceAmount
+  return Math.round(serviceAmount * (days / 30) * 100) / 100
+}
+
+/**
+ * Finding #14: two date ranges (both inclusive) overlap if each starts on
+ * or before the other's end.
+ */
+function periodsOverlap(aStart: string, aEnd: string, bStart: string, bEnd: string): boolean {
+  return aStart <= bEnd && bStart <= aEnd
 }
 
 export function InvoiceDetailPage() {
@@ -85,6 +115,22 @@ export function InvoiceDetailPage() {
     setCreating(true)
     setError(null)
     try {
+      // Finding #14: nothing previously warned about creating two invoices
+      // with overlapping billing periods for the same job site. Non-blocking
+      // — just a deliberate confirm, since a legitimate correction/reissue
+      // can genuinely need an overlapping period.
+      const existing = await listInvoicesForJobSite(jobSiteId)
+      const overlapping = existing.filter(
+        (inv) => inv.status !== 'void' && periodsOverlap(inv.period_start, inv.period_end, periodStart, periodEnd),
+      )
+      if (overlapping.length > 0) {
+        const summary = overlapping.map((inv) => `${inv.period_start} to ${inv.period_end} ($${inv.amount}, ${inv.status})`).join('; ')
+        if (!confirm(`An invoice already covers part of this period (${summary}). Create anyway?`)) {
+          setCreating(false)
+          return
+        }
+      }
+
       const created = await createInvoice({
         job_site_id: jobSiteId,
         period_start: periodStart,
@@ -93,14 +139,17 @@ export function InvoiceDetailPage() {
         notes: null,
       })
       // Pre-fill a starting line item from the job's monthly service amount,
-      // if it has one — the admin can edit or replace it before sending.
+      // prorated to the period's actual length against a standard 30-day
+      // month (finding #15) — the admin can edit or replace it before
+      // sending regardless.
       if (jobSite?.service_amount != null) {
+        const prorated = prorateServiceAmount(jobSite.service_amount, periodStart, periodEnd)
         await replaceInvoiceLineItems(
           created.id,
           [
             {
               description: `Cleaning service — ${periodStart} to ${periodEnd}`,
-              amount: jobSite.service_amount,
+              amount: prorated,
               taxable: false,
             },
           ],
@@ -180,7 +229,10 @@ export function InvoiceDetailPage() {
       }
       await replaceInvoiceLineItems(invoice!.id, parsed, taxRate)
       const subtotal = parsed.reduce((sum, i) => sum + i.amount, 0)
-      const taxableBase = parsed.reduce((sum, i) => (i.taxable && i.amount > 0 ? sum + i.amount : sum), 0)
+      // Matches the RPC's tax base (finding #5): all taxable items, sign
+      // included — this is only for the PDF snapshot, the RPC call above is
+      // what's actually authoritative for the stored amount/tax_amount.
+      const taxableBase = parsed.reduce((sum, i) => (i.taxable ? sum + i.amount : sum), 0)
       const taxAmount = taxableBase * taxRate
       const blob = await renderInvoicePdfBlob({
         companyName: client!.company,

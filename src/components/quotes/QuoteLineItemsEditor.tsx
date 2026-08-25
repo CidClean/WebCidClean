@@ -60,10 +60,12 @@ export function QuoteLineItemsEditor({
   }
 
   const subtotal = items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
-  const taxableBase = items.reduce((sum, item) => {
-    const amount = Number(item.amount) || 0
-    return item.taxable && amount > 0 ? sum + amount : sum
-  }, 0)
+  // Sum ALL taxable line items into the base, including negative ones (e.g.
+  // a manual taxable credit) — excluding amount > 0 silently dropped a
+  // negative taxable line instead of letting it reduce the tax base
+  // (finding #5). Matches the server-side calc in replace_quote_line_items
+  // / replace_invoice_line_items.
+  const taxableBase = items.reduce((sum, item) => (item.taxable ? sum + (Number(item.amount) || 0) : sum), 0)
   const tax = taxableBase * taxRate
   const total = subtotal + tax
 

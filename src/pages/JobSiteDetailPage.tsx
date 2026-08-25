@@ -1,14 +1,14 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, type MouseEvent, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { BackLink } from '../components/ui/BackLink'
 import { getClientBillingInfo, listClientDocuments } from '../api/clients'
-import { activateJob, getJobSite, updateJobSite } from '../api/jobSites'
+import { activateJob, getJobSite, reactivateJobSite, updateJobSite } from '../api/jobSites'
 import { getJobSiteClosingSummary, type JobSiteClosingSummary } from '../api/accounting'
 import { todayDateOnly } from '../lib/accrual'
 import { listAreasForJobSite } from '../api/areas'
 import { listQuotesForJobSite } from '../api/quotes'
 import { listInvoicesForJobSite } from '../api/invoices'
-import { assignStaffToJob, endStaffAssignment, listAssignmentsForJobSite } from '../api/staff'
+import { changeAssignmentRate, endStaffAssignment, listAssignmentsForJobSite } from '../api/staff'
 import type { JobStaffAssignmentWithStaff } from '../api/staff'
 import { floorToCents } from '../lib/money'
 import {
@@ -84,7 +84,10 @@ export function JobSiteDetailPage() {
     if (!jobSiteId) return
     setActionError(null)
     try {
-      await updateJobSite(jobSiteId, { status: 'active', end_date: null })
+      // reactivate_job_site re-runs activate_job's preconditions (billing
+      // info, signed contract, staff payment amount) — a paused/archived
+      // job site can't skip straight back to active without them (#1).
+      await reactivateJobSite(jobSiteId)
       refresh()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Action failed')
@@ -345,10 +348,33 @@ function QuoteSection({ jobSiteId, clientId }: { jobSiteId: string; clientId: st
 
   if (loading) return <p className="text-sm text-gray-500">Loading...</p>
 
+  // Finding #22: the current pending quote (sent, awaiting a client
+  // response) is what "New Quote" would immediately supersede — surface it
+  // so that's a deliberate choice, not a dead end with no visibility into
+  // what's already outstanding.
+  const pendingQuote = quotes.find((q) => q.status === 'sent')
+
+  function handleNewQuoteClick(e: MouseEvent) {
+    if (
+      pendingQuote &&
+      !confirm(
+        `Quote for $${pendingQuote.amount} sent ${new Date(pendingQuote.sent_at ?? pendingQuote.created_at).toLocaleDateString()} is still awaiting the client's response. Starting a new quote will supersede it once sent. Continue?`,
+      )
+    ) {
+      e.preventDefault()
+    }
+  }
+
   return (
     <div className="space-y-3">
+      {pendingQuote && (
+        <p className="text-xs text-orange-600 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">
+          Awaiting response: ${pendingQuote.amount} quote sent{' '}
+          {new Date(pendingQuote.sent_at ?? pendingQuote.created_at).toLocaleDateString()}.
+        </p>
+      )}
       <div className="flex justify-end">
-        <Link to={`/clients/${clientId}/job-sites/${jobSiteId}/quote/new`}>
+        <Link to={`/clients/${clientId}/job-sites/${jobSiteId}/quote/new`} onClick={handleNewQuoteClick}>
           <Button>New Quote</Button>
         </Link>
       </div>
@@ -360,9 +386,14 @@ function QuoteSection({ jobSiteId, clientId }: { jobSiteId: string; clientId: st
             <Link
               key={q.id}
               to={`/clients/${clientId}/job-sites/${jobSiteId}/quote/${q.id}`}
-              className="flex items-center justify-between p-3 hover:bg-gray-50"
+              className={`flex items-center justify-between p-3 hover:bg-gray-50 ${q.status === 'sent' ? 'bg-orange-50/50' : ''}`}
             >
-              <span className="text-sm text-gray-900">${q.amount}</span>
+              <span className="text-sm text-gray-900">
+                ${q.amount}{' '}
+                <span className="text-xs text-gray-400">
+                  {new Date(q.sent_at ?? q.created_at).toLocaleDateString()}
+                </span>
+              </span>
               <StatusBadge status={q.status} />
             </Link>
           ))}
@@ -422,7 +453,12 @@ function ActivateJobPanel({ jobSite, onActivated }: { jobSite: JobSite; onActiva
 
   useEffect(() => {
     getClientBillingInfo(jobSite.client_id).then((info) => setHasBilling(!!info))
-    listClientDocuments(jobSite.client_id).then((docs) => setHasDocs(docs.length > 0))
+    // Matches the server-side check in activate_job/reactivate_job_site
+    // (finding #6): a signed contract specifically, not just any uploaded
+    // file — an ID scan or other unrelated document no longer satisfies it.
+    listClientDocuments(jobSite.client_id).then((docs) =>
+      setHasDocs(docs.some((d) => d.document_type === 'contract' && d.signed_at !== null)),
+    )
   }, [jobSite.client_id])
 
   const hasStaffPayment = jobSite.staff_payment_amount !== null
@@ -450,7 +486,10 @@ function ActivateJobPanel({ jobSite, onActivated }: { jobSite: JobSite; onActiva
         <p className="text-sm text-red-600">Client is missing billing information — add it under the client's Billing tab.</p>
       )}
       {hasDocs === false && (
-        <p className="text-sm text-red-600">Client has no signed documents — upload one under the client's Documents tab.</p>
+        <p className="text-sm text-red-600">
+          Client has no signed contract on file — upload one under the client's Documents tab ("Upload Signed
+          Contract"), or have them sign it through their client portal.
+        </p>
       )}
       {!hasStaffPayment && (
         <p className="text-sm text-red-600">Set the staff payment amount in the Staff tab before activating.</p>
@@ -500,7 +539,11 @@ function StaffAssignmentsSection({ jobSite, onUpdated }: { jobSite: JobSite; onU
       const evenShare = floorToCents(jobSite.staff_payment_amount / remainingMonthly.length)
       for (const a of remainingMonthly) {
         if (Math.abs(a.payment_amount - evenShare) > 0.01) {
-          await assignStaffToJob(jobSite.id, a.staff_id, evenShare, a.start_date, 'monthly')
+          // Rebalancing the other staff's share is a rate change — route
+          // through change_assignment_rate (effective today) rather than
+          // overwriting their assignment row in place, so their own
+          // already-accrued days keep their prior rate (finding #7).
+          await changeAssignmentRate(a.id, evenShare, 'monthly', todayDateOnly())
         }
       }
     }
@@ -588,7 +631,7 @@ function AssignmentRow({
   const [endDate, setEndDate] = useState(todayDateOnly())
   const [amount, setAmount] = useState(String(assignment.payment_amount))
   const [paymentType, setPaymentType] = useState<PaymentType>(assignment.payment_type as PaymentType)
-  const [startDate, setStartDate] = useState(assignment.start_date)
+  const [effectiveDate, setEffectiveDate] = useState(todayDateOnly())
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -596,7 +639,11 @@ function AssignmentRow({
     setSaving(true)
     setError(null)
     try {
-      await assignStaffToJob(assignment.job_site_id, assignment.staff_id, Number(amount) || 0, startDate, paymentType)
+      // change_assignment_rate ends the current segment the day before
+      // effectiveDate and opens a new one at the new rate, so days already
+      // accrued before then keep the old rate instead of being rewritten
+      // (finding #7) — rather than overwriting this row in place.
+      await changeAssignmentRate(assignment.id, Number(amount) || 0, paymentType, effectiveDate)
       setEditing(false)
       onChanged()
     } catch (err) {
@@ -658,7 +705,16 @@ function AssignmentRow({
                 onChange={(e) => setAmount(e.target.value)}
                 className="w-24"
               />
-              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-36" />
+              <div>
+                <Input
+                  type="date"
+                  value={effectiveDate}
+                  onChange={(e) => setEffectiveDate(e.target.value)}
+                  className="w-36"
+                  min={assignment.start_date}
+                />
+                <p className="text-[11px] text-gray-400">Effective date — days before this keep the old rate</p>
+              </div>
               <button onClick={handleSave} disabled={saving} className="text-xs text-blue-600 hover:underline">
                 {saving ? 'Saving...' : 'Save'}
               </button>
@@ -672,7 +728,15 @@ function AssignmentRow({
                 ${assignment.payment_amount}
                 {suffix} <span className="text-gray-400">since {assignment.start_date}</span>
               </span>
-              <button onClick={() => setEditing(true)} className="text-xs text-blue-600 hover:underline">
+              <button
+                onClick={() => {
+                  setAmount(String(assignment.payment_amount))
+                  setPaymentType(assignment.payment_type as PaymentType)
+                  setEffectiveDate(todayDateOnly())
+                  setEditing(true)
+                }}
+                className="text-xs text-blue-600 hover:underline"
+              >
                 Edit
               </button>
               <button

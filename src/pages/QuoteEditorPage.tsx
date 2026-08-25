@@ -110,7 +110,10 @@ export function QuoteEditorPage() {
       }
       await replaceQuoteLineItems(quote!.id, parsed, taxRate)
       const subtotal = parsed.reduce((sum, i) => sum + i.amount, 0)
-      const taxableBase = parsed.reduce((sum, i) => (i.taxable && i.amount > 0 ? sum + i.amount : sum), 0)
+      // Matches the RPC's tax base (finding #5): all taxable items, sign
+      // included — this is only for the PDF snapshot, the RPC call above is
+      // what's actually authoritative for the stored amount/tax_amount.
+      const taxableBase = parsed.reduce((sum, i) => (i.taxable ? sum + i.amount : sum), 0)
       const taxAmount = taxableBase * taxRate
       const blob = await renderQuotePdfBlob({
         companyName: client!.company,

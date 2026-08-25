@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { updateJobSite } from '../../api/jobSites'
+import { listAssignmentsForJobSite, listAssignmentsForStaff } from '../../api/staff'
+import { findScheduleConflict, type ScheduleWindow } from '../../lib/availability'
 import type { FrequencyType, JobSite, Weekday } from '../../types/models'
 import { Button } from '../ui/Button'
 import { Field, Input, Textarea } from '../ui/Input'
@@ -22,13 +24,14 @@ export function JobSiteEditForm({ jobSite, onSaved, onCancel }: { jobSite: JobSi
   const [notes, setNotes] = useState(jobSite.notes ?? '')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [conflictWarnings, setConflictWarnings] = useState<string[] | null>(null)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setSubmitting(true)
     setError(null)
     try {
-      await updateJobSite(jobSite.id, {
+      const updated = await updateJobSite(jobSite.id, {
         name,
         address,
         contact_name: contactName || null,
@@ -44,12 +47,65 @@ export function JobSiteEditForm({ jobSite, onSaved, onCancel }: { jobSite: JobSi
         estimated_duration_minutes: Number(estimatedDuration) || 60,
         notes: notes || null,
       })
-      onSaved()
+
+      // Finding #10: schedule edits here were never re-checked against
+      // currently-assigned staff's OTHER assignments, unlike
+      // AssignStaffForm which only checks at assignment-creation time. A
+      // conflict found here doesn't block the save (the schedule is already
+      // the client's real requirement) — just surfaces it so the admin can
+      // resolve the overlap deliberately instead of it going unnoticed.
+      const candidate: ScheduleWindow = {
+        id: updated.id,
+        name: updated.name,
+        status: updated.status,
+        frequency: updated.frequency,
+        frequency_days: updated.frequency_days,
+        start_date: updated.start_date,
+        preferred_start_time: updated.preferred_start_time,
+        estimated_duration_minutes: updated.estimated_duration_minutes,
+      }
+      const assignments = await listAssignmentsForJobSite(jobSite.id)
+      const openAssignments = assignments.filter((a) => !a.end_date && a.staff)
+      const warnings: string[] = []
+      for (const a of openAssignments) {
+        const others = await listAssignmentsForStaff(a.staff_id)
+        const otherSchedules = others
+          .filter((o) => o.job_sites && o.job_site_id !== jobSite.id && !o.end_date)
+          .map((o) => o.job_sites!)
+        const conflict = findScheduleConflict(candidate, otherSchedules)
+        if (conflict) {
+          warnings.push(`${a.staff!.first_name} ${a.staff!.last_name} now overlaps with their schedule at "${conflict.name}".`)
+        }
+      }
+
+      if (warnings.length > 0) {
+        setConflictWarnings(warnings)
+      } else {
+        onSaved()
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save job site')
     } finally {
       setSubmitting(false)
     }
+  }
+
+  if (conflictWarnings) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
+        <p className="text-sm font-medium text-gray-900">Saved — but this schedule now conflicts for some assigned staff:</p>
+        <ul className="list-disc list-inside text-sm text-orange-700 space-y-1">
+          {conflictWarnings.map((w, i) => (
+            <li key={i}>{w}</li>
+          ))}
+        </ul>
+        <p className="text-xs text-gray-500">
+          Resolve this from the Staff tab (end or reassign the conflicting assignment) — the save itself already went
+          through.
+        </p>
+        <Button onClick={onSaved}>Done</Button>
+      </div>
+    )
   }
 
   return (

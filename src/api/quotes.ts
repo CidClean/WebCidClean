@@ -37,34 +37,27 @@ export async function listQuoteLineItems(quoteId: string): Promise<QuoteLineItem
   return data
 }
 
+/**
+ * Replaces a quote's line items via the replace_quote_line_items RPC
+ * instead of raw delete+insert against the tables (finding #4) — the RPC
+ * verifies server-side that the quote is still draft/changes_requested
+ * before writing, so two open tabs (or a stale reopened one) can't silently
+ * overwrite a quote that's since been sent/approved. The RPC also computes
+ * the tax base from ALL taxable line items including negative ones, not
+ * just amount > 0 (finding #5).
+ */
 export async function replaceQuoteLineItems(
   quoteId: string,
   items: { description: string; amount: number; taxable: boolean }[],
   taxRate: number,
 ): Promise<QuoteLineItem[]> {
-  const { error: deleteError } = await supabase.from('quote_line_items').delete().eq('quote_id', quoteId)
-  if (deleteError) throw deleteError
-
-  const rows = items.map((item, index) => ({
-    quote_id: quoteId,
-    description: item.description,
-    amount: item.amount,
-    taxable: item.taxable,
-    sort_order: index,
-  }))
-  const { data, error } = await supabase.from('quote_line_items').insert(rows).select()
+  const { data, error } = await supabase.rpc('replace_quote_line_items', {
+    p_quote_id: quoteId,
+    p_items: items,
+    p_tax_rate: taxRate,
+  })
   if (error) throw error
-
-  const subtotal = items.reduce((sum, item) => sum + item.amount, 0)
-  const taxableBase = items.reduce((sum, item) => (item.taxable && item.amount > 0 ? sum + item.amount : sum), 0)
-  const taxAmount = taxableBase * taxRate
-  const { error: updateError } = await supabase
-    .from('quotes')
-    .update({ amount: subtotal + taxAmount, tax_amount: taxAmount })
-    .eq('id', quoteId)
-  if (updateError) throw updateError
-
-  return data
+  return data as unknown as QuoteLineItem[]
 }
 
 export async function uploadQuotePdf(quoteId: string, blob: Blob): Promise<string> {

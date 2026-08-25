@@ -57,34 +57,26 @@ export async function listInvoiceLineItems(invoiceId: string): Promise<InvoiceLi
   return data
 }
 
+/**
+ * Replaces an invoice's line items via the replace_invoice_line_items RPC
+ * instead of raw delete+insert against the tables (finding #4) — the RPC
+ * verifies server-side that the invoice is still draft before writing, so
+ * a stale reopened tab can't silently rewrite an already-sent invoice. The
+ * RPC also computes the tax base from ALL taxable line items including
+ * negative ones, not just amount > 0 (finding #5).
+ */
 export async function replaceInvoiceLineItems(
   invoiceId: string,
   items: { description: string; amount: number; taxable: boolean }[],
   taxRate: number,
 ): Promise<InvoiceLineItem[]> {
-  const { error: deleteError } = await supabase.from('invoice_line_items').delete().eq('invoice_id', invoiceId)
-  if (deleteError) throw deleteError
-
-  const rows = items.map((item, index) => ({
-    invoice_id: invoiceId,
-    description: item.description,
-    amount: item.amount,
-    taxable: item.taxable,
-    sort_order: index,
-  }))
-  const { data, error } = await supabase.from('invoice_line_items').insert(rows).select()
+  const { data, error } = await supabase.rpc('replace_invoice_line_items', {
+    p_invoice_id: invoiceId,
+    p_items: items,
+    p_tax_rate: taxRate,
+  })
   if (error) throw error
-
-  const subtotal = items.reduce((sum, item) => sum + item.amount, 0)
-  const taxableBase = items.reduce((sum, item) => (item.taxable && item.amount > 0 ? sum + item.amount : sum), 0)
-  const taxAmount = taxableBase * taxRate
-  const { error: updateError } = await supabase
-    .from('invoices')
-    .update({ amount: subtotal + taxAmount, tax_amount: taxAmount })
-    .eq('id', invoiceId)
-  if (updateError) throw updateError
-
-  return data
+  return data as unknown as InvoiceLineItem[]
 }
 
 export async function uploadInvoicePdf(invoiceId: string, blob: Blob): Promise<string> {

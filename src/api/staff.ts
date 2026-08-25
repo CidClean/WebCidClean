@@ -105,7 +105,46 @@ export async function endStaffAssignment(assignmentId: string, endDate: string):
   if (error) throw error
 }
 
+/**
+ * Changes an assignment's pay rate effective a given date (default today)
+ * instead of overwriting the row in place. Since computeAccrual reads each
+ * assignment's own start_date/end_date window, mutating the same row would
+ * retroactively change what already-accrued (possibly already-reviewed)
+ * past days are worth. The change_assignment_rate RPC instead ends the
+ * current segment the day before p_effective_date and opens a fresh segment
+ * at the new rate, atomically (finding #7). Use this instead of
+ * assignStaffToJob whenever the goal is "change the rate going forward" —
+ * both for a manual edit and for the automatic even-split rebalance that
+ * runs when a co-assigned staff member's assignment ends.
+ */
+export async function changeAssignmentRate(
+  assignmentId: string,
+  newPaymentAmount: number,
+  newPaymentType: PaymentType,
+  effectiveDate: string,
+): Promise<void> {
+  const { error } = await supabase.rpc('change_assignment_rate', {
+    p_assignment_id: assignmentId,
+    p_new_payment_amount: newPaymentAmount,
+    p_new_payment_type: newPaymentType,
+    p_effective_date: effectiveDate,
+  })
+  if (error) throw error
+}
+
 export async function removeAssignment(assignmentId: string): Promise<void> {
   const { error } = await supabase.from('job_staff_assignments').delete().eq('id', assignmentId)
+  if (error) throw error
+}
+
+/**
+ * Archives a staff member and, in the same transaction, ends every one of
+ * their currently-open assignments as of endDate — an archived staff member
+ * with an assignment that was never individually ended would otherwise keep
+ * accruing pay indefinitely, since computeAccrual never reads staff status
+ * at all (finding #8).
+ */
+export async function archiveStaff(staffId: string, endDate: string): Promise<void> {
+  const { error } = await supabase.rpc('archive_staff', { p_staff_id: staffId, p_end_date: endDate })
   if (error) throw error
 }

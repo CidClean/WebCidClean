@@ -1,5 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { assignStaffToJob, listAssignmentsForStaff, listStaff, type JobStaffAssignmentWithStaff } from '../../api/staff'
+import {
+  assignStaffToJob,
+  changeAssignmentRate,
+  listAssignmentsForStaff,
+  listStaff,
+  type JobStaffAssignmentWithStaff,
+} from '../../api/staff'
 import { findScheduleConflict } from '../../lib/availability'
 import { todayDateOnly } from '../../lib/accrual'
 import { floorToCents } from '../../lib/money'
@@ -85,13 +91,17 @@ export function AssignStaffForm({
       // them in sync unless the admin already customized the amount away
       // from the even split. Only applies among monthly-rate assignments —
       // per_day/per_hour staff aren't part of the monthly budget split.
+      // Routed through change_assignment_rate (finding #7): each existing
+      // assignment's rate change takes effect today, ending its current
+      // segment rather than overwriting it, so already-accrued days keep
+      // their prior rate.
       if (paymentType === 'monthly' && staffPaymentAmount !== null) {
         const evenShare = floorToCents(staffPaymentAmount / (monthlyAssignments.length + 1))
         const isEvenSplit = Math.abs(Number(amount) - evenShare) < 0.01
         if (isEvenSplit) {
           for (const a of monthlyAssignments) {
             if (Math.abs(a.payment_amount - evenShare) > 0.01) {
-              await assignStaffToJob(jobSite.id, a.staff_id, evenShare, a.start_date, 'monthly')
+              await changeAssignmentRate(a.id, evenShare, 'monthly', todayDateOnly())
             }
           }
         }

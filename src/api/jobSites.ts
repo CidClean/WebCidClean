@@ -39,6 +39,18 @@ export async function activateJob(jobSiteId: string): Promise<void> {
   if (error) throw error
 }
 
+/**
+ * Moves a paused/archived job site back to active. Unlike a plain status
+ * update, the reactivate_job_site RPC re-runs the same preconditions
+ * activate_job enforces (billing info, signed contract, staff payment
+ * amount) — closes the bypass where "Reactivate" could jump straight to
+ * active without ever passing those checks (finding #1).
+ */
+export async function reactivateJobSite(jobSiteId: string): Promise<void> {
+  const { error } = await supabase.rpc('reactivate_job_site', { p_job_site_id: jobSiteId })
+  if (error) throw error
+}
+
 export async function updateStaffPaymentAmount(jobSiteId: string, amount: number): Promise<JobSite> {
   return updateJobSite(jobSiteId, { staff_payment_amount: amount })
 }
