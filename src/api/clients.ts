@@ -121,14 +121,16 @@ export async function listClientDocuments(clientId: string): Promise<ClientDocum
  * Uploads a document marked document_type: 'contract' with signed_at set
  * immediately — for when the admin collects a final signed copy of a
  * document from an external e-signature provider and just records that
- * it happened. This is currently the ONLY path that produces a document
- * satisfying activate_job's tightened check (document_type='contract' AND
- * signed_at is not null).
+ * it happened. jobSiteId ties the document to the specific job site it
+ * covers — activate_job/reactivate_job_site check for a signed contract
+ * scoped to THAT job site, not just any signed contract for the client,
+ * since a client can have multiple job sites each needing their own.
  */
 export async function uploadSignedClientDocument(
   clientId: string,
   file: File,
   signedByName: string,
+  jobSiteId: string | null,
 ): Promise<ClientDocument> {
   const path = `${clientId}/${Date.now()}-${file.name}`
   const { error: uploadError } = await supabase.storage.from('client-documents').upload(path, file)
@@ -142,6 +144,7 @@ export async function uploadSignedClientDocument(
       document_type: 'contract',
       signed_at: new Date().toISOString(),
       signed_by_name: signedByName,
+      job_site_id: jobSiteId,
     })
     .select()
     .single()

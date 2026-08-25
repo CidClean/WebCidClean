@@ -260,6 +260,7 @@ export type Database = {
           client_id: string
           document_type: string
           id: string
+          job_site_id: string | null
           name: string
           requirement_id: string | null
           signed_at: string | null
@@ -271,6 +272,7 @@ export type Database = {
           client_id: string
           document_type?: string
           id?: string
+          job_site_id?: string | null
           name: string
           requirement_id?: string | null
           signed_at?: string | null
@@ -282,6 +284,7 @@ export type Database = {
           client_id?: string
           document_type?: string
           id?: string
+          job_site_id?: string | null
           name?: string
           requirement_id?: string | null
           signed_at?: string | null
@@ -295,6 +298,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_documents_job_site_id_fkey"
+            columns: ["job_site_id"]
+            isOneToOne: false
+            referencedRelation: "job_sites"
             referencedColumns: ["id"]
           },
           {

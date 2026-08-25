@@ -43,7 +43,7 @@ export function StaffDocumentUploadList({ staffId }: { staffId: string }) {
     }
   }
 
-  async function handleUploadSigned(file: File, signedByName: string) {
+  async function handleUploadSigned(file: File, signedByName: string, _jobSiteId: string | null) {
     setSignedUploading(true)
     setError(null)
     try {

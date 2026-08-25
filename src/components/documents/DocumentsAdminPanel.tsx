@@ -1,22 +1,31 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import type { DocumentRequirement } from '../../types/models'
 import { Button } from '../ui/Button'
 import { Field, Input } from '../ui/Input'
 import { FileButton } from '../ui/FileButton'
+import { Select } from '../ui/Select'
 
 export interface AdminDocumentLike {
   id: string
   name: string
   document_type: string
   requirement_id: string | null
+  // Only present on client documents — staff have no job sites.
+  job_site_id?: string | null
   signed_at: string | null
   signed_by_name: string | null
   uploaded_at: string
 }
 
+export interface JobSiteOption {
+  id: string
+  name: string
+}
+
 export function DocumentsAdminPanel<D extends AdminDocumentLike>({
   requirements,
   documents,
+  jobSites,
   loading,
   error,
   onAddRequirement,
@@ -27,24 +36,38 @@ export function DocumentsAdminPanel<D extends AdminDocumentLike>({
 }: {
   requirements: DocumentRequirement[]
   documents: D[]
+  // Omit entirely for owners that have no concept of job sites (staff).
+  // When provided, uploading a signed document requires picking which
+  // job site it covers — activate_job only accepts a signed document
+  // scoped to the specific job site being activated.
+  jobSites?: JobSiteOption[]
   loading: boolean
   error: string | null
   onAddRequirement: (label: string) => Promise<void>
   onDeleteRequirement: (id: string) => Promise<void>
   onOpenDocument: (doc: D) => void
   signedUploading: boolean
-  onUploadSigned: (file: File, signedByName: string) => Promise<void>
+  onUploadSigned: (file: File, signedByName: string, jobSiteId: string | null) => Promise<void>
 }) {
   const [newLabel, setNewLabel] = useState('')
   const [addingRequirement, setAddingRequirement] = useState(false)
   const [signedFile, setSignedFile] = useState<File | null>(null)
   const [signedByName, setSignedByName] = useState('')
+  const [signedJobSiteId, setSignedJobSiteId] = useState('')
   const [signedFileResetKey, setSignedFileResetKey] = useState(0)
+
+  // A client with exactly one job site almost always means the signed
+  // document is for that one — pre-select it instead of making the admin
+  // pick from a list of one.
+  useEffect(() => {
+    if (jobSites && jobSites.length === 1) setSignedJobSiteId(jobSites[0].id)
+  }, [jobSites])
 
   const signedDocs = documents.filter((d) => d.document_type === 'contract')
   const docsByRequirement = new Map(
     documents.filter((d) => d.requirement_id).map((d) => [d.requirement_id as string, d]),
   )
+  const jobSiteName = (id: string | null | undefined) => jobSites?.find((js) => js.id === id)?.name
 
   async function handleAddRequirement(e: FormEvent) {
     e.preventDefault()
@@ -58,12 +81,16 @@ export function DocumentsAdminPanel<D extends AdminDocumentLike>({
     }
   }
 
+  const needsJobSite = !!jobSites
+  const canSubmitSigned = !!signedFile && !!signedByName.trim() && (!needsJobSite || !!signedJobSiteId)
+
   async function handleSignedSubmit(e: FormEvent) {
     e.preventDefault()
-    if (!signedFile || !signedByName.trim()) return
-    await onUploadSigned(signedFile, signedByName.trim())
+    if (!canSubmitSigned || !signedFile) return
+    await onUploadSigned(signedFile, signedByName.trim(), needsJobSite ? signedJobSiteId : null)
     setSignedFile(null)
     setSignedByName('')
+    setSignedJobSiteId(jobSites && jobSites.length === 1 ? jobSites[0].id : '')
     setSignedFileResetKey((k) => k + 1)
   }
 
@@ -153,36 +180,43 @@ export function DocumentsAdminPanel<D extends AdminDocumentLike>({
         </div>
 
         {signedDocs.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-4">
+          <ul className="divide-y divide-gray-100">
             {signedDocs.map((doc) => (
-              <button
-                key={doc.id}
-                onClick={() => onOpenDocument(doc)}
-                className="flex gap-3 bg-gray-50 border border-gray-200 rounded-lg p-3 text-left hover:border-gray-300 transition-colors"
-              >
-                <div className="w-8 h-9 rounded-lg shrink-0 relative bg-orange-50">
-                  <span className="absolute inset-x-1.5 top-1.5 h-0.5 bg-orange-300" />
-                  <span className="absolute inset-x-1.5 top-3 h-0.5 bg-orange-300" />
-                  <span className="absolute inset-x-1.5 top-[18px] h-0.5 w-1/2 bg-orange-300" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-gray-900 truncate">{doc.name}</p>
-                  <p className="text-[11px] text-gray-400 mt-0.5">
+              <li key={doc.id} className="px-4 py-3 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{doc.name}</p>
+                  <p className="text-xs text-gray-500 truncate">
                     Signed by {doc.signed_by_name ?? 'unknown'} · {new Date(doc.uploaded_at).toLocaleDateString()}
+                    {needsJobSite && (
+                      <> · {jobSiteName(doc.job_site_id) ?? <span className="text-amber-600">no job site set</span>}</>
+                    )}
                   </p>
                 </div>
-              </button>
+                <Button variant="secondary" onClick={() => onOpenDocument(doc)} className="shrink-0">
+                  View
+                </Button>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
 
-        <form onSubmit={handleSignedSubmit} className="px-4 py-3 bg-gray-50 border-t border-gray-100 space-y-2.5">
-          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-end">
-            <div className="flex-1">
-              <Field label="Signed by">
-                <Input value={signedByName} onChange={(e) => setSignedByName(e.target.value)} placeholder="Full name" />
-              </Field>
-            </div>
+        <form onSubmit={handleSignedSubmit} className="px-4 py-3 bg-gray-50 border-t border-gray-100 space-y-3">
+          {needsJobSite && (
+            <Field label="Job site">
+              <Select value={signedJobSiteId} onChange={(e) => setSignedJobSiteId(e.target.value)}>
+                <option value="">Select a job site…</option>
+                {jobSites?.map((js) => (
+                  <option key={js.id} value={js.id}>
+                    {js.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          )}
+          <Field label="Signed by">
+            <Input value={signedByName} onChange={(e) => setSignedByName(e.target.value)} placeholder="Full name" />
+          </Field>
+          <div>
             <FileButton
               resetKey={signedFileResetKey}
               onChange={(e) => setSignedFile(e.target.files?.[0] ?? null)}
@@ -190,9 +224,9 @@ export function DocumentsAdminPanel<D extends AdminDocumentLike>({
             >
               {signedFile ? 'Change file' : 'Choose file'}
             </FileButton>
+            {signedFile && <p className="text-xs text-gray-500 truncate mt-1.5">Selected: {signedFile.name}</p>}
           </div>
-          {signedFile && <p className="text-xs text-gray-500 truncate">Selected: {signedFile.name}</p>}
-          <Button type="submit" disabled={signedUploading || !signedFile || !signedByName.trim()} className="w-full">
+          <Button type="submit" disabled={signedUploading || !canSubmitSigned} className="w-full">
             {signedUploading ? 'Uploading...' : 'Upload signed document'}
           </Button>
         </form>

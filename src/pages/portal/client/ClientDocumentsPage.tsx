@@ -4,6 +4,7 @@ import {
   getMyDocumentUrl,
   listMyDocumentRequirements,
   listMyDocuments,
+  listMyJobSites,
   uploadMyIdentificationDocument,
 } from '../../../api/clientPortal'
 import type { ClientDocument, DocumentRequirement } from '../../../types/models'
@@ -15,16 +16,18 @@ export function ClientDocumentsPage() {
   const { clientId } = useAuth()
   const [documents, setDocuments] = useState<ClientDocument[]>([])
   const [requirements, setRequirements] = useState<DocumentRequirement[]>([])
+  const [jobSites, setJobSites] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   function refresh() {
     setLoading(true)
-    Promise.all([listMyDocuments(), listMyDocumentRequirements()])
-      .then(([docs, reqs]) => {
+    Promise.all([listMyDocuments(), listMyDocumentRequirements(), listMyJobSites()])
+      .then(([docs, reqs, sites]) => {
         setDocuments(docs)
         setRequirements(reqs)
+        setJobSites(sites.map((s) => ({ id: s.id, name: s.name })))
       })
       .finally(() => setLoading(false))
   }
@@ -66,6 +69,7 @@ export function ClientDocumentsPage() {
         onUploadForRequirement={handleUpload}
         onOpen={handleOpen}
         onDownload={handleDownload}
+        jobSites={jobSites}
       />
     </PortalShell>
   )

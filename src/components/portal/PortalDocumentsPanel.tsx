@@ -6,6 +6,8 @@ export interface PortalDocumentLike {
   name: string
   document_type: string
   requirement_id: string | null
+  // Only present on client documents — staff have no job sites.
+  job_site_id?: string | null
   signed_at: string | null
   signed_by_name: string | null
   uploaded_at: string
@@ -84,6 +86,7 @@ export function PortalDocumentsPanel<T extends PortalDocumentLike>({
   onUploadForRequirement,
   onOpen,
   onDownload,
+  jobSites,
 }: {
   requirements: DocumentRequirement[]
   documents: T[]
@@ -93,6 +96,9 @@ export function PortalDocumentsPanel<T extends PortalDocumentLike>({
   onUploadForRequirement: (requirementId: string, file: File) => void
   onOpen: (doc: T) => void
   onDownload: (doc: T) => void
+  // Only relevant for the client portal — resolves a signed document's
+  // job_site_id to a display name.
+  jobSites?: { id: string; name: string }[]
 }) {
   if (loading) return <p className="text-sm text-gray-500">Loading...</p>
 
@@ -158,6 +164,8 @@ export function PortalDocumentsPanel<T extends PortalDocumentLike>({
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-bold text-gray-900 truncate">{doc.name}</p>
                   <p className="text-[11px] text-gray-400 mt-0.5">
+                    {jobSites?.find((js) => js.id === doc.job_site_id)?.name}
+                    {jobSites?.find((js) => js.id === doc.job_site_id) && ' · '}
                     Signed {doc.signed_at ? new Date(doc.signed_at).toLocaleDateString() : ''}
                   </p>
                   <div className="flex items-center gap-3 mt-1.5">
