@@ -137,7 +137,7 @@ export function CalendarPage() {
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <button onClick={() => shift(-1)} className="text-sm text-blue-600 hover:underline">
             &larr; Prev
           </button>
@@ -164,7 +164,7 @@ export function CalendarPage() {
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="grid grid-cols-7 border-b border-gray-200 text-xs font-medium text-gray-500">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-              <div key={d} className="p-2 text-center">
+              <div key={d} className="p-1 sm:p-2 text-center">
                 {d}
               </div>
             ))}
@@ -175,11 +175,11 @@ export function CalendarPage() {
                 const dateStr = toDateOnly(day)
                 const inMonth = viewMode === 'week' || day.getUTCMonth() === anchor.getUTCMonth()
                 const occurrences = occurrencesByDate.get(dateStr) ?? []
-                const cellMinHeight = viewMode === 'week' ? 'min-h-[160px]' : 'min-h-[92px]'
+                const cellMinHeight = viewMode === 'week' ? 'min-h-[120px] sm:min-h-[160px]' : 'min-h-[68px] sm:min-h-[92px]'
                 return (
                   <div
                     key={dateStr}
-                    className={`${cellMinHeight} border-r border-gray-100 last:border-0 p-1.5 align-top ${
+                    className={`${cellMinHeight} border-r border-gray-100 last:border-0 p-1 sm:p-1.5 align-top ${
                       inMonth ? '' : 'bg-gray-50'
                     }`}
                   >
@@ -200,7 +200,7 @@ export function CalendarPage() {
                         <button
                           key={occ.jobSiteId}
                           onClick={() => setSelectedDate(dateStr)}
-                          className="block w-full text-left text-[11px] leading-tight px-1 py-0.5 rounded-lg bg-blue-50 text-blue-800 hover:bg-blue-100 truncate"
+                          className="block w-full text-left text-[10px] sm:text-[11px] leading-tight px-1 py-0.5 rounded-lg bg-blue-50 text-blue-800 hover:bg-blue-100 truncate"
                           title={`${occ.jobSiteName} — ${occ.clientName} @ ${occ.startTime}`}
                         >
                           {viewMode === 'week' ? `${occ.startTime} ${occ.jobSiteName}` : occ.jobSiteName}

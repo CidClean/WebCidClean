@@ -123,11 +123,11 @@ export function DayLogPanel({ jobSiteId, jobSiteName, date, onClose }: DayLogPan
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold text-gray-900 break-words min-w-0">
           {jobSiteName} — {date}
         </h3>
-        <button onClick={onClose} className="text-xs text-gray-500 hover:underline">
+        <button onClick={onClose} className="text-xs text-gray-500 hover:underline shrink-0">
           Close
         </button>
       </div>
@@ -154,8 +154,8 @@ export function DayLogPanel({ jobSiteId, jobSiteName, date, onClose }: DayLogPan
           )}
           {rows.map((row) =>
             row.beforeStart || row.afterEnd ? (
-              <div key={row.staffId} className="flex items-center justify-between text-sm text-gray-400">
-                <span>
+              <div key={row.staffId} className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-sm text-gray-400">
+                <span className="break-words min-w-0">
                   {row.staffName}{' '}
                   <span className="text-xs">
                     {row.beforeStart ? `(starts ${row.assignmentStartDate})` : `(ended ${row.assignmentEndDate})`}
@@ -163,17 +163,18 @@ export function DayLogPanel({ jobSiteId, jobSiteName, date, onClose }: DayLogPan
                 </span>
               </div>
             ) : (
-              <label key={row.staffId} className="flex items-center justify-between text-sm text-gray-700">
-                <span className="flex items-center gap-2">
+              <label key={row.staffId} className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-sm text-gray-700">
+                <span className="flex items-center gap-2 min-w-0 break-words">
                   <input
                     type="checkbox"
                     checked={row.checked}
                     onChange={(e) => toggleRow(row.staffId, e.target.checked)}
+                    className="shrink-0"
                   />
                   {row.staffName}
                   {row.checked !== row.defaultIncluded && <span className="text-xs text-blue-600">(adjusted)</span>}
                 </span>
-                <span className="text-gray-500">${row.amount.toFixed(2)}</span>
+                <span className="text-gray-500 shrink-0">${row.amount.toFixed(2)}</span>
               </label>
             ),
           )}
@@ -181,7 +182,7 @@ export function DayLogPanel({ jobSiteId, jobSiteName, date, onClose }: DayLogPan
           {error && <p className="text-sm text-red-600">{error}</p>}
           {saved && <p className="text-sm text-green-600">Saved.</p>}
           {rows.length > 0 && (
-            <Button onClick={handleSave} disabled={saving}>
+            <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
               {saving ? 'Saving...' : 'Save'}
             </Button>
           )}

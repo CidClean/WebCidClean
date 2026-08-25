@@ -93,7 +93,9 @@ function CatalogTab() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={() => setShowForm((v) => !v)}>{showForm ? 'Cancel' : 'New Service / Add-on'}</Button>
+        <Button onClick={() => setShowForm((v) => !v)} className="w-full sm:w-auto">
+          {showForm ? 'Cancel' : 'New Service / Add-on'}
+        </Button>
       </div>
       {showForm && (
         <CatalogItemForm
@@ -109,14 +111,14 @@ function CatalogTab() {
         <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
           {items.length === 0 && <p className="p-4 text-sm text-gray-500">No services or add-ons yet.</p>}
           {items.map((item) => (
-            <div key={item.id} className="flex items-center justify-between p-3">
-              <div>
+            <div key={item.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-3">
+              <div className="min-w-0 break-words">
                 <span className="text-sm font-medium text-gray-900">{item.name}</span>
                 <span className="ml-2 text-xs text-gray-500 capitalize">{item.kind}</span>
                 {item.taxable && <span className="ml-2 text-xs text-blue-600">taxable</span>}
                 {!item.active && <span className="ml-2 text-xs text-gray-400">inactive</span>}
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 shrink-0">
                 <span className="text-sm text-gray-700">${item.default_price}</span>
                 <button onClick={() => toggleActive(item)} className="text-xs text-blue-600 hover:underline">
                   {item.active ? 'Deactivate' : 'Activate'}
@@ -154,7 +156,7 @@ function CatalogItemForm({ onCreated }: { onCreated: () => void }) {
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 max-w-lg">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="Kind">
           <Select value={kind} onChange={(e) => setKind(e.target.value as CatalogItemKind)}>
             <option value="service">Service</option>
@@ -164,7 +166,7 @@ function CatalogItemForm({ onCreated }: { onCreated: () => void }) {
         <Field label="Default Price">
           <Input type="number" step="0.01" min="0" value={price} onChange={(e) => setPrice(e.target.value)} required />
         </Field>
-        <div className="col-span-2">
+        <div className="sm:col-span-2">
           <Field label="Name">
             <Input value={name} onChange={(e) => setName(e.target.value)} required />
           </Field>
@@ -175,7 +177,7 @@ function CatalogItemForm({ onCreated }: { onCreated: () => void }) {
         Taxable
       </label>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={submitting}>
+      <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
         {submitting ? 'Saving...' : 'Save'}
       </Button>
     </form>
@@ -204,7 +206,9 @@ function DiscountsTab() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={() => setShowForm((v) => !v)}>{showForm ? 'Cancel' : 'New Discount'}</Button>
+        <Button onClick={() => setShowForm((v) => !v)} className="w-full sm:w-auto">
+          {showForm ? 'Cancel' : 'New Discount'}
+        </Button>
       </div>
       {showForm && (
         <DiscountForm
@@ -220,12 +224,12 @@ function DiscountsTab() {
         <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
           {discounts.length === 0 && <p className="p-4 text-sm text-gray-500">No discounts yet.</p>}
           {discounts.map((d) => (
-            <div key={d.id} className="flex items-center justify-between p-3">
-              <div>
+            <div key={d.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-3">
+              <div className="min-w-0 break-words">
                 <span className="text-sm font-medium text-gray-900">{d.name}</span>
                 {!d.active && <span className="ml-2 text-xs text-gray-400">inactive</span>}
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 shrink-0">
                 <span className="text-sm text-gray-700">{d.type === 'percentage' ? `${d.value}%` : `$${d.value}`}</span>
                 <button onClick={() => toggleActive(d)} className="text-xs text-blue-600 hover:underline">
                   {d.active ? 'Deactivate' : 'Activate'}
@@ -262,7 +266,7 @@ function DiscountForm({ onCreated }: { onCreated: () => void }) {
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 max-w-lg">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="Type">
           <Select value={type} onChange={(e) => setType(e.target.value as DiscountType)}>
             <option value="percentage">Percentage</option>
@@ -272,14 +276,14 @@ function DiscountForm({ onCreated }: { onCreated: () => void }) {
         <Field label={type === 'percentage' ? 'Value (%)' : 'Value ($)'}>
           <Input type="number" step="0.01" min="0" value={value} onChange={(e) => setValue(e.target.value)} required />
         </Field>
-        <div className="col-span-2">
+        <div className="sm:col-span-2">
           <Field label="Name">
             <Input value={name} onChange={(e) => setName(e.target.value)} required />
           </Field>
         </div>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={submitting}>
+      <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
         {submitting ? 'Saving...' : 'Save'}
       </Button>
     </form>
@@ -335,7 +339,9 @@ function ExpenseCategoriesTab() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={() => setShowForm((v) => !v)}>{showForm ? 'Cancel' : 'New Category'}</Button>
+        <Button onClick={() => setShowForm((v) => !v)} className="w-full sm:w-auto">
+          {showForm ? 'Cancel' : 'New Category'}
+        </Button>
       </div>
       {showForm && (
         <ExpenseCategoryForm
@@ -354,16 +360,16 @@ function ExpenseCategoriesTab() {
           {topLevel.length === 0 && <p className="p-4 text-sm text-gray-500">No expense categories yet.</p>}
           {topLevel.map((cat) => (
             <div key={cat.id}>
-              <div className="flex items-center justify-between p-3">
-                <span className="text-sm font-medium text-gray-900">{cat.name}</span>
-                <button onClick={() => handleDelete(cat)} className="text-xs text-red-600 hover:underline">
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-3">
+                <span className="text-sm font-medium text-gray-900 break-words min-w-0">{cat.name}</span>
+                <button onClick={() => handleDelete(cat)} className="text-xs text-red-600 hover:underline shrink-0">
                   Delete
                 </button>
               </div>
               {childrenOf(cat.id).map((sub) => (
-                <div key={sub.id} className="flex items-center justify-between p-3 pl-8 border-t border-gray-50">
-                  <span className="text-sm text-gray-700">{sub.name}</span>
-                  <button onClick={() => handleDelete(sub)} className="text-xs text-red-600 hover:underline">
+                <div key={sub.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-3 pl-8 border-t border-gray-50">
+                  <span className="text-sm text-gray-700 break-words min-w-0">{sub.name}</span>
+                  <button onClick={() => handleDelete(sub)} className="text-xs text-red-600 hover:underline shrink-0">
                     Delete
                   </button>
                 </div>
@@ -422,7 +428,7 @@ function ExpenseCategoryForm({
         </Field>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={submitting}>
+      <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
         {submitting ? 'Saving...' : 'Save'}
       </Button>
     </form>
@@ -510,7 +516,9 @@ function SecurityTab() {
           ))}
         </div>
       ) : (
-        <Button onClick={startEnrollment}>Enable Two-Factor Authentication</Button>
+        <Button onClick={startEnrollment} className="w-full sm:w-auto">
+          Enable Two-Factor Authentication
+        </Button>
       )}
     </div>
   )
@@ -554,11 +562,11 @@ function TotpEnrollmentForm({
         <Input value={code} onChange={(e) => setCode(e.target.value)} inputMode="numeric" pattern="[0-9]*" required />
       </Field>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex gap-2">
-        <Button type="submit" disabled={submitting}>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
           {submitting ? 'Verifying...' : 'Verify & Enable'}
         </Button>
-        <Button type="button" variant="secondary" onClick={onCancel}>
+        <Button type="button" variant="secondary" onClick={onCancel} className="w-full sm:w-auto">
           Cancel
         </Button>
       </div>
@@ -603,7 +611,7 @@ function TaxRateTab() {
       <p className="text-xs text-gray-500">Applied to taxable line items on quotes. Default is Florida's 6%.</p>
       {error && <p className="text-sm text-red-600">{error}</p>}
       {saved && <p className="text-sm text-green-600">Saved.</p>}
-      <Button onClick={handleSave} disabled={saving}>
+      <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
         {saving ? 'Saving...' : 'Save'}
       </Button>
     </div>

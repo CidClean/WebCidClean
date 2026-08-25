@@ -132,11 +132,11 @@ export function StaffDetailPage() {
                 Every currently open assignment will be ended as of this date — days on or before it still count
                 toward pay, but nothing accrues after. Editable per-assignment later if it turns out to be wrong.
               </p>
-              <div className="flex gap-2">
-                <Button variant="danger" onClick={confirmArchive}>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button variant="danger" onClick={confirmArchive} className="w-full sm:w-auto">
                   Confirm Archive
                 </Button>
-                <Button variant="secondary" onClick={() => setArchiving(false)}>
+                <Button variant="secondary" onClick={() => setArchiving(false)} className="w-full sm:w-auto">
                   Cancel
                 </Button>
               </div>
@@ -155,9 +155,9 @@ export function StaffDetailPage() {
                   <Link
                     key={a.id}
                     to={`/clients/${a.job_sites?.client_id}/job-sites/${a.job_site_id}`}
-                    className="flex items-center justify-between p-3 hover:bg-gray-50"
+                    className="flex flex-wrap items-center justify-between gap-2 p-3 hover:bg-gray-50"
                   >
-                    <span className="text-sm text-gray-900">{a.job_sites?.name}</span>
+                    <span className="text-sm text-gray-900 break-words">{a.job_sites?.name}</span>
                     <div className="flex items-center gap-3">
                       <span className="text-sm text-gray-700">${a.payment_amount}/mo</span>
                       {a.job_sites && <StatusBadge status={a.job_sites.status} />}
@@ -266,7 +266,7 @@ function StaffEditForm({
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="First Name">
           <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
         </Field>
@@ -290,11 +290,11 @@ function StaffEditForm({
         </Field>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex gap-2">
-        <Button type="submit" disabled={saving}>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button type="submit" disabled={saving} className="w-full sm:w-auto">
           {saving ? 'Saving...' : 'Save'}
         </Button>
-        <Button type="button" variant="secondary" onClick={onCancel}>
+        <Button type="button" variant="secondary" onClick={onCancel} className="w-full sm:w-auto">
           Cancel
         </Button>
       </div>
@@ -374,31 +374,35 @@ function PaymentsSection({ staffId }: { staffId: string }) {
   return (
     <div className="space-y-3">
       <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Payments</h2>
-      <div className="flex flex-wrap items-end gap-3">
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">From</label>
-          <input
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            className="border border-gray-300 rounded-lg px-2 py-1 text-sm"
-          />
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+        <div className="flex gap-3">
+          <div className="flex-1 sm:flex-none">
+            <label className="block text-xs text-gray-500 mb-1">From</label>
+            <input
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-2 py-1 text-sm"
+            />
+          </div>
+          <div className="flex-1 sm:flex-none">
+            <label className="block text-xs text-gray-500 mb-1">To</label>
+            <input
+              type="date"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-2 py-1 text-sm"
+            />
+          </div>
         </div>
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">To</label>
-          <input
-            type="date"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            className="border border-gray-300 rounded-lg px-2 py-1 text-sm"
-          />
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={() => setFrom(startOfWeek())} className="flex-1 sm:flex-none">
+            This Week
+          </Button>
+          <Button variant="secondary" onClick={() => setFrom(startOfMonth())} className="flex-1 sm:flex-none">
+            This Month
+          </Button>
         </div>
-        <Button variant="secondary" onClick={() => setFrom(startOfWeek())}>
-          This Week
-        </Button>
-        <Button variant="secondary" onClick={() => setFrom(startOfMonth())}>
-          This Month
-        </Button>
       </div>
 
       <p className="text-xs text-gray-500">
@@ -413,13 +417,13 @@ function PaymentsSection({ staffId }: { staffId: string }) {
       ) : (
         <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
           {logs.map((l) => (
-            <div key={l.id} className="flex items-center justify-between p-3 text-sm">
-              <div>
+            <div key={l.id} className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 p-3 text-sm">
+              <div className="min-w-0 break-words">
                 <span className="text-gray-900">{l.job_sites?.name ?? 'Unknown job site'}</span>
                 <span className="text-gray-500 ml-2">{l.work_date}</span>
                 {!l.auto && <span className="ml-2 text-xs text-blue-600">adjusted</span>}
               </div>
-              <span className="text-gray-700">${l.payment_amount.toFixed(2)}</span>
+              <span className="text-gray-700 shrink-0">${l.payment_amount.toFixed(2)}</span>
             </div>
           ))}
           <div className="flex items-center justify-between p-3 text-sm font-semibold">

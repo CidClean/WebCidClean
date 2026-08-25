@@ -187,7 +187,7 @@ export function InvoiceDetailPage() {
         </div>
         <h1 className="text-xl font-semibold text-gray-900">New Invoice — {jobSite.name}</h1>
         <form onSubmit={handleCreate} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 max-w-md">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Period Start">
               <Input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} required />
             </Field>
@@ -199,7 +199,7 @@ export function InvoiceDetailPage() {
             </Field>
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <Button type="submit" disabled={creating}>
+          <Button type="submit" disabled={creating} className="w-full sm:w-auto">
             {creating ? 'Creating...' : 'Create Draft Invoice'}
           </Button>
         </form>
@@ -305,8 +305,8 @@ export function InvoiceDetailPage() {
         <BackLink to={`/clients/${clientId}/job-sites/${jobSiteId}`} label="Back to job site" />
       </div>
 
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-xl font-semibold text-gray-900 break-words">
           Invoice — {jobSite.name} ({invoice.period_start} to {invoice.period_end})
         </h1>
         <StatusBadge status={invoice.status} overdue={isInvoiceOverdue(invoice)} />
@@ -326,20 +326,24 @@ export function InvoiceDetailPage() {
         />
         {error && <p className="text-sm text-red-600">{error}</p>}
         {emailWarning && <p className="text-sm text-amber-600">{emailWarning}</p>}
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           {editable && (
             <>
-              <Button variant="secondary" onClick={handleSaveDraft} disabled={saving}>
+              <Button variant="secondary" onClick={handleSaveDraft} disabled={saving} className="w-full sm:w-auto">
                 {saving ? 'Saving...' : 'Save Draft'}
               </Button>
-              <Button onClick={handleMarkSent} disabled={sending}>
+              <Button onClick={handleMarkSent} disabled={sending} className="w-full sm:w-auto">
                 {sending ? 'Sending...' : 'Mark Sent'}
               </Button>
             </>
           )}
-          {invoice.status === 'sent' && <Button onClick={handleMarkPaid}>Mark Paid</Button>}
+          {invoice.status === 'sent' && (
+            <Button onClick={handleMarkPaid} className="w-full sm:w-auto">
+              Mark Paid
+            </Button>
+          )}
           {(invoice.status === 'draft' || invoice.status === 'sent') && (
-            <Button variant="danger" onClick={handleVoid}>
+            <Button variant="danger" onClick={handleVoid} className="w-full sm:w-auto">
               Void
             </Button>
           )}

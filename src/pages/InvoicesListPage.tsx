@@ -46,7 +46,7 @@ export function InvoicesListPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <div className="w-44">
+        <div className="w-full sm:w-44">
           <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}>
             <option value="all">All statuses</option>
             {INVOICE_STATUSES.map((s) => (
