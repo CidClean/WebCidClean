@@ -8,7 +8,7 @@ import {
   listExpenses,
   type ExpenseWithCategory,
 } from '../api/expenses'
-import { listSchedulableJobSites, type SchedulableJobSite } from '../api/jobSites'
+import { listAllJobSites, type SchedulableJobSite } from '../api/jobSites'
 import type { ExpenseCategory } from '../types/models'
 import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
@@ -46,7 +46,10 @@ export function AccountingPage() {
   const [refreshTick, setRefreshTick] = useState(0)
 
   useEffect(() => {
-    listSchedulableJobSites().then(setJobSites)
+    // Not listSchedulableJobSites — that excludes archived job sites, but
+    // an expense (e.g. a final bill) can arrive after a job site is
+    // archived and still needs to be attributed to its account.
+    listAllJobSites().then(setJobSites)
     listExpenseCategories().then(setCategories)
   }, [])
 
@@ -379,6 +382,7 @@ function ExpenseForm({
               <option key={js.id} value={js.id}>
                 {js.name}
                 {js.clients ? ` — ${js.clients.company || `${js.clients.first_name} ${js.clients.last_name}`}` : ''}
+                {js.status === 'archived' ? ' (archived)' : ''}
               </option>
             ))}
           </Select>
