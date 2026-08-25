@@ -66,8 +66,9 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { signOut } = useAuth()
+  const { signOut, session } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
+  const email = session?.user?.email ?? null
 
   return (
     <div className="min-h-screen flex bg-gray-50">
@@ -77,7 +78,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Wordmark />
         </div>
         <SidebarNav />
-        <div className="p-3 border-t border-gray-200">
+        <div className="p-3 border-t border-gray-200 space-y-1.5">
+          {email && <p className="px-2.5 text-xs text-gray-400 truncate">Signed in as {email}</p>}
           <button
             onClick={() => signOut()}
             className="w-full text-left px-2.5 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg"
@@ -101,7 +103,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               </button>
             </div>
             <SidebarNav onNavigate={() => setMenuOpen(false)} />
-            <div className="p-3 border-t border-gray-200">
+            <div className="p-3 border-t border-gray-200 space-y-1.5">
+              {email && <p className="px-2.5 text-xs text-gray-400 truncate">Signed in as {email}</p>}
               <button
                 onClick={() => {
                   setMenuOpen(false)

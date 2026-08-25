@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../auth/AuthContext'
 import { listClients } from '../api/clients'
 import { listAllJobSites } from '../api/jobSites'
 import { listAllInvoices } from '../api/invoices'
@@ -19,6 +20,7 @@ function todayDateOnly(): string {
 }
 
 export function DashboardPage() {
+  const { session } = useAuth()
   const [stats, setStats] = useState<Stats | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -41,7 +43,10 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
+      <div>
+        <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
+        {session?.user?.email && <p className="text-sm text-gray-500 mt-0.5">Welcome back, signed in as {session.user.email}</p>}
+      </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {stats && (

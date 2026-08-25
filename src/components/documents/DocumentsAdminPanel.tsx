@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import type { DocumentRequirement } from '../../types/models'
 import { Button } from '../ui/Button'
 import { Field, Input } from '../ui/Input'
+import { FileButton } from '../ui/FileButton'
 
 export interface AdminDocumentLike {
   id: string
@@ -38,6 +39,7 @@ export function DocumentsAdminPanel<D extends AdminDocumentLike>({
   const [addingRequirement, setAddingRequirement] = useState(false)
   const [signedFile, setSignedFile] = useState<File | null>(null)
   const [signedByName, setSignedByName] = useState('')
+  const [signedFileResetKey, setSignedFileResetKey] = useState(0)
 
   const signedDocs = documents.filter((d) => d.document_type === 'contract')
   const docsByRequirement = new Map(
@@ -62,6 +64,7 @@ export function DocumentsAdminPanel<D extends AdminDocumentLike>({
     await onUploadSigned(signedFile, signedByName.trim())
     setSignedFile(null)
     setSignedByName('')
+    setSignedFileResetKey((k) => k + 1)
   }
 
   if (loading) return <p className="text-sm text-gray-500">Loading...</p>
@@ -173,24 +176,23 @@ export function DocumentsAdminPanel<D extends AdminDocumentLike>({
           </div>
         )}
 
-        <form
-          onSubmit={handleSignedSubmit}
-          className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end"
-        >
-          <Field label="Signed by">
-            <Input value={signedByName} onChange={(e) => setSignedByName(e.target.value)} placeholder="Full name" />
-          </Field>
-          <input
-            type="file"
-            onChange={(e) => setSignedFile(e.target.files?.[0] ?? null)}
-            className="text-xs text-gray-600"
-          />
-          <Button
-            type="submit"
-            variant="secondary"
-            disabled={signedUploading || !signedFile || !signedByName.trim()}
-            className="w-full sm:w-auto"
-          >
+        <form onSubmit={handleSignedSubmit} className="px-4 py-3 bg-gray-50 border-t border-gray-100 space-y-2.5">
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-end">
+            <div className="flex-1">
+              <Field label="Signed by">
+                <Input value={signedByName} onChange={(e) => setSignedByName(e.target.value)} placeholder="Full name" />
+              </Field>
+            </div>
+            <FileButton
+              resetKey={signedFileResetKey}
+              onChange={(e) => setSignedFile(e.target.files?.[0] ?? null)}
+              disabled={signedUploading}
+            >
+              {signedFile ? 'Change file' : 'Choose file'}
+            </FileButton>
+          </div>
+          {signedFile && <p className="text-xs text-gray-500 truncate">Selected: {signedFile.name}</p>}
+          <Button type="submit" disabled={signedUploading || !signedFile || !signedByName.trim()} className="w-full">
             {signedUploading ? 'Uploading...' : 'Upload signed document'}
           </Button>
         </form>

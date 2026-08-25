@@ -12,6 +12,10 @@ interface AuthContextValue {
   roleLoading: boolean
   clientId: string | null
   staffId: string | null
+  // First name for a client/staff portal user (fetched alongside role
+  // resolution); null for admins, who have no client/staff record — use
+  // session.user.email for admin identity instead.
+  displayName: string | null
   mfaPending: boolean
   mfaLoading: boolean
   markMfaVerified: () => void
@@ -37,16 +41,27 @@ function hasPersistedSession(): boolean {
   return false
 }
 
-async function resolveRole(): Promise<{ role: PortalRole; clientId: string | null; staffId: string | null }> {
+async function resolveRole(): Promise<{
+  role: PortalRole
+  clientId: string | null
+  staffId: string | null
+  displayName: string | null
+}> {
   const [adminRes, clientRes, staffRes] = await Promise.all([
     supabase.rpc('is_admin'),
     supabase.rpc('current_client_id'),
     supabase.rpc('current_staff_id'),
   ])
-  if (adminRes.data === true) return { role: 'admin', clientId: null, staffId: null }
-  if (clientRes.data) return { role: 'client', clientId: clientRes.data as string, staffId: null }
-  if (staffRes.data) return { role: 'staff', clientId: null, staffId: staffRes.data as string }
-  return { role: null, clientId: null, staffId: null }
+  if (adminRes.data === true) return { role: 'admin', clientId: null, staffId: null, displayName: null }
+  if (clientRes.data) {
+    const { data: client } = await supabase.from('clients').select('first_name').eq('id', clientRes.data).single()
+    return { role: 'client', clientId: clientRes.data as string, staffId: null, displayName: client?.first_name ?? null }
+  }
+  if (staffRes.data) {
+    const { data: staff } = await supabase.from('staff').select('first_name').eq('id', staffRes.data).single()
+    return { role: 'staff', clientId: null, staffId: staffRes.data as string, displayName: staff?.first_name ?? null }
+  }
+  return { role: null, clientId: null, staffId: null, displayName: null }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -56,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roleLoading, setRoleLoading] = useState(true)
   const [clientId, setClientId] = useState<string | null>(null)
   const [staffId, setStaffId] = useState<string | null>(null)
+  const [displayName, setDisplayName] = useState<string | null>(null)
   const [mfaPending, setMfaPending] = useState(false)
   const [mfaLoading, setMfaLoading] = useState(true)
 
@@ -122,6 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRole(null)
       setClientId(null)
       setStaffId(null)
+      setDisplayName(null)
       setRoleLoading(false)
       return
     }
@@ -130,6 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRole(r.role)
       setClientId(r.clientId)
       setStaffId(r.staffId)
+      setDisplayName(r.displayName)
       setRoleLoading(false)
     })
     // Keyed on the user id, not the session object: Supabase issues a new
@@ -182,6 +200,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         roleLoading,
         clientId,
         staffId,
+        displayName,
         mfaPending,
         mfaLoading,
         markMfaVerified,

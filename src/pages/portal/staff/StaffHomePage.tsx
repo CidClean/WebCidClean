@@ -27,7 +27,7 @@ function startOfMonth(): string {
 }
 
 export function StaffHomePage() {
-  const { staffId } = useAuth()
+  const { staffId, displayName } = useAuth()
   const [assignments, setAssignments] = useState<JobStaffAssignmentWithJobSite[]>([])
   const [logs, setLogs] = useState<StaffWorkLogEntry[]>([])
   const [documents, setDocuments] = useState<StaffDocument[]>([])
@@ -80,6 +80,7 @@ export function StaffHomePage() {
 
   return (
     <PortalShell title="Cid Clean" tabs={STAFF_TABS}>
+      {displayName && <p className="text-sm text-gray-500 mb-3">Welcome back, {displayName}</p>}
       {next ? (
         <HeroCard
           label="Next visit"

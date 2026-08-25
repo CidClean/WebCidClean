@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useAuth } from '../../../auth/AuthContext'
 import {
   listMyDocumentRequirements,
   listMyDocuments,
@@ -28,6 +29,7 @@ interface ActivityItem {
 }
 
 export function ClientHomePage() {
+  const { displayName } = useAuth()
   const [jobSites, setJobSites] = useState<JobSite[]>([])
   const [quotes, setQuotes] = useState<MyQuote[]>([])
   const [invoices, setInvoices] = useState<MyInvoice[]>([])
@@ -87,6 +89,7 @@ export function ClientHomePage() {
 
   return (
     <PortalShell title="Cid Clean" tabs={CLIENT_TABS}>
+      {displayName && <p className="text-sm text-gray-500 mb-3">Welcome back, {displayName}</p>}
       {nextVisit ? (
         <HeroCard
           label="Next visit"
