@@ -129,6 +129,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
+    // Root cause, confirmed via debug_events: this effect runs once on
+    // mount too, alongside the session effect above — and on that mount
+    // pass `session` is still its initial null value (the auth
+    // subscription's callback hasn't landed yet), so this took the
+    // "!session" branch and set roleLoading=false/role=null for a session
+    // that was actually valid and about to arrive a moment later.
+    // ProtectedRoute saw that exact combination — a real session with a
+    // confidently-resolved "no role" — and treated it as "not admin",
+    // navigating to /login before role resolution ever ran for the real
+    // session. Guarding on `loading` (only settled by the session effect
+    // once the real session-or-none is known) closes that gap: this
+    // effect now does nothing until the session state itself is final.
+    if (loading) return
     if (!session) {
       setRole(null)
       setClientId(null)
@@ -151,9 +164,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // whole route tree and lose in-progress page state (selected tab,
     // pending uploads) for no actual auth change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user?.id])
+  }, [session?.user?.id, loading])
 
   useEffect(() => {
+    // Same root cause and same fix as the role effect above.
+    if (loading) return
     if (!session) {
       setMfaPending(false)
       setMfaLoading(false)
@@ -167,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // same-user token refresh doesn't re-trigger mfaLoading and unmount
     // the route tree via ProtectedRoute.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user?.id])
+  }, [session?.user?.id, loading])
 
   function markMfaVerified() {
     setMfaPending(false)
