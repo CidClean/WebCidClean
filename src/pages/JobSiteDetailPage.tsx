@@ -154,18 +154,22 @@ export function JobSiteDetailPage() {
                   {closingSummary.expensesToDate.toFixed(2)}.
                 </p>
               )}
-              <div className="flex gap-2">
-                <Button variant={pendingStatus === 'archived' ? 'danger' : 'secondary'} onClick={confirmStatusAction}>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button
+                  variant={pendingStatus === 'archived' ? 'danger' : 'secondary'}
+                  onClick={confirmStatusAction}
+                  className="w-full sm:w-auto"
+                >
                   Confirm {pendingStatus === 'archived' ? 'Archive' : 'Pause'}
                 </Button>
-                <Button variant="secondary" onClick={() => setPendingStatus(null)}>
+                <Button variant="secondary" onClick={() => setPendingStatus(null)} className="w-full sm:w-auto">
                   Cancel
                 </Button>
               </div>
             </div>
           )}
 
-          <div className="border-b border-gray-200 flex gap-4">
+          <div className="border-b border-gray-200 flex gap-4 overflow-x-auto">
             {(
               [
                 ['info', 'Info'],
@@ -178,7 +182,7 @@ export function JobSiteDetailPage() {
               <button
                 key={value}
                 onClick={() => setTab(value)}
-                className={`pb-2 text-sm font-medium border-b-2 -mb-px ${
+                className={`pb-2 text-sm font-medium border-b-2 -mb-px whitespace-nowrap ${
                   tab === value ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -386,9 +390,9 @@ function QuoteSection({ jobSiteId, clientId }: { jobSiteId: string; clientId: st
             <Link
               key={q.id}
               to={`/clients/${clientId}/job-sites/${jobSiteId}/quote/${q.id}`}
-              className={`flex items-center justify-between p-3 hover:bg-gray-50 ${q.status === 'sent' ? 'bg-orange-50/50' : ''}`}
+              className={`flex items-center justify-between gap-2 p-3 hover:bg-gray-50 ${q.status === 'sent' ? 'bg-orange-50/50' : ''}`}
             >
-              <span className="text-sm text-gray-900">
+              <span className="text-sm text-gray-900 min-w-0 break-words">
                 ${q.amount}{' '}
                 <span className="text-xs text-gray-400">
                   {new Date(q.sent_at ?? q.created_at).toLocaleDateString()}
@@ -431,9 +435,9 @@ function InvoicesSection({ jobSiteId, clientId }: { jobSiteId: string; clientId:
             <Link
               key={inv.id}
               to={`/clients/${clientId}/job-sites/${jobSiteId}/invoice/${inv.id}`}
-              className="flex items-center justify-between p-3 hover:bg-gray-50"
+              className="flex items-center justify-between gap-2 p-3 hover:bg-gray-50"
             >
-              <span className="text-sm text-gray-900">
+              <span className="text-sm text-gray-900 min-w-0 break-words">
                 {inv.period_start} — {inv.period_end} · ${inv.amount}
               </span>
               <StatusBadge status={inv.status} />
@@ -494,7 +498,7 @@ function ActivateJobPanel({ jobSite, onActivated }: { jobSite: JobSite; onActiva
       {!hasStaffPayment && (
         <p className="text-sm text-red-600">Set the staff payment amount in the Staff tab before activating.</p>
       )}
-      <dl className="grid grid-cols-2 gap-3 text-sm">
+      <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
         <div>
           <dt className="text-gray-500">Service Amount</dt>
           <dd className="text-gray-900 break-words">{jobSite.service_amount !== null ? `$${jobSite.service_amount}` : '—'}</dd>
@@ -505,7 +509,7 @@ function ActivateJobPanel({ jobSite, onActivated }: { jobSite: JobSite; onActiva
         </div>
       </dl>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button onClick={handleActivate} disabled={!ready || submitting}>
+      <Button onClick={handleActivate} disabled={!ready || submitting} className="w-full sm:w-auto">
         {submitting ? 'Activating...' : 'Activate Job'}
       </Button>
     </div>
@@ -605,11 +609,11 @@ function StaffPaymentBudgetEditor({ jobSite, onUpdated }: { jobSite: JobSite; on
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 flex items-end gap-2 max-w-sm">
+    <div className="bg-white rounded-lg border border-gray-200 p-4 flex flex-col gap-2 sm:flex-row sm:items-end max-w-sm">
       <Field label="Staff Payment Budget (monthly)">
         <Input type="number" step="0.01" min="0" value={value} onChange={(e) => setValue(e.target.value)} />
       </Field>
-      <Button variant="secondary" onClick={handleSave} disabled={saving}>
+      <Button variant="secondary" onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
         {saving ? 'Saving...' : 'Save'}
       </Button>
       {error && <p className="text-sm text-red-600">{error}</p>}
@@ -658,11 +662,11 @@ function AssignmentRow({
 
   return (
     <div className="p-3">
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-gray-900">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <span className="text-sm text-gray-900 break-words">
           {assignment.staff?.first_name} {assignment.staff?.last_name} ({assignment.staff?.type})
         </span>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
           {isEnded ? (
             <span className="text-sm text-gray-500">
               ${assignment.payment_amount}

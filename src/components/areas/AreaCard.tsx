@@ -93,7 +93,7 @@ function AreaEditForm({
           ))}
         </Select>
       </Field>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <Field label="Size">
           <Select value={size} onChange={(e) => setSize(e.target.value as AreaSize)}>
             {AREA_SIZES.map((s) => (
@@ -117,11 +117,11 @@ function AreaEditForm({
         <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
       </Field>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex gap-2">
-        <Button type="submit" disabled={submitting}>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
           {submitting ? 'Saving...' : 'Save'}
         </Button>
-        <Button type="button" variant="secondary" onClick={onCancel}>
+        <Button type="button" variant="secondary" onClick={onCancel} className="w-full sm:w-auto">
           Cancel
         </Button>
       </div>

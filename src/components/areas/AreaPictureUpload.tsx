@@ -49,13 +49,17 @@ export function AreaPictureUpload({ areaId }: { areaId: string }) {
       </FileButton>
       {error && <p className="text-xs text-red-600">{error}</p>}
       {pictures.length > 0 && (
-        <div className="flex gap-2 flex-wrap">
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
           {pictures.map((pic) => (
             <a key={pic.id} href={urls[pic.id] ?? '#'} target="_blank" rel="noreferrer">
               {urls[pic.id] ? (
-                <img src={urls[pic.id]} alt="" className="w-16 h-16 object-cover rounded-lg border border-gray-200" />
+                <img
+                  src={urls[pic.id]}
+                  alt=""
+                  className="w-full aspect-square object-cover rounded-lg border border-gray-200"
+                />
               ) : (
-                <div className="w-16 h-16 rounded-lg border border-gray-200 bg-gray-100" />
+                <div className="w-full aspect-square rounded-lg border border-gray-200 bg-gray-100" />
               )}
             </a>
           ))}

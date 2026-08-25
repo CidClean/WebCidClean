@@ -165,7 +165,7 @@ function NewClientForm({ onCreated }: { onCreated: () => void }) {
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="First Name">
           <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
         </Field>
@@ -223,7 +223,7 @@ function NewClientForm({ onCreated }: { onCreated: () => void }) {
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={submitting}>
+      <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
         {submitting ? 'Saving...' : 'Save Client'}
       </Button>
     </form>

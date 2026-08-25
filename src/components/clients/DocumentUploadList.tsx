@@ -82,7 +82,7 @@ export function DocumentUploadList({ clientId }: { clientId: string }) {
           activation's signed-document check is satisfied. If they sign through their client portal instead, it's
           recorded automatically and doesn't need this.
         </p>
-        <div className="flex items-end gap-2 flex-wrap">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
           <Field label="Signed by">
             <Input value={signedByName} onChange={(e) => setSignedByName(e.target.value)} placeholder="Client name" />
           </Field>
@@ -91,7 +91,12 @@ export function DocumentUploadList({ clientId }: { clientId: string }) {
             onChange={(e) => setContractFile(e.target.files?.[0] ?? null)}
             className="text-xs text-gray-600"
           />
-          <Button type="submit" variant="secondary" disabled={uploading || !contractFile || !signedByName.trim()}>
+          <Button
+            type="submit"
+            variant="secondary"
+            disabled={uploading || !contractFile || !signedByName.trim()}
+            className="w-full sm:w-auto"
+          >
             {uploading ? 'Uploading...' : 'Upload Signed Contract'}
           </Button>
         </div>

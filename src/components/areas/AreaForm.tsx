@@ -69,7 +69,7 @@ export function AreaForm({ jobSiteId, existingAreas, onCreated }: AreaFormProps)
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="Area Type">
           <Select value={type} onChange={(e) => setType(e.target.value as AreaType)}>
             {AREA_TYPES.map((t) => (
@@ -128,7 +128,7 @@ export function AreaForm({ jobSiteId, existingAreas, onCreated }: AreaFormProps)
       {justAdded && (
         <p className="text-sm text-green-600">Added "{justAdded}" — keep going, or close this form when you're done.</p>
       )}
-      <Button type="submit" disabled={submitting}>
+      <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
         {submitting ? 'Saving...' : `Add ${nextName}`}
       </Button>
     </form>

@@ -60,7 +60,7 @@ export function JobSiteForm({ client, onCreated }: { client: Client; onCreated: 
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="Job Site Name">
           <Input value={name} onChange={(e) => setName(e.target.value)} required />
         </Field>
@@ -75,7 +75,7 @@ export function JobSiteForm({ client, onCreated }: { client: Client; onCreated: 
           Same as client
         </button>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="Contact Name">
           <Input value={contactName} onChange={(e) => setContactName(e.target.value)} />
         </Field>
@@ -92,7 +92,7 @@ export function JobSiteForm({ client, onCreated }: { client: Client; onCreated: 
 
       <FrequencyPicker frequency={frequency} onFrequencyChange={setFrequency} days={days} onDaysChange={setDays} />
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="Preferred Start Time">
           <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} required />
         </Field>
@@ -123,7 +123,7 @@ export function JobSiteForm({ client, onCreated }: { client: Client; onCreated: 
       </Field>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={submitting}>
+      <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
         {submitting ? 'Saving...' : 'Save Job Site'}
       </Button>
     </form>

@@ -138,7 +138,7 @@ export function ClientDetailPage() {
             />
           )}
 
-          <div className="border-b border-gray-200 flex gap-4">
+          <div className="border-b border-gray-200 flex gap-4 overflow-x-auto">
             {(
               [
                 ['info', 'Info'],
@@ -150,7 +150,7 @@ export function ClientDetailPage() {
               <button
                 key={value}
                 onClick={() => setTab(value)}
-                className={`pb-2 text-sm font-medium border-b-2 -mb-px ${
+                className={`pb-2 text-sm font-medium border-b-2 -mb-px whitespace-nowrap ${
                   tab === value ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -221,11 +221,11 @@ function ChangeStatusPanel({
         <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. client asked to pause billing" />
       </Field>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex gap-2">
-        <Button onClick={handleConfirm} disabled={saving || status === client.status}>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button onClick={handleConfirm} disabled={saving || status === client.status} className="w-full sm:w-auto">
           {saving ? 'Saving...' : 'Confirm'}
         </Button>
-        <Button variant="secondary" onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel} className="w-full sm:w-auto">
           Cancel
         </Button>
       </div>
@@ -292,7 +292,7 @@ function InfoTab({ client, onUpdated }: { client: Client; onUpdated: () => void 
                 Edit
               </button>
             </div>
-            <dl className="grid grid-cols-2 gap-3 text-sm">
+            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div>
                 <dt className="text-gray-500">First Name</dt>
                 <dd className="text-gray-900 break-words">{client.first_name}</dd>
@@ -321,7 +321,7 @@ function InfoTab({ client, onUpdated }: { client: Client; onUpdated: () => void 
                 <dt className="text-gray-500">Facility Type</dt>
                 <dd className="text-gray-900 break-words">{client.facility_type || '—'}</dd>
               </div>
-              <div className="col-span-2">
+              <div className="col-span-1 sm:col-span-2">
                 <dt className="text-gray-500">Services Required</dt>
                 <dd className="text-gray-900 break-words">{client.services_required?.join(', ') || '—'}</dd>
               </div>
@@ -386,7 +386,7 @@ function ClientEditForm({
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="First Name">
           <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
         </Field>
@@ -413,11 +413,11 @@ function ClientEditForm({
         </Field>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex gap-2">
-        <Button type="submit" disabled={saving}>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button type="submit" disabled={saving} className="w-full sm:w-auto">
           {saving ? 'Saving...' : 'Save'}
         </Button>
-        <Button type="button" variant="secondary" onClick={onCancel}>
+        <Button type="button" variant="secondary" onClick={onCancel} className="w-full sm:w-auto">
           Cancel
         </Button>
       </div>
@@ -527,11 +527,11 @@ function JobSiteRow({ clientId, jobSite: js }: { clientId: string; jobSite: JobS
   return (
     <Link
       to={`/clients/${clientId}/job-sites/${js.id}`}
-      className="flex items-center justify-between p-4 hover:bg-gray-50"
+      className="flex items-center justify-between gap-2 p-4 hover:bg-gray-50"
     >
-      <div>
-        <div className="font-medium text-gray-900">{js.name}</div>
-        <div className="text-sm text-gray-500">{js.address}</div>
+      <div className="min-w-0">
+        <div className="font-medium text-gray-900 break-words">{js.name}</div>
+        <div className="text-sm text-gray-500 break-words">{js.address}</div>
       </div>
       <StatusBadge status={js.status} />
     </Link>

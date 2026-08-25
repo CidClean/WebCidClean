@@ -151,7 +151,7 @@ export function AssignStaffForm({
         ) : (
           <p className="text-xs text-red-600">Set the job site's staff payment amount before assigning monthly-rate staff.</p>
         ))}
-      <div className="flex items-end gap-2 flex-wrap">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-2">
         <Field label="Staff">
           <Select value={staffId} onChange={(e) => setStaffId(e.target.value)}>
             {availableStaff.map((s) => (
@@ -176,7 +176,7 @@ export function AssignStaffForm({
         <Field label="Start Date">
           <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
         </Field>
-        <Button type="submit" disabled={submitting || monthlyBlocked}>
+        <Button type="submit" disabled={submitting || monthlyBlocked} className="w-full sm:w-auto">
           {submitting ? 'Saving...' : 'Assign'}
         </Button>
       </div>

@@ -103,14 +103,14 @@ export function JobSiteEditForm({ jobSite, onSaved, onCancel }: { jobSite: JobSi
           Resolve this from the Staff tab (end or reassign the conflicting assignment) — the save itself already went
           through.
         </p>
-        <Button onClick={onSaved}>Done</Button>
+        <Button onClick={onSaved} className="w-full sm:w-auto">Done</Button>
       </div>
     )
   }
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="Job Site Name">
           <Input value={name} onChange={(e) => setName(e.target.value)} required />
         </Field>
@@ -133,7 +133,7 @@ export function JobSiteEditForm({ jobSite, onSaved, onCancel }: { jobSite: JobSi
 
       <FrequencyPicker frequency={frequency} onFrequencyChange={setFrequency} days={days} onDaysChange={setDays} />
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="Preferred Start Time">
           <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} required />
         </Field>
@@ -171,11 +171,11 @@ export function JobSiteEditForm({ jobSite, onSaved, onCancel }: { jobSite: JobSi
       </Field>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex gap-2">
-        <Button type="submit" disabled={submitting}>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
           {submitting ? 'Saving...' : 'Save'}
         </Button>
-        <Button type="button" variant="secondary" onClick={onCancel}>
+        <Button type="button" variant="secondary" onClick={onCancel} className="w-full sm:w-auto">
           Cancel
         </Button>
       </div>

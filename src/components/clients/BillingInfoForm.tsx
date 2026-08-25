@@ -71,7 +71,7 @@ export function BillingInfoForm({ clientId, client }: { clientId: string; client
         <input type="checkbox" checked={sameAsClient} onChange={(e) => toggleSameAsClient(e.target.checked)} />
         Same as client information
       </label>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="Billing Name">
           <Input value={billingName} onChange={(e) => setBillingName(e.target.value)} />
         </Field>
@@ -93,7 +93,7 @@ export function BillingInfoForm({ clientId, client }: { clientId: string; client
       </Field>
       {error && <p className="text-sm text-red-600">{error}</p>}
       {saved && <p className="text-sm text-green-600">Saved.</p>}
-      <Button type="submit" disabled={saving}>
+      <Button type="submit" disabled={saving} className="w-full sm:w-auto">
         {saving ? 'Saving...' : 'Save Billing Info'}
       </Button>
     </form>

@@ -151,8 +151,8 @@ export function QuoteEditorPage() {
         <BackLink to={`/clients/${clientId}/job-sites/${jobSiteId}`} label="Back to job site" />
       </div>
 
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Quote — {jobSite.name}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-xl font-semibold text-gray-900 break-words min-w-0">Quote — {jobSite.name}</h1>
         <StatusBadge status={quote.status} />
       </div>
 
@@ -167,11 +167,11 @@ export function QuoteEditorPage() {
         />
         {error && <p className="text-sm text-red-600">{error}</p>}
         {editable && (
-          <div className="flex gap-2">
-            <Button variant="secondary" onClick={handleSaveLineItems} disabled={saving}>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button variant="secondary" onClick={handleSaveLineItems} disabled={saving} className="w-full sm:w-auto">
               {saving ? 'Saving...' : 'Save Draft'}
             </Button>
-            <Button onClick={handleSendQuote} disabled={sending}>
+            <Button onClick={handleSendQuote} disabled={sending} className="w-full sm:w-auto">
               {sending ? 'Sending...' : 'Send Quote'}
             </Button>
           </div>
@@ -222,9 +222,9 @@ function ShareLinkRow({ shareToken }: { shareToken: string }) {
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <p className="text-sm text-gray-600 break-all flex-1">{url}</p>
-      <Button variant="secondary" onClick={handleCopy}>
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <p className="text-sm text-gray-600 break-all flex-1 min-w-0">{url}</p>
+      <Button variant="secondary" onClick={handleCopy} className="w-full sm:w-auto">
         {copied ? 'Copied!' : 'Copy Link'}
       </Button>
     </div>

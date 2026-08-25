@@ -71,50 +71,54 @@ export function QuoteLineItemsEditor({
 
   return (
     <div className="space-y-3">
-      {items.map((item, i) => (
-        <div key={i} className="flex gap-2 items-center">
-          <Input
-            placeholder="Description"
-            value={item.description}
-            onChange={(e) => updateItem(i, { description: e.target.value })}
-            disabled={readOnly}
-            className="flex-1"
-          />
-          <Input
-            type="number"
-            step="0.01"
-            placeholder="Amount"
-            value={item.amount}
-            onChange={(e) => updateItem(i, { amount: e.target.value })}
-            disabled={readOnly}
-            className="w-28"
-          />
-          <label className="flex items-center gap-1 text-xs text-gray-600 whitespace-nowrap">
-            <input
-              type="checkbox"
-              checked={item.taxable}
-              onChange={(e) => updateItem(i, { taxable: e.target.checked })}
+      <div className="space-y-2">
+        {items.map((item, i) => (
+          <div key={i} className="border border-gray-200 rounded-lg p-3 space-y-2">
+            <Input
+              placeholder="Description"
+              value={item.description}
+              onChange={(e) => updateItem(i, { description: e.target.value })}
               disabled={readOnly}
+              className="w-full"
             />
-            taxable
-          </label>
-          {!readOnly && (
-            <button type="button" onClick={() => removeItem(i)} className="text-xs text-red-600 hover:underline">
-              Remove
-            </button>
-          )}
-        </div>
-      ))}
+            <div className="flex items-center justify-between gap-2">
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="Amount"
+                value={item.amount}
+                onChange={(e) => updateItem(i, { amount: e.target.value })}
+                disabled={readOnly}
+                className="w-28"
+              />
+              <label className="flex items-center gap-1 text-xs text-gray-600 whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={item.taxable}
+                  onChange={(e) => updateItem(i, { taxable: e.target.checked })}
+                  disabled={readOnly}
+                />
+                taxable
+              </label>
+              {!readOnly && (
+                <button type="button" onClick={() => removeItem(i)} className="text-xs text-red-600 hover:underline">
+                  Remove
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
 
       {!readOnly && (
-        <div className="flex flex-wrap gap-2 items-center pt-1">
-          <Button type="button" variant="secondary" onClick={addManualItem}>
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center pt-1">
+          <Button type="button" variant="secondary" onClick={addManualItem} className="w-full sm:w-auto">
             Add Line Item
           </Button>
 
           {catalogItems.length > 0 && (
-            <div className="flex items-center gap-1">
-              <Select value={catalogSelection} onChange={(e) => setCatalogSelection(e.target.value)} className="w-48">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center">
+              <Select value={catalogSelection} onChange={(e) => setCatalogSelection(e.target.value)} className="w-full sm:w-48">
                 <option value="">Add from catalog...</option>
                 {catalogItems.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -122,15 +126,15 @@ export function QuoteLineItemsEditor({
                   </option>
                 ))}
               </Select>
-              <Button type="button" variant="secondary" onClick={addCatalogItem} disabled={!catalogSelection}>
+              <Button type="button" variant="secondary" onClick={addCatalogItem} disabled={!catalogSelection} className="w-full sm:w-auto">
                 Add
               </Button>
             </div>
           )}
 
           {discounts.length > 0 && (
-            <div className="flex items-center gap-1">
-              <Select value={discountSelection} onChange={(e) => setDiscountSelection(e.target.value)} className="w-48">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center">
+              <Select value={discountSelection} onChange={(e) => setDiscountSelection(e.target.value)} className="w-full sm:w-48">
                 <option value="">Apply discount...</option>
                 {discounts.map((d) => (
                   <option key={d.id} value={d.id}>
@@ -138,7 +142,7 @@ export function QuoteLineItemsEditor({
                   </option>
                 ))}
               </Select>
-              <Button type="button" variant="secondary" onClick={addDiscount} disabled={!discountSelection}>
+              <Button type="button" variant="secondary" onClick={addDiscount} disabled={!discountSelection} className="w-full sm:w-auto">
                 Add
               </Button>
             </div>
