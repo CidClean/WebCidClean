@@ -71,7 +71,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setStaffId(r.staffId)
       setRoleLoading(false)
     })
-  }, [session])
+    // Keyed on the user id, not the session object: Supabase issues a new
+    // session object (same user) on every tab-visibility-triggered token
+    // refresh — e.g. when Android backgrounds Chrome to open the native
+    // file picker. Re-running this on session identity churn flips
+    // roleLoading back to true, which makes ProtectedRoute unmount the
+    // whole route tree and lose in-progress page state (selected tab,
+    // pending uploads) for no actual auth change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id])
 
   useEffect(() => {
     if (!session) {
@@ -83,7 +91,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     getAssuranceLevel()
       .then(({ currentLevel, nextLevel }) => setMfaPending(currentLevel === 'aal1' && nextLevel === 'aal2'))
       .finally(() => setMfaLoading(false))
-  }, [session])
+    // Same reasoning as the role effect above: key on user id so a
+    // same-user token refresh doesn't re-trigger mfaLoading and unmount
+    // the route tree via ProtectedRoute.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id])
 
   function markMfaVerified() {
     setMfaPending(false)
