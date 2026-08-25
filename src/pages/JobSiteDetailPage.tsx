@@ -440,6 +440,7 @@ function InvoicesSection({ jobSiteId, clientId }: { jobSiteId: string; clientId:
 function ActivateJobPanel({ jobSite, onActivated }: { jobSite: JobSite; onActivated: () => void }) {
   const [hasBilling, setHasBilling] = useState<boolean | null>(null)
   const [hasDocs, setHasDocs] = useState<boolean | null>(null)
+  const [needsStaffPayment, setNeedsStaffPayment] = useState<boolean | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -449,12 +450,21 @@ function ActivateJobPanel({ jobSite, onActivated }: { jobSite: JobSite; onActiva
     // (finding #6): a signed contract specifically, not just any uploaded
     // file — an ID scan or other unrelated document no longer satisfies it.
     listClientDocuments(jobSite.client_id).then((docs) =>
-      setHasDocs(docs.some((d) => d.document_type === 'contract' && d.signed_at !== null)),
+      setHasDocs(docs.some((d) => d.document_type === 'contract' && d.job_site_id === jobSite.id && d.signed_at !== null)),
     )
-  }, [jobSite.client_id])
+    // A staff payment budget only ever feeds the even-split default for
+    // monthly-rate assignments — per_day/per_hour staff are paid based on
+    // actual logged work, so it's only required when a monthly-rate
+    // assignment is actually active on this job site (matches
+    // activate_job/reactivate_job_site's server-side check).
+    listAssignmentsForJobSite(jobSite.id).then((assignments) =>
+      setNeedsStaffPayment(assignments.some((a) => !a.end_date && (a.payment_type as PaymentType) === 'monthly')),
+    )
+  }, [jobSite.id, jobSite.client_id])
 
   const hasStaffPayment = jobSite.staff_payment_amount !== null
-  const ready = hasBilling && hasDocs && hasStaffPayment && jobSite.service_amount !== null
+  const staffPaymentOk = !needsStaffPayment || hasStaffPayment
+  const ready = hasBilling && hasDocs && staffPaymentOk && jobSite.service_amount !== null
 
   async function handleActivate() {
     setSubmitting(true)
@@ -479,12 +489,15 @@ function ActivateJobPanel({ jobSite, onActivated }: { jobSite: JobSite; onActiva
       )}
       {hasDocs === false && (
         <p className="text-sm text-red-600">
-          Client has no signed contract on file — upload one under the client's Documents tab ("Upload Signed
-          Contract"), or have them sign it through their client portal.
+          No signed contract on file for this job site — upload one under the client's Documents tab ("Signed
+          documents", picking this job site), or have them sign it through their client portal.
         </p>
       )}
-      {!hasStaffPayment && (
-        <p className="text-sm text-red-600">Set the staff payment amount in the Staff tab before activating.</p>
+      {needsStaffPayment && !hasStaffPayment && (
+        <p className="text-sm text-red-600">
+          This job site has a staff member on a fixed monthly rate — set the staff payment budget in the Staff tab
+          before activating.
+        </p>
       )}
       <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
         <div>
@@ -493,7 +506,13 @@ function ActivateJobPanel({ jobSite, onActivated }: { jobSite: JobSite; onActiva
         </div>
         <div>
           <dt className="text-gray-500">Staff Payment Budget (monthly)</dt>
-          <dd className="text-gray-900 break-words">{jobSite.staff_payment_amount !== null ? `$${jobSite.staff_payment_amount}/mo` : '—'}</dd>
+          <dd className="text-gray-900 break-words">
+            {jobSite.staff_payment_amount !== null
+              ? `$${jobSite.staff_payment_amount}/mo`
+              : needsStaffPayment
+                ? '—'
+                : 'Not needed (no monthly-rate staff)'}
+          </dd>
         </div>
       </dl>
       {error && <p className="text-sm text-red-600">{error}</p>}
@@ -545,12 +564,10 @@ function StaffAssignmentsSection({ jobSite, onUpdated }: { jobSite: JobSite; onU
   const activeAssignments = assignments.filter((a) => !a.end_date)
   const endedAssignments = assignments.filter((a) => a.end_date)
 
+  const hasMonthlyAssignment = activeAssignments.some((a) => (a.payment_type as PaymentType) === 'monthly')
+
   return (
     <div className="space-y-6">
-      <Section title="Staff Payment Budget">
-        <StaffPaymentBudgetEditor jobSite={jobSite} onUpdated={refreshAll} />
-      </Section>
-
       <Section title="Assignments">
         <AssignStaffForm jobSite={jobSite} existingAssignments={activeAssignments} onAssigned={refreshAll} />
         {loading ? (
@@ -573,6 +590,15 @@ function StaffAssignmentsSection({ jobSite, onUpdated }: { jobSite: JobSite; onU
             </ArchivedSection>
           </>
         )}
+      </Section>
+
+      <Section title="Staff Payment Budget">
+        <p className="text-xs text-gray-500 -mt-1">
+          {hasMonthlyAssignment
+            ? "Used to suggest an even split between staff on a fixed monthly rate — required before activating since this job site has one."
+            : "Only needed for staff on a fixed monthly rate, to suggest an even split between them. No staff here are on a monthly rate right now, so this isn't required — staff paid per day or per hour are calculated from logged work instead."}
+        </p>
+        <StaffPaymentBudgetEditor jobSite={jobSite} onUpdated={refreshAll} />
       </Section>
     </div>
   )
