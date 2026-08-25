@@ -21,6 +21,22 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
+// Supabase persists the session under a "sb-<project-ref>-auth-token" key.
+// Checked synchronously (independent of the async auth calls below) so we
+// can tell a genuinely signed-out visitor apart from a cold reload where a
+// real session is still being read from storage.
+function hasPersistedSession(): boolean {
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key?.startsWith('sb-') && key.endsWith('-auth-token')) return true
+    }
+  } catch {
+    // localStorage inaccessible (private browsing, etc.) — nothing to check.
+  }
+  return false
+}
+
 async function resolveRole(): Promise<{ role: PortalRole; clientId: string | null; staffId: string | null }> {
   const [adminRes, clientRes, staffRes] = await Promise.all([
     supabase.rpc('is_admin'),
@@ -44,24 +60,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [mfaLoading, setMfaLoading] = useState(true)
 
   useEffect(() => {
-    // Deliberately not also calling supabase.auth.getSession() here: it and
-    // onAuthStateChange are two independent async reads of the same state,
-    // and on a cold reload they can resolve out of order. If getSession()
-    // resolves first with a stale/not-yet-refreshed null, loading flips to
-    // false with session still null, ProtectedRoute redirects to /login,
-    // and then the real session lands moments later via onAuthStateChange —
-    // by which point LoginPage's own "already signed in" redirect bounces
-    // to Dashboard, losing whatever page the user was on. onAuthStateChange
-    // alone is sufficient: its callback fires once immediately on
-    // subscribe with the resolved current session, then on every
-    // subsequent auth event — a single source of truth instead of two
-    // racing ones.
+    // Confirmed via screen recording: on a hard/native reload,
+    // onAuthStateChange's first callback can fire with session: null before
+    // a corrected callback lands a moment later with the real, persisted
+    // session. The very first render with loading=false and session=null
+    // is enough for ProtectedRoute to redirect to /login, and once that
+    // navigation happens, LoginPage's own "already signed in" redirect
+    // bounces to Dashboard instead of back to the original page — even
+    // though the user was never actually signed out.
+    //
+    // hasPersistedSession() is a synchronous, independent signal: if a
+    // session token exists in storage, a null callback is known-premature,
+    // so we keep showing the loading state instead of treating it as
+    // "signed out" and wait for a real value. A short safety timeout
+    // still resolves loading either way, in case storage has a stale
+    // token that never actually resolves to a session (e.g. after a
+    // manual token wipe).
+    const expectSession = hasPersistedSession()
+    let settled = false
+
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession)
-      setLoading(false)
+      // Once settled, every later event (including a real sign-out's
+      // null) is authoritative. Before that, only accept a truthy
+      // session or "we never expected one" as the settling event — a
+      // premature null while a token is on disk just means keep waiting.
+      if (settled || newSession || !expectSession) {
+        settled = true
+        setLoading(false)
+      }
     })
 
-    return () => subscription.subscription.unsubscribe()
+    const fallback = expectSession
+      ? window.setTimeout(() => {
+          settled = true
+          setLoading(false)
+        }, 3000)
+      : undefined
+
+    return () => {
+      subscription.subscription.unsubscribe()
+      if (fallback) window.clearTimeout(fallback)
+    }
   }, [])
 
   useEffect(() => {
