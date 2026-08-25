@@ -115,78 +115,76 @@ export function JobSiteDetailPage() {
 
       {actionError && <p className="text-sm text-red-600">{actionError}</p>}
 
-      <div className="flex flex-col sm:flex-row gap-4 items-start">
-        <SummaryCard
-          title={jobSite.name}
-          subtitle={jobSite.address}
-          status={<StatusBadge status={jobSite.status} />}
-          stats={[
-            { label: 'Monthly', value: jobSite.service_amount === null ? '—' : `$${jobSite.service_amount}` },
-            { label: 'Staff', value: staffCount === null ? '—' : String(staffCount) },
-          ]}
-          actions={
-            <>
-              {(jobSite.status === 'active' || jobSite.status === 'approved') && (
-                <Button variant="secondary" onClick={() => startStatusAction('paused')}>
-                  Pause
-                </Button>
-              )}
-              {(jobSite.status === 'paused' || jobSite.status === 'archived') && (
-                <Button variant="secondary" onClick={handleReactivate}>
-                  Reactivate
-                </Button>
-              )}
-              {jobSite.status !== 'archived' && (
-                <Button variant="danger" onClick={() => startStatusAction('archived')}>
-                  Archive
-                </Button>
-              )}
-            </>
-          }
-        />
+      <SummaryCard
+        title={jobSite.name}
+        subtitle={jobSite.address}
+        status={<StatusBadge status={jobSite.status} />}
+        stats={[
+          { label: 'Monthly', value: jobSite.service_amount === null ? '—' : `$${jobSite.service_amount}` },
+          { label: 'Staff', value: staffCount === null ? '—' : String(staffCount) },
+        ]}
+        actions={
+          <>
+            {(jobSite.status === 'active' || jobSite.status === 'approved') && (
+              <Button variant="secondary" onClick={() => startStatusAction('paused')}>
+                Pause
+              </Button>
+            )}
+            {(jobSite.status === 'paused' || jobSite.status === 'archived') && (
+              <Button variant="secondary" onClick={handleReactivate}>
+                Reactivate
+              </Button>
+            )}
+            {jobSite.status !== 'archived' && (
+              <Button variant="danger" onClick={() => startStatusAction('archived')}>
+                Archive
+              </Button>
+            )}
+          </>
+        }
+      />
 
-        <div className="flex-1 min-w-0 space-y-6">
-          {pendingStatus && (
-            <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 max-w-md">
-              <p className="text-sm font-medium text-gray-900">
-                {pendingStatus === 'archived' ? 'Archive' : 'Pause'} this job site
-              </p>
-              <Field label="Last Active Day">
-                <Input type="date" value={pendingEndDate} onChange={(e) => setPendingEndDate(e.target.value)} />
-              </Field>
+      <div className="space-y-6">
+        {pendingStatus && (
+          <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 max-w-md">
+            <p className="text-sm font-medium text-gray-900">
+              {pendingStatus === 'archived' ? 'Archive' : 'Pause'} this job site
+            </p>
+            <Field label="Last Active Day">
+              <Input type="date" value={pendingEndDate} onChange={(e) => setPendingEndDate(e.target.value)} />
+            </Field>
+            <p className="text-xs text-gray-500">
+              Days on or before this date still count toward staff pay and accounting — this only stops the
+              schedule going forward. Editable later from the Info tab if it turns out to be wrong.
+            </p>
+            {closingSummary && (
               <p className="text-xs text-gray-500">
-                Days on or before this date still count toward staff pay and accounting — this only stops the
-                schedule going forward. Editable later from the Info tab if it turns out to be wrong.
+                Accrued to date: staff ${closingSummary.staffCostToDate.toFixed(2)}, expenses $
+                {closingSummary.expensesToDate.toFixed(2)}.
               </p>
-              {closingSummary && (
-                <p className="text-xs text-gray-500">
-                  Accrued to date: staff ${closingSummary.staffCostToDate.toFixed(2)}, expenses $
-                  {closingSummary.expensesToDate.toFixed(2)}.
-                </p>
-              )}
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button
-                  variant={pendingStatus === 'archived' ? 'danger' : 'secondary'}
-                  onClick={confirmStatusAction}
-                  className="w-full sm:w-auto"
-                >
-                  Confirm {pendingStatus === 'archived' ? 'Archive' : 'Pause'}
-                </Button>
-                <Button variant="secondary" onClick={() => setPendingStatus(null)} className="w-full sm:w-auto">
-                  Cancel
-                </Button>
-              </div>
+            )}
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                variant={pendingStatus === 'archived' ? 'danger' : 'secondary'}
+                onClick={confirmStatusAction}
+                className="w-full sm:w-auto"
+              >
+                Confirm {pendingStatus === 'archived' ? 'Archive' : 'Pause'}
+              </Button>
+              <Button variant="secondary" onClick={() => setPendingStatus(null)} className="w-full sm:w-auto">
+                Cancel
+              </Button>
             </div>
-          )}
+          </div>
+        )}
 
-          <TabBar tabs={JOB_SITE_TABS} active={tab} onChange={setTab} />
+        <TabBar tabs={JOB_SITE_TABS} active={tab} onChange={setTab} />
 
-          {tab === 'info' && <InfoTab jobSite={jobSite} onUpdated={refresh} />}
-          {tab === 'areas' && <AreasSection jobSiteId={jobSiteId} />}
-          {tab === 'staff' && <StaffAssignmentsSection jobSite={jobSite} onUpdated={refresh} />}
-          {tab === 'quote' && <QuoteSection jobSiteId={jobSiteId} clientId={clientId} />}
-          {tab === 'invoices' && <InvoicesSection jobSiteId={jobSiteId} clientId={clientId} />}
-        </div>
+        {tab === 'info' && <InfoTab jobSite={jobSite} onUpdated={refresh} />}
+        {tab === 'areas' && <AreasSection jobSiteId={jobSiteId} />}
+        {tab === 'staff' && <StaffAssignmentsSection jobSite={jobSite} onUpdated={refresh} />}
+        {tab === 'quote' && <QuoteSection jobSiteId={jobSiteId} clientId={clientId} />}
+        {tab === 'invoices' && <InvoicesSection jobSiteId={jobSiteId} clientId={clientId} />}
       </div>
     </div>
   )

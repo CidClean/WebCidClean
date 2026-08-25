@@ -23,7 +23,7 @@ export function SummaryCard({
   actions?: ReactNode
 }) {
   return (
-    <div className="w-full sm:w-56 shrink-0 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div className="w-full bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="bg-gradient-to-br from-blue-700 to-blue-600 px-4 pt-5 pb-6 text-center text-white">
         <div className="w-12 h-12 rounded-full bg-white/15 ring-1 ring-white/30 font-semibold flex items-center justify-center mx-auto text-sm">
           {initialsOf(title)}

@@ -80,98 +80,96 @@ export function StaffDetailPage() {
       </div>
       {actionError && <p className="text-sm text-red-600">{actionError}</p>}
 
-      <div className="flex flex-col sm:flex-row gap-4 items-start">
-        <SummaryCard
-          title={`${staff.first_name} ${staff.last_name}`}
-          subtitle={
-            <>
-              <span className="capitalize">{staff.type}</span>
-              {staff.email && <span className="block">{staff.email}</span>}
-              {staff.phone && <span className="block">{staff.phone}</span>}
-            </>
-          }
-          status={<StatusBadge status={staff.status} />}
-          stats={[
-            { label: 'Sites', value: String(assignments.filter((a) => a.end_date === null).length) },
-            {
-              label: 'Monthly',
-              value: `$${assignments
-                .filter((a) => a.end_date === null)
-                .reduce((sum, a) => sum + a.payment_amount, 0)}`,
-            },
-          ]}
-          actions={
-            <>
-              {staff.status === 'active' && (
-                <Button variant="secondary" onClick={() => runStatusAction('paused')}>
-                  Pause
-                </Button>
-              )}
-              {(staff.status === 'paused' || staff.status === 'archived') && (
-                <Button variant="secondary" onClick={() => runStatusAction('active')}>
-                  Reactivate
-                </Button>
-              )}
-              {staff.status !== 'archived' && (
-                <Button variant="danger" onClick={startArchive}>
-                  Archive
-                </Button>
-              )}
-            </>
-          }
-        />
+      <SummaryCard
+        title={`${staff.first_name} ${staff.last_name}`}
+        subtitle={
+          <>
+            <span className="capitalize">{staff.type}</span>
+            {staff.email && <span className="block">{staff.email}</span>}
+            {staff.phone && <span className="block">{staff.phone}</span>}
+          </>
+        }
+        status={<StatusBadge status={staff.status} />}
+        stats={[
+          { label: 'Sites', value: String(assignments.filter((a) => a.end_date === null).length) },
+          {
+            label: 'Monthly',
+            value: `$${assignments
+              .filter((a) => a.end_date === null)
+              .reduce((sum, a) => sum + a.payment_amount, 0)}`,
+          },
+        ]}
+        actions={
+          <>
+            {staff.status === 'active' && (
+              <Button variant="secondary" onClick={() => runStatusAction('paused')}>
+                Pause
+              </Button>
+            )}
+            {(staff.status === 'paused' || staff.status === 'archived') && (
+              <Button variant="secondary" onClick={() => runStatusAction('active')}>
+                Reactivate
+              </Button>
+            )}
+            {staff.status !== 'archived' && (
+              <Button variant="danger" onClick={startArchive}>
+                Archive
+              </Button>
+            )}
+          </>
+        }
+      />
 
-        <div className="flex-1 min-w-0 space-y-6">
-          {archiving && (
-            <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 max-w-md">
-              <p className="text-sm font-medium text-gray-900">Archive {staff.first_name} {staff.last_name}</p>
-              <Field label="Last Active Day">
-                <Input type="date" value={archiveEndDate} onChange={(e) => setArchiveEndDate(e.target.value)} />
-              </Field>
-              <p className="text-xs text-gray-500">
-                Every currently open assignment will be ended as of this date — days on or before it still count
-                toward pay, but nothing accrues after. Editable per-assignment later if it turns out to be wrong.
-              </p>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button variant="danger" onClick={confirmArchive} className="w-full sm:w-auto">
-                  Confirm Archive
-                </Button>
-                <Button variant="secondary" onClick={() => setArchiving(false)} className="w-full sm:w-auto">
-                  Cancel
-                </Button>
-              </div>
+      <div className="space-y-6">
+        {archiving && (
+          <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 max-w-md">
+            <p className="text-sm font-medium text-gray-900">Archive {staff.first_name} {staff.last_name}</p>
+            <Field label="Last Active Day">
+              <Input type="date" value={archiveEndDate} onChange={(e) => setArchiveEndDate(e.target.value)} />
+            </Field>
+            <p className="text-xs text-gray-500">
+              Every currently open assignment will be ended as of this date — days on or before it still count
+              toward pay, but nothing accrues after. Editable per-assignment later if it turns out to be wrong.
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button variant="danger" onClick={confirmArchive} className="w-full sm:w-auto">
+                Confirm Archive
+              </Button>
+              <Button variant="secondary" onClick={() => setArchiving(false)} className="w-full sm:w-auto">
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+
+        <StaffInfoSection staff={staff} onUpdated={refresh} />
+
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Job Site Assignments</h2>
+          {assignments.length === 0 ? (
+            <p className="text-sm text-gray-500">No assignments yet.</p>
+          ) : (
+            <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
+              {assignments.map((a) => (
+                <Link
+                  key={a.id}
+                  to={`/clients/${a.job_sites?.client_id}/job-sites/${a.job_site_id}`}
+                  className="flex flex-wrap items-center justify-between gap-2 p-3 hover:bg-gray-50"
+                >
+                  <span className="text-sm text-gray-900 break-words">{a.job_sites?.name}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-gray-700">${a.payment_amount}/mo</span>
+                    {a.job_sites && <StatusBadge status={a.job_sites.status} />}
+                  </div>
+                </Link>
+              ))}
             </div>
           )}
-
-          <StaffInfoSection staff={staff} onUpdated={refresh} />
-
-          <div className="space-y-3">
-            <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Job Site Assignments</h2>
-            {assignments.length === 0 ? (
-              <p className="text-sm text-gray-500">No assignments yet.</p>
-            ) : (
-              <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
-                {assignments.map((a) => (
-                  <Link
-                    key={a.id}
-                    to={`/clients/${a.job_sites?.client_id}/job-sites/${a.job_site_id}`}
-                    className="flex flex-wrap items-center justify-between gap-2 p-3 hover:bg-gray-50"
-                  >
-                    <span className="text-sm text-gray-900 break-words">{a.job_sites?.name}</span>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-gray-700">${a.payment_amount}/mo</span>
-                      {a.job_sites && <StatusBadge status={a.job_sites.status} />}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <PaymentsSection staffId={staff.id} />
-
-          <PortalInviteSection staff={staff} />
         </div>
+
+        <PaymentsSection staffId={staff.id} />
+
+        <PortalInviteSection staff={staff} />
       </div>
     </div>
   )

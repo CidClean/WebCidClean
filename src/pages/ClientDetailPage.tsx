@@ -21,11 +21,19 @@ import { Select } from '../components/ui/Select'
 import { StatusBadge } from '../components/ui/StatusBadge'
 import { SummaryCard } from '../components/ui/SummaryCard'
 import { ArchivedSection } from '../components/ui/ArchivedSection'
+import { TabBar, type TabDef } from '../components/ui/TabBar'
 import { BillingInfoForm } from '../components/clients/BillingInfoForm'
 import { DocumentUploadList } from '../components/clients/DocumentUploadList'
 import { JobSiteForm } from '../components/jobSites/JobSiteForm'
 
 type Tab = 'info' | 'jobSites' | 'billing' | 'documents'
+
+const CLIENT_DETAIL_TABS: TabDef<Tab>[] = [
+  { value: 'info', label: 'Info', icon: 'user' },
+  { value: 'jobSites', label: 'Job Sites', icon: 'pin' },
+  { value: 'billing', label: 'Billing', icon: 'wallet' },
+  { value: 'documents', label: 'Documents', icon: 'doc' },
+]
 
 export function ClientDetailPage() {
   const { clientId } = useParams<{ clientId: string }>()
@@ -95,77 +103,56 @@ export function ClientDetailPage() {
 
       {actionError && <p className="text-sm text-red-600">{actionError}</p>}
 
-      <div className="flex flex-col sm:flex-row gap-4 items-start">
-        <SummaryCard
-          title={`${client.first_name} ${client.last_name}`}
-          subtitle={client.company || client.role || undefined}
-          status={<StatusBadge status={client.status} />}
-          stats={[
-            { label: 'Job Sites', value: String(jobSites.filter((js) => js.status !== 'archived').length) },
-            { label: 'Total', value: String(jobSites.length) },
-          ]}
-          actions={
-            <>
-              {client.status === 'prospect' && (
-                <Button onClick={() => runAction(() => markClientContacted(clientId))}>Mark Contacted</Button>
-              )}
-              {client.status === 'contacted' && (
-                <Button onClick={() => runAction(() => markClientInProcess(clientId))}>Move to In Process</Button>
-              )}
-              {client.status !== 'archived' && (
-                <Button variant="secondary" onClick={() => setShowStatusChange((v) => !v)}>
-                  Change Status
-                </Button>
-              )}
-              {client.status !== 'archived' && (
-                <Button variant="danger" onClick={handleArchiveClient}>
-                  Archive
-                </Button>
-              )}
-            </>
-          }
-        />
+      <SummaryCard
+        title={`${client.first_name} ${client.last_name}`}
+        subtitle={client.company || client.role || undefined}
+        status={<StatusBadge status={client.status} />}
+        stats={[
+          { label: 'Job Sites', value: String(jobSites.filter((js) => js.status !== 'archived').length) },
+          { label: 'Total', value: String(jobSites.length) },
+        ]}
+        actions={
+          <>
+            {client.status === 'prospect' && (
+              <Button onClick={() => runAction(() => markClientContacted(clientId))}>Mark Contacted</Button>
+            )}
+            {client.status === 'contacted' && (
+              <Button onClick={() => runAction(() => markClientInProcess(clientId))}>Move to In Process</Button>
+            )}
+            {client.status !== 'archived' && (
+              <Button variant="secondary" onClick={() => setShowStatusChange((v) => !v)}>
+                Change Status
+              </Button>
+            )}
+            {client.status !== 'archived' && (
+              <Button variant="danger" onClick={handleArchiveClient}>
+                Archive
+              </Button>
+            )}
+          </>
+        }
+      />
 
-        <div className="flex-1 min-w-0 space-y-6">
-          {showStatusChange && (
-            <ChangeStatusPanel
-              client={client}
-              onDone={() => {
-                setShowStatusChange(false)
-                refresh()
-              }}
-              onCancel={() => setShowStatusChange(false)}
-            />
-          )}
+      <div className="space-y-6">
+        {showStatusChange && (
+          <ChangeStatusPanel
+            client={client}
+            onDone={() => {
+              setShowStatusChange(false)
+              refresh()
+            }}
+            onCancel={() => setShowStatusChange(false)}
+          />
+        )}
 
-          <div className="border-b border-gray-200 flex gap-4 overflow-x-auto">
-            {(
-              [
-                ['info', 'Info'],
-                ['jobSites', 'Job Sites'],
-                ['billing', 'Billing'],
-                ['documents', 'Documents'],
-              ] as [Tab, string][]
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                onClick={() => setTab(value)}
-                className={`pb-2 text-sm font-medium border-b-2 -mb-px whitespace-nowrap ${
-                  tab === value ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+        <TabBar tabs={CLIENT_DETAIL_TABS} active={tab} onChange={setTab} />
 
-          {tab === 'info' && <InfoTab client={client} onUpdated={refresh} />}
-          {tab === 'jobSites' && (
-            <JobSitesTab client={client} jobSites={jobSites} loading={jobSitesLoading} onUpdated={refreshJobSites} />
-          )}
-          {tab === 'billing' && <BillingInfoForm clientId={clientId} client={client} />}
-          {tab === 'documents' && <DocumentUploadList clientId={clientId} />}
-        </div>
+        {tab === 'info' && <InfoTab client={client} onUpdated={refresh} />}
+        {tab === 'jobSites' && (
+          <JobSitesTab client={client} jobSites={jobSites} loading={jobSitesLoading} onUpdated={refreshJobSites} />
+        )}
+        {tab === 'billing' && <BillingInfoForm clientId={clientId} client={client} />}
+        {tab === 'documents' && <DocumentUploadList clientId={clientId} />}
       </div>
     </div>
   )
