@@ -44,13 +44,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [mfaLoading, setMfaLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-      setLoading(false)
-    })
-
+    // Deliberately not also calling supabase.auth.getSession() here: it and
+    // onAuthStateChange are two independent async reads of the same state,
+    // and on a cold reload they can resolve out of order. If getSession()
+    // resolves first with a stale/not-yet-refreshed null, loading flips to
+    // false with session still null, ProtectedRoute redirects to /login,
+    // and then the real session lands moments later via onAuthStateChange —
+    // by which point LoginPage's own "already signed in" redirect bounces
+    // to Dashboard, losing whatever page the user was on. onAuthStateChange
+    // alone is sufficient: its callback fires once immediately on
+    // subscribe with the resolved current session, then on every
+    // subsequent auth event — a single source of truth instead of two
+    // racing ones.
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession)
+      setLoading(false)
     })
 
     return () => subscription.subscription.unsubscribe()
