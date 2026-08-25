@@ -1,10 +1,27 @@
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from './AuthContext'
 import { MfaChallengeScreen } from './MfaChallengeScreen'
+import { logDebugEvent } from '../lib/debugLog'
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { session, loading, role, roleLoading, mfaPending, mfaLoading } = useAuth()
+
+  // Temporary: records every state snapshot ProtectedRoute sees, so a
+  // reproduction of the reload-bounce bug can be traced exactly. See
+  // src/lib/debugLog.ts for why this was added instead of another guess.
+  useEffect(() => {
+    logDebugEvent('protected_route_render', {
+      hasSession: !!session,
+      userId: session?.user?.id ?? null,
+      loading,
+      role,
+      roleLoading,
+      mfaPending,
+      mfaLoading,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!session, session?.user?.id, loading, role, roleLoading, mfaPending, mfaLoading])
 
   if (loading || (session && roleLoading)) {
     return <div className="p-8 text-gray-500">Loading...</div>

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { getAssuranceLevel } from '../api/mfa'
+import { logDebugEvent } from '../lib/debugLog'
 
 export type PortalRole = 'admin' | 'client' | 'staff' | null
 
@@ -46,6 +47,18 @@ async function resolveRole(): Promise<{ role: PortalRole; clientId: string | nul
   if (adminRes.data === true) return { role: 'admin', clientId: null, staffId: null }
   if (clientRes.data) return { role: 'client', clientId: clientRes.data as string, staffId: null }
   if (staffRes.data) return { role: 'staff', clientId: null, staffId: staffRes.data as string }
+  // Temporary diagnostic: role resolved to null. Capture the raw RPC
+  // results (including .error, which the return-value logic above never
+  // checks) so a reproduction shows whether this is a silent RPC failure
+  // rather than a legitimate "no role" result.
+  logDebugEvent('resolve_role_null', {
+    adminData: adminRes.data,
+    adminError: adminRes.error?.message ?? null,
+    clientData: clientRes.data,
+    clientError: clientRes.error?.message ?? null,
+    staffData: staffRes.data,
+    staffError: staffRes.error?.message ?? null,
+  })
   return { role: null, clientId: null, staffId: null }
 }
 
@@ -79,7 +92,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const expectSession = hasPersistedSession()
     let settled = false
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    const { data: subscription } = supabase.auth.onAuthStateChange((event, newSession) => {
+      // Temporary: every onAuthStateChange firing, including its event
+      // name — this is the piece no external log can show, since these
+      // events don't necessarily involve a network call (e.g. a purely
+      // local TOKEN_REFRESHED/INITIAL_SESSION replay).
+      logDebugEvent('auth_state_change', {
+        authEvent: event,
+        expectSession,
+        settledBefore: settled,
+        hasNewSession: !!newSession,
+        newSessionUserId: newSession?.user?.id ?? null,
+      })
       setSession(newSession)
       // Once settled, every later event (including a real sign-out's
       // null) is authoritative. Before that, only accept a truthy
