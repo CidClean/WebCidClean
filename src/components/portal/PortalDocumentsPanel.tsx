@@ -107,6 +107,22 @@ export function PortalDocumentsPanel<T extends PortalDocumentLike>({
   const fulfilled = requirements.filter((r) => docByRequirement.has(r.id))
   const signedDocs = documents.filter((d) => d.document_type === 'contract')
 
+  // Grouped by job site so a client with several job sites (each possibly
+  // with several signed documents) sees them organized rather than one
+  // flat, unlabeled grid.
+  const signedGroups: { key: string; label: string | null; docs: T[] }[] = jobSites
+    ? [
+        ...jobSites
+          .map((js) => ({ key: js.id, label: js.name, docs: signedDocs.filter((d) => d.job_site_id === js.id) }))
+          .filter((g) => g.docs.length > 0),
+        {
+          key: '__none__',
+          label: 'No job site set',
+          docs: signedDocs.filter((d) => !d.job_site_id || !jobSites.some((js) => js.id === d.job_site_id)),
+        },
+      ].filter((g) => g.docs.length > 0)
+    : [{ key: '__all__', label: null, docs: signedDocs }]
+
   return (
     <div>
       <h2 className="font-serif italic text-2xl text-gray-900 mb-4">Documents</h2>
@@ -157,25 +173,38 @@ export function PortalDocumentsPanel<T extends PortalDocumentLike>({
             Nothing here yet — signed copies will show up once they're ready.
           </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            {signedDocs.map((doc) => (
-              <div key={doc.id} className="flex gap-3 bg-white border border-gray-200 rounded-xl p-3.5">
-                <FileIcon name={doc.name} tone="green" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold text-gray-900 truncate">{doc.name}</p>
-                  <p className="text-[11px] text-gray-400 mt-0.5">
-                    {jobSites?.find((js) => js.id === doc.job_site_id)?.name}
-                    {jobSites?.find((js) => js.id === doc.job_site_id) && ' · '}
-                    Signed {doc.signed_at ? new Date(doc.signed_at).toLocaleDateString() : ''}
+          <div className="space-y-4">
+            {signedGroups.map((group) => (
+              <div key={group.key}>
+                {group.label && (
+                  <p
+                    className={`text-[11px] font-bold uppercase tracking-wide mb-1.5 ${
+                      group.key === '__none__' ? 'text-amber-600' : 'text-gray-400'
+                    }`}
+                  >
+                    {group.label}
                   </p>
-                  <div className="flex items-center gap-3 mt-1.5">
-                    <button onClick={() => onOpen(doc)} className="text-xs font-bold text-blue-700">
-                      View
-                    </button>
-                    <button onClick={() => onDownload(doc)} className="text-xs font-bold text-gray-500">
-                      Download
-                    </button>
-                  </div>
+                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {group.docs.map((doc) => (
+                    <div key={doc.id} className="flex gap-3 bg-white border border-gray-200 rounded-xl p-3.5">
+                      <FileIcon name={doc.name} tone="green" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-gray-900 truncate">{doc.name}</p>
+                        <p className="text-[11px] text-gray-400 mt-0.5">
+                          Signed {doc.signed_at ? new Date(doc.signed_at).toLocaleDateString() : ''}
+                        </p>
+                        <div className="flex items-center gap-3 mt-1.5">
+                          <button onClick={() => onOpen(doc)} className="text-xs font-bold text-blue-700">
+                            View
+                          </button>
+                          <button onClick={() => onDownload(doc)} className="text-xs font-bold text-gray-500">
+                            Download
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}

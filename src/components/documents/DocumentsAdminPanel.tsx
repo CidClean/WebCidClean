@@ -67,7 +67,22 @@ export function DocumentsAdminPanel<D extends AdminDocumentLike>({
   const docsByRequirement = new Map(
     documents.filter((d) => d.requirement_id).map((d) => [d.requirement_id as string, d]),
   )
-  const jobSiteName = (id: string | null | undefined) => jobSites?.find((js) => js.id === id)?.name
+
+  // Grouped by job site when there is one to group by, so a client with
+  // several job sites (each possibly with several signed documents) reads
+  // as organized sections instead of one flat, unlabeled list.
+  const signedGroups: { key: string; label: string | null; docs: D[] }[] = jobSites
+    ? [
+        ...jobSites
+          .map((js) => ({ key: js.id, label: js.name, docs: signedDocs.filter((d) => d.job_site_id === js.id) }))
+          .filter((g) => g.docs.length > 0),
+        {
+          key: '__none__',
+          label: 'No job site set',
+          docs: signedDocs.filter((d) => !d.job_site_id || !jobSites.some((js) => js.id === d.job_site_id)),
+        },
+      ].filter((g) => g.docs.length > 0)
+    : [{ key: '__all__', label: null, docs: signedDocs }]
 
   async function handleAddRequirement(e: FormEvent) {
     e.preventDefault()
@@ -179,26 +194,34 @@ export function DocumentsAdminPanel<D extends AdminDocumentLike>({
           </p>
         </div>
 
-        {signedDocs.length > 0 && (
-          <ul className="divide-y divide-gray-100">
-            {signedDocs.map((doc) => (
-              <li key={doc.id} className="px-4 py-3 flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{doc.name}</p>
-                  <p className="text-xs text-gray-500 truncate">
-                    Signed by {doc.signed_by_name ?? 'unknown'} · {new Date(doc.uploaded_at).toLocaleDateString()}
-                    {needsJobSite && (
-                      <> · {jobSiteName(doc.job_site_id) ?? <span className="text-amber-600">no job site set</span>}</>
-                    )}
-                  </p>
-                </div>
-                <Button variant="secondary" onClick={() => onOpenDocument(doc)} className="shrink-0">
-                  View
-                </Button>
-              </li>
-            ))}
-          </ul>
-        )}
+        {signedGroups.map((group) => (
+          <div key={group.key}>
+            {group.label && (
+              <p
+                className={`px-4 pt-3 pb-1 text-[11px] font-bold uppercase tracking-wide ${
+                  group.key === '__none__' ? 'text-amber-600' : 'text-gray-400'
+                }`}
+              >
+                {group.label}
+              </p>
+            )}
+            <ul className="divide-y divide-gray-100">
+              {group.docs.map((doc) => (
+                <li key={doc.id} className="px-4 py-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{doc.name}</p>
+                    <p className="text-xs text-gray-500 truncate">
+                      Signed by {doc.signed_by_name ?? 'unknown'} · {new Date(doc.uploaded_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <Button variant="secondary" onClick={() => onOpenDocument(doc)} className="shrink-0">
+                    View
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
 
         <form onSubmit={handleSignedSubmit} className="px-4 py-3 bg-gray-50 border-t border-gray-100 space-y-3">
           {needsJobSite && (
