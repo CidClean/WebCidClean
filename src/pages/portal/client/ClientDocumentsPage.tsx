@@ -2,37 +2,41 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../../../auth/AuthContext'
 import {
   getMyDocumentUrl,
+  listMyDocumentRequirements,
   listMyDocuments,
-  signMyDocument,
   uploadMyIdentificationDocument,
 } from '../../../api/clientPortal'
-import type { ClientDocument } from '../../../types/models'
+import type { ClientDocument, DocumentRequirement } from '../../../types/models'
 import { PortalShell } from '../../../components/layout/PortalShell'
-import { PortalDocumentsView } from '../../../components/portal/PortalDocumentsView'
+import { PortalDocumentsPanel } from '../../../components/portal/PortalDocumentsPanel'
 import { CLIENT_TABS } from './tabs'
 
 export function ClientDocumentsPage() {
   const { clientId } = useAuth()
   const [documents, setDocuments] = useState<ClientDocument[]>([])
+  const [requirements, setRequirements] = useState<DocumentRequirement[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   function refresh() {
     setLoading(true)
-    listMyDocuments()
-      .then(setDocuments)
+    Promise.all([listMyDocuments(), listMyDocumentRequirements()])
+      .then(([docs, reqs]) => {
+        setDocuments(docs)
+        setRequirements(reqs)
+      })
       .finally(() => setLoading(false))
   }
 
   useEffect(refresh, [])
 
-  async function handleUpload(file: File) {
+  async function handleUpload(requirementId: string, file: File) {
     if (!clientId) return
     setUploading(true)
     setError(null)
     try {
-      await uploadMyIdentificationDocument(clientId, file)
+      await uploadMyIdentificationDocument(clientId, file, requirementId)
       refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed')
@@ -46,23 +50,22 @@ export function ClientDocumentsPage() {
     window.open(url, '_blank')
   }
 
-  async function handleSign(doc: ClientDocument) {
-    const name = prompt('Type your full name to sign this document:')
-    if (!name) return
-    await signMyDocument(doc.id, name)
-    refresh()
+  async function handleDownload(doc: ClientDocument) {
+    const url = await getMyDocumentUrl(doc.storage_path, doc.name)
+    window.open(url, '_blank')
   }
 
   return (
     <PortalShell title="Documents" tabs={CLIENT_TABS}>
-      <PortalDocumentsView
+      <PortalDocumentsPanel
+        requirements={requirements}
         documents={documents}
         loading={loading}
         uploading={uploading}
         error={error}
-        onUpload={handleUpload}
+        onUploadForRequirement={handleUpload}
         onOpen={handleOpen}
-        onSign={handleSign}
+        onDownload={handleDownload}
       />
     </PortalShell>
   )

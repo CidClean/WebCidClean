@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../../auth/AuthContext'
 import { listAssignmentsForStaff, type JobStaffAssignmentWithJobSite } from '../../../api/staff'
-import { listMyStaffDocuments } from '../../../api/staffPortal'
+import { listMyStaffDocumentRequirements, listMyStaffDocuments } from '../../../api/staffPortal'
 import { listWorkLogsForStaff, type StaffWorkLogEntry } from '../../../api/workLogs'
 import { computeOccurrences, type ScheduleJobSite } from '../../../lib/schedule'
 import { todayDateOnly } from '../../../lib/accrual'
-import type { StaffDocument } from '../../../types/models'
+import type { DocumentRequirement, StaffDocument } from '../../../types/models'
 import { PortalShell } from '../../../components/layout/PortalShell'
 import { HeroCard } from '../../../components/portal/HeroCard'
 import { STAFF_TABS } from './tabs'
@@ -31,6 +31,7 @@ export function StaffHomePage() {
   const [assignments, setAssignments] = useState<JobStaffAssignmentWithJobSite[]>([])
   const [logs, setLogs] = useState<StaffWorkLogEntry[]>([])
   const [documents, setDocuments] = useState<StaffDocument[]>([])
+  const [requirements, setRequirements] = useState<DocumentRequirement[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -39,11 +40,13 @@ export function StaffHomePage() {
       listAssignmentsForStaff(staffId),
       listWorkLogsForStaff(staffId, startOfMonth(), toDateOnly(new Date())),
       listMyStaffDocuments(),
+      listMyStaffDocumentRequirements(),
     ])
-      .then(([a, l, d]) => {
+      .then(([a, l, d, reqs]) => {
         setAssignments(a)
         setLogs(l)
         setDocuments(d)
+        setRequirements(reqs)
       })
       .finally(() => setLoading(false))
   }, [staffId])
@@ -73,7 +76,7 @@ export function StaffHomePage() {
   const rest = visits.slice(1, 4)
 
   const monthTotal = logs.reduce((sum, l) => sum + l.payment_amount, 0)
-  const unsignedDocs = documents.filter((d) => d.document_type === 'contract' && !d.signed_at).length
+  const pendingDocuments = requirements.filter((r) => !documents.some((d) => d.requirement_id === r.id)).length
 
   return (
     <PortalShell title="Cid Clean" tabs={STAFF_TABS}>
@@ -97,8 +100,8 @@ export function StaffHomePage() {
           <div className="text-[10px] font-bold uppercase tracking-wide text-gray-400 mt-0.5">This month</div>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-2.5">
-          <div className="font-serif italic text-xl text-gray-900">{unsignedDocs}</div>
-          <div className="text-[10px] font-bold uppercase tracking-wide text-gray-400 mt-0.5">To sign</div>
+          <div className="font-serif italic text-xl text-gray-900">{pendingDocuments}</div>
+          <div className="text-[10px] font-bold uppercase tracking-wide text-gray-400 mt-0.5">To upload</div>
         </div>
       </div>
 

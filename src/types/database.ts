@@ -261,6 +261,7 @@ export type Database = {
           document_type: string
           id: string
           name: string
+          requirement_id: string | null
           signed_at: string | null
           signed_by_name: string | null
           storage_path: string
@@ -271,6 +272,7 @@ export type Database = {
           document_type?: string
           id?: string
           name: string
+          requirement_id?: string | null
           signed_at?: string | null
           signed_by_name?: string | null
           storage_path: string
@@ -281,6 +283,7 @@ export type Database = {
           document_type?: string
           id?: string
           name?: string
+          requirement_id?: string | null
           signed_at?: string | null
           signed_by_name?: string | null
           storage_path?: string
@@ -292,6 +295,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_documents_requirement_id_fkey"
+            columns: ["requirement_id"]
+            isOneToOne: false
+            referencedRelation: "document_requirements"
             referencedColumns: ["id"]
           },
         ]
@@ -405,6 +415,45 @@ export type Database = {
           value?: number
         }
         Relationships: []
+      }
+      document_requirements: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          id: string
+          label: string
+          staff_id: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          label: string
+          staff_id?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          label?: string
+          staff_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_requirements_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_requirements_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       document_sequences: {
         Row: {
@@ -1380,6 +1429,7 @@ export type Database = {
           document_type: string
           id: string
           name: string
+          requirement_id: string | null
           signed_at: string | null
           signed_by_name: string | null
           staff_id: string
@@ -1390,6 +1440,7 @@ export type Database = {
           document_type?: string
           id?: string
           name: string
+          requirement_id?: string | null
           signed_at?: string | null
           signed_by_name?: string | null
           staff_id: string
@@ -1400,6 +1451,7 @@ export type Database = {
           document_type?: string
           id?: string
           name?: string
+          requirement_id?: string | null
           signed_at?: string | null
           signed_by_name?: string | null
           staff_id?: string
@@ -1407,6 +1459,13 @@ export type Database = {
           uploaded_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "staff_documents_requirement_id_fkey"
+            columns: ["requirement_id"]
+            isOneToOne: false
+            referencedRelation: "document_requirements"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "staff_documents_staff_id_fkey"
             columns: ["staff_id"]

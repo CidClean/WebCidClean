@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { getClientDocumentUrl, listClientDocuments, uploadSignedClientDocument } from '../../api/clients'
+import { getStaffDocumentUrl, listStaffDocuments, uploadSignedStaffDocument } from '../../api/staffDocuments'
 import { addDocumentRequirement, deleteDocumentRequirement, listDocumentRequirements } from '../../api/documentRequirements'
-import type { ClientDocument, DocumentRequirement } from '../../types/models'
+import type { DocumentRequirement, StaffDocument } from '../../types/models'
 import { DocumentsAdminPanel } from '../documents/DocumentsAdminPanel'
 
-export function DocumentUploadList({ clientId }: { clientId: string }) {
-  const [documents, setDocuments] = useState<ClientDocument[]>([])
+export function StaffDocumentUploadList({ staffId }: { staffId: string }) {
+  const [documents, setDocuments] = useState<StaffDocument[]>([])
   const [requirements, setRequirements] = useState<DocumentRequirement[]>([])
   const [loading, setLoading] = useState(true)
   const [signedUploading, setSignedUploading] = useState(false)
@@ -13,7 +13,7 @@ export function DocumentUploadList({ clientId }: { clientId: string }) {
 
   function refresh() {
     setLoading(true)
-    Promise.all([listClientDocuments(clientId), listDocumentRequirements({ clientId })])
+    Promise.all([listStaffDocuments(staffId), listDocumentRequirements({ staffId })])
       .then(([docs, reqs]) => {
         setDocuments(docs)
         setRequirements(reqs)
@@ -21,12 +21,12 @@ export function DocumentUploadList({ clientId }: { clientId: string }) {
       .finally(() => setLoading(false))
   }
 
-  useEffect(refresh, [clientId])
+  useEffect(refresh, [staffId])
 
   async function handleAddRequirement(label: string) {
     setError(null)
     try {
-      await addDocumentRequirement({ clientId }, label)
+      await addDocumentRequirement({ staffId }, label)
       refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add requirement')
@@ -47,7 +47,7 @@ export function DocumentUploadList({ clientId }: { clientId: string }) {
     setSignedUploading(true)
     setError(null)
     try {
-      await uploadSignedClientDocument(clientId, file, signedByName)
+      await uploadSignedStaffDocument(staffId, file, signedByName)
       refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed')
@@ -56,9 +56,9 @@ export function DocumentUploadList({ clientId }: { clientId: string }) {
     }
   }
 
-  async function handleOpen(doc: ClientDocument) {
+  async function handleOpen(doc: StaffDocument) {
     try {
-      const url = await getClientDocumentUrl(doc.storage_path)
+      const url = await getStaffDocumentUrl(doc.storage_path)
       window.open(url, '_blank')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to open document')

@@ -5,6 +5,7 @@ import { archiveStaff, getStaffMember, listAssignmentsForStaff, updateStaff, typ
 import { listWorkLogsForStaff, type StaffWorkLogEntry } from '../api/workLogs'
 import { getPortalAccountStatus, invitePortalUser, type PortalAccountStatus } from '../api/portal'
 import { todayDateOnly } from '../lib/accrual'
+import { StaffDocumentUploadList } from '../components/staff/StaffDocumentUploadList'
 import type { Staff, StaffType } from '../types/models'
 import { STAFF_TYPES } from '../types/models'
 import { Button } from '../components/ui/Button'
@@ -168,6 +169,11 @@ export function StaffDetailPage() {
         </div>
 
         <PaymentsSection staffId={staff.id} />
+
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Documents</h2>
+          <StaffDocumentUploadList staffId={staff.id} />
+        </div>
 
         <PortalInviteSection staff={staff} />
       </div>

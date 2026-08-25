@@ -117,21 +117,31 @@ export async function listClientDocuments(clientId: string): Promise<ClientDocum
   return data
 }
 
-export async function addClientDocument(
+/**
+ * Uploads a document marked document_type: 'contract' with signed_at set
+ * immediately — for when the admin collects a final signed copy of a
+ * document from an external e-signature provider and just records that
+ * it happened. This is currently the ONLY path that produces a document
+ * satisfying activate_job's tightened check (document_type='contract' AND
+ * signed_at is not null).
+ */
+export async function uploadSignedClientDocument(
   clientId: string,
-  name: string,
-  storagePath: string,
-  options?: { documentType?: string; signed?: boolean; signedByName?: string },
+  file: File,
+  signedByName: string,
 ): Promise<ClientDocument> {
+  const path = `${clientId}/${Date.now()}-${file.name}`
+  const { error: uploadError } = await supabase.storage.from('client-documents').upload(path, file)
+  if (uploadError) throw uploadError
   const { data, error } = await supabase
     .from('client_documents')
     .insert({
       client_id: clientId,
-      name,
-      storage_path: storagePath,
-      document_type: options?.documentType ?? 'identification',
-      signed_at: options?.signed ? new Date().toISOString() : null,
-      signed_by_name: options?.signed ? options?.signedByName ?? null : null,
+      name: file.name,
+      storage_path: path,
+      document_type: 'contract',
+      signed_at: new Date().toISOString(),
+      signed_by_name: signedByName,
     })
     .select()
     .single()
@@ -139,38 +149,10 @@ export async function addClientDocument(
   return data
 }
 
-/**
- * Uploads a document as document_type: 'identification' (the default —
- * plain supporting files). Use uploadSignedContract for the specific
- * "signed contract" document activate_job/reactivate_job_site require
- * before a job site can go active (finding #6).
- */
-export async function uploadClientDocument(clientId: string, file: File): Promise<ClientDocument> {
-  const path = `${clientId}/${Date.now()}-${file.name}`
-  const { error: uploadError } = await supabase.storage.from('client-documents').upload(path, file)
-  if (uploadError) throw uploadError
-  return addClientDocument(clientId, file.name, path)
-}
-
-/**
- * Uploads a document marked document_type: 'contract' with signed_at set
- * immediately — the admin-side equivalent of a client signing their
- * contract through the portal (src/api/clientPortal.ts::signMyDocument),
- * for when the admin collects a signature outside the app (in person, by
- * mail) and just needs to record that it happened. This is currently the
- * ONLY path that produces a document satisfying activate_job's tightened
- * check (document_type='contract' AND signed_at is not null) from the
- * admin side.
- */
-export async function uploadSignedContract(clientId: string, file: File, signedByName: string): Promise<ClientDocument> {
-  const path = `${clientId}/${Date.now()}-${file.name}`
-  const { error: uploadError } = await supabase.storage.from('client-documents').upload(path, file)
-  if (uploadError) throw uploadError
-  return addClientDocument(clientId, file.name, path, { documentType: 'contract', signed: true, signedByName })
-}
-
-export async function getClientDocumentUrl(storagePath: string): Promise<string> {
-  const { data, error } = await supabase.storage.from('client-documents').createSignedUrl(storagePath, 3600)
+export async function getClientDocumentUrl(storagePath: string, download?: string): Promise<string> {
+  const { data, error } = await supabase.storage
+    .from('client-documents')
+    .createSignedUrl(storagePath, 3600, download ? { download } : undefined)
   if (error) throw error
   return data.signedUrl
 }

@@ -1,8 +1,16 @@
 import { useEffect, useState } from 'react'
-import { listMyDocuments, listMyInvoices, listMyJobSites, listMyQuotes, type MyInvoice, type MyQuote } from '../../../api/clientPortal'
+import {
+  listMyDocumentRequirements,
+  listMyDocuments,
+  listMyInvoices,
+  listMyJobSites,
+  listMyQuotes,
+  type MyInvoice,
+  type MyQuote,
+} from '../../../api/clientPortal'
 import { computeOccurrences, type ScheduleJobSite } from '../../../lib/schedule'
 import { todayDateOnly } from '../../../lib/accrual'
-import type { ClientDocument, JobSite } from '../../../types/models'
+import type { ClientDocument, DocumentRequirement, JobSite } from '../../../types/models'
 import { PortalShell } from '../../../components/layout/PortalShell'
 import { HeroCard } from '../../../components/portal/HeroCard'
 import { CLIENT_TABS } from './tabs'
@@ -24,15 +32,17 @@ export function ClientHomePage() {
   const [quotes, setQuotes] = useState<MyQuote[]>([])
   const [invoices, setInvoices] = useState<MyInvoice[]>([])
   const [documents, setDocuments] = useState<ClientDocument[]>([])
+  const [requirements, setRequirements] = useState<DocumentRequirement[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([listMyJobSites(), listMyQuotes(), listMyInvoices(), listMyDocuments()])
-      .then(([js, q, inv, docs]) => {
+    Promise.all([listMyJobSites(), listMyQuotes(), listMyInvoices(), listMyDocuments(), listMyDocumentRequirements()])
+      .then(([js, q, inv, docs, reqs]) => {
         setJobSites(js)
         setQuotes(q)
         setInvoices(inv)
         setDocuments(docs)
+        setRequirements(reqs)
       })
       .finally(() => setLoading(false))
   }, [])
@@ -65,7 +75,7 @@ export function ClientHomePage() {
 
   const balanceDue = invoices.filter((i) => i.status === 'sent').reduce((sum, i) => sum + i.amount, 0)
   const activeJobSites = jobSites.filter((js) => js.status === 'active').length
-  const unsignedContracts = documents.filter((d) => d.document_type === 'contract' && !d.signed_at).length
+  const pendingDocuments = requirements.filter((r) => !documents.some((d) => d.requirement_id === r.id)).length
 
   const activity: ActivityItem[] = [
     ...quotes.slice(0, 3).map((q) => ({ text: `Quote for ${q.job_sites?.name ?? 'job site'} — ${q.status}`, date: q.created_at, kind: 'quote' as const })),
@@ -97,8 +107,8 @@ export function ClientHomePage() {
           <div className="text-[10px] font-bold uppercase tracking-wide text-gray-400 mt-0.5">Active sites</div>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-2.5">
-          <div className="font-serif italic text-xl text-gray-900">{unsignedContracts}</div>
-          <div className="text-[10px] font-bold uppercase tracking-wide text-gray-400 mt-0.5">To sign</div>
+          <div className="font-serif italic text-xl text-gray-900">{pendingDocuments}</div>
+          <div className="text-[10px] font-bold uppercase tracking-wide text-gray-400 mt-0.5">To upload</div>
         </div>
       </div>
 

@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase'
-import type { Client, ClientDocument, Invoice, JobSite, Quote } from '../types/models'
+import type { Client, ClientDocument, DocumentRequirement, Invoice, JobSite, Quote } from '../types/models'
 
 // RLS scopes every query here to the signed-in client's own rows automatically —
 // no client_id filters needed (or trusted) client-side.
@@ -50,31 +50,44 @@ export async function listMyDocuments(): Promise<ClientDocument[]> {
   return data
 }
 
-export async function uploadMyIdentificationDocument(clientId: string, file: File): Promise<ClientDocument> {
+export async function listMyDocumentRequirements(): Promise<DocumentRequirement[]> {
+  const { data, error } = await supabase
+    .from('document_requirements')
+    .select('*')
+    .order('created_at', { ascending: true })
+  if (error) throw error
+  return data
+}
+
+export async function uploadMyIdentificationDocument(
+  clientId: string,
+  file: File,
+  requirementId?: string,
+): Promise<ClientDocument> {
   const path = `${clientId}/${Date.now()}-${file.name}`
   const { error: uploadError } = await supabase.storage.from('client-documents').upload(path, file)
   if (uploadError) throw uploadError
   const { data, error } = await supabase
     .from('client_documents')
-    .insert({ client_id: clientId, name: file.name, storage_path: path, document_type: 'identification' })
+    .insert({
+      client_id: clientId,
+      name: file.name,
+      storage_path: path,
+      document_type: 'identification',
+      requirement_id: requirementId ?? null,
+    })
     .select()
     .single()
   if (error) throw error
   return data
 }
 
-export async function getMyDocumentUrl(storagePath: string): Promise<string> {
-  const { data, error } = await supabase.storage.from('client-documents').createSignedUrl(storagePath, 3600)
+export async function getMyDocumentUrl(storagePath: string, download?: string): Promise<string> {
+  const { data, error } = await supabase.storage
+    .from('client-documents')
+    .createSignedUrl(storagePath, 3600, download ? { download } : undefined)
   if (error) throw error
   return data.signedUrl
-}
-
-export async function signMyDocument(documentId: string, signedByName: string): Promise<void> {
-  const { error } = await supabase
-    .from('client_documents')
-    .update({ signed_at: new Date().toISOString(), signed_by_name: signedByName })
-    .eq('id', documentId)
-  if (error) throw error
 }
 
 export async function updateMyClientContact(phone: string | null, email: string | null): Promise<void> {
