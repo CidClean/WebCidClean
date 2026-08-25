@@ -140,7 +140,8 @@ export function AccountingPage() {
       {tab === 'accounts' && (
         <section className="space-y-3">
           <p className="text-xs text-gray-500">
-            Income (service amount) minus staff cost accrued in this range minus job-attributed expenses in this range.
+            Income (service amount, prorated to the scheduled visits that actually fall in this range) minus staff
+            cost accrued in this range minus job-attributed expenses in this range.
           </p>
           {loading ? (
             <p className="text-sm text-gray-500">Loading...</p>

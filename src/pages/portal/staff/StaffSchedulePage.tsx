@@ -29,8 +29,14 @@ export function StaffSchedulePage() {
   const rangeEnd = new Date(today)
   rangeEnd.setUTCDate(rangeEnd.getUTCDate() + 13)
 
+  const todayStr = todayDateOnly()
+  // Finding #12: an assignment whose end_date has already passed was still
+  // included, so a staff member kept seeing that job site's visits on their
+  // own schedule after they'd actually stopped working it.
+  const currentAssignments = assignments.filter((a) => !a.end_date || a.end_date >= todayStr)
+
   const visits: UpcomingVisit[] = []
-  for (const a of assignments) {
+  for (const a of currentAssignments) {
     if (!a.job_sites) continue
     const dates = computeOccurrences(a.job_sites as unknown as ScheduleJobSite, today, rangeEnd)
     for (const date of dates) {

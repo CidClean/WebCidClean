@@ -8,6 +8,7 @@ const WARM = 'bg-[#fae5d8] text-[#c8541f]'
 const ROSE = 'bg-[#f5dde3] text-[#b03a5b]'
 const ACCENT = 'bg-blue-100 text-blue-800'
 const NEUTRAL = 'bg-gray-200 text-gray-500'
+const OVERDUE = 'bg-red-100 text-red-800'
 
 const COLORS: Record<string, string> = {
   prospect: SLATE,
@@ -29,11 +30,17 @@ const COLORS: Record<string, string> = {
   void: ROSE,
 }
 
-export function StatusBadge({ status }: { status: string }) {
-  const classes = COLORS[status] ?? SLATE
+/**
+ * `overdue` (finding #16) overrides the normal status color/label with a
+ * distinct red-tinted treatment — for a `sent` invoice past its due_date,
+ * so it doesn't look identical to a non-overdue "sent" everywhere the
+ * status is shown.
+ */
+export function StatusBadge({ status, overdue }: { status: string; overdue?: boolean }) {
+  const classes = overdue ? OVERDUE : COLORS[status] ?? SLATE
   return (
     <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${classes}`}>
-      {status.replace(/_/g, ' ')}
+      {overdue ? 'overdue' : status.replace(/_/g, ' ')}
     </span>
   )
 }

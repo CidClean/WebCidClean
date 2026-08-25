@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { listAllInvoices, type InvoiceWithJobSite } from '../api/invoices'
+import { isInvoiceOverdue } from '../lib/accrual'
 import { INVOICE_STATUSES } from '../types/models'
 import { Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
@@ -100,7 +101,7 @@ function InvoiceRow({ invoice: inv }: { invoice: InvoiceWithJobSite }) {
       </td>
       <td className="px-4 py-3 text-gray-700">${inv.amount.toFixed(2)}</td>
       <td className="px-4 py-3">
-        <StatusBadge status={inv.status} />
+        <StatusBadge status={inv.status} overdue={isInvoiceOverdue(inv)} />
       </td>
     </tr>
   )

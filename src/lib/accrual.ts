@@ -19,6 +19,19 @@ export function todayDateOnly(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
+/**
+ * Finding #16: "overdue" was only ever computed ad hoc on the Dashboard
+ * tile — a sent invoice past its due_date looked identical to a non-overdue
+ * one everywhere else. Single shared definition so the list and detail
+ * pages can show the same overdue treatment consistently.
+ */
+export function isInvoiceOverdue(
+  invoice: { status: string; due_date: string | null },
+  today: string = todayDateOnly(),
+): boolean {
+  return invoice.status === 'sent' && invoice.due_date !== null && invoice.due_date < today
+}
+
 export interface AccrualJobSite extends ScheduleJobSite {
   id: string
   estimated_duration_minutes: number

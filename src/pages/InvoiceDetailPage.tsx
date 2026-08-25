@@ -17,6 +17,7 @@ import {
   voidInvoice,
 } from '../api/invoices'
 import { renderInvoicePdfBlob } from '../lib/pdf'
+import { isInvoiceOverdue } from '../lib/accrual'
 import type { CatalogItem, Client, Discount, Invoice, JobSite } from '../types/models'
 import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
@@ -41,14 +42,26 @@ function daysInclusive(start: string, end: string): number {
   return Math.round((endMs - startMs) / 86400000) + 1
 }
 
+function isFullCalendarMonth(periodStart: string, periodEnd: string): boolean {
+  const [sy, sm, sd] = periodStart.split('-').map(Number)
+  const [ey, em, ed] = periodEnd.split('-').map(Number)
+  if (sy !== ey || sm !== em || sd !== 1) return false
+  const lastDay = new Date(Date.UTC(ey, em, 0)).getUTCDate()
+  return ed === lastDay
+}
+
 /**
  * Finding #15: the prefilled line-item amount previously always used the
  * job site's full flat service_amount regardless of period length — easy to
  * accidentally send a full month's charge for a deliberately partial
  * period. Prorate by (period length) / (a standard 30-day month), rounded
- * to cents. Stays fully editable afterward — this is only a starting point.
+ * to cents — except when the period IS exactly one calendar month (the
+ * common case), where the full service_amount is used as-is rather than
+ * the 30-day approximation over/under-shooting a 28-, 29-, or 31-day month.
+ * Stays fully editable afterward either way — this is only a starting point.
  */
 function prorateServiceAmount(serviceAmount: number, periodStart: string, periodEnd: string): number {
+  if (isFullCalendarMonth(periodStart, periodEnd)) return serviceAmount
   const days = daysInclusive(periodStart, periodEnd)
   if (days <= 0) return serviceAmount
   return Math.round(serviceAmount * (days / 30) * 100) / 100
@@ -296,8 +309,11 @@ export function InvoiceDetailPage() {
         <h1 className="text-xl font-semibold text-gray-900">
           Invoice — {jobSite.name} ({invoice.period_start} to {invoice.period_end})
         </h1>
-        <StatusBadge status={invoice.status} />
+        <StatusBadge status={invoice.status} overdue={isInvoiceOverdue(invoice)} />
       </div>
+      {isInvoiceOverdue(invoice) && (
+        <p className="text-sm text-red-600">Past due date ({invoice.due_date}) — still unpaid.</p>
+      )}
 
       <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-4 max-w-xl">
         <QuoteLineItemsEditor

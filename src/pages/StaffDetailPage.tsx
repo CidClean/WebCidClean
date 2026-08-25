@@ -1,9 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { BackLink } from '../components/ui/BackLink'
-import { getStaffMember, listAssignmentsForStaff, updateStaff, type JobStaffAssignmentWithJobSite } from '../api/staff'
+import { archiveStaff, getStaffMember, listAssignmentsForStaff, updateStaff, type JobStaffAssignmentWithJobSite } from '../api/staff'
 import { listWorkLogsForStaff, type StaffWorkLogEntry } from '../api/workLogs'
 import { getPortalAccountStatus, invitePortalUser, type PortalAccountStatus } from '../api/portal'
+import { todayDateOnly } from '../lib/accrual'
 import type { Staff, StaffType } from '../types/models'
 import { STAFF_TYPES } from '../types/models'
 import { Button } from '../components/ui/Button'
@@ -19,6 +20,8 @@ export function StaffDetailPage() {
   const [assignments, setAssignments] = useState<JobStaffAssignmentWithJobSite[]>([])
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [archiving, setArchiving] = useState(false)
+  const [archiveEndDate, setArchiveEndDate] = useState(todayDateOnly())
 
   function refresh() {
     if (!staffId) return
@@ -35,6 +38,32 @@ export function StaffDetailPage() {
     setActionError(null)
     try {
       await updateStaff(staffId, { status })
+      refresh()
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Action failed')
+    }
+  }
+
+  function startArchive() {
+    setActionError(null)
+    setArchiveEndDate(todayDateOnly())
+    setArchiving(true)
+  }
+
+  /**
+   * Finding #8: archiving previously only flipped staff.status — any
+   * assignment that was never individually ended kept accruing pay
+   * indefinitely, since computeAccrual never reads staff status at all.
+   * archive_staff ends every currently-open assignment as of the given
+   * effective date in the same transaction as the status flip. Prompts for
+   * the effective date the same way job-site pause/archive already does.
+   */
+  async function confirmArchive() {
+    if (!staffId) return
+    setActionError(null)
+    try {
+      await archiveStaff(staffId, archiveEndDate)
+      setArchiving(false)
       refresh()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Action failed')
@@ -84,7 +113,7 @@ export function StaffDetailPage() {
                 </Button>
               )}
               {staff.status !== 'archived' && (
-                <Button variant="danger" onClick={() => runStatusAction('archived')}>
+                <Button variant="danger" onClick={startArchive}>
                   Archive
                 </Button>
               )}
@@ -93,6 +122,27 @@ export function StaffDetailPage() {
         />
 
         <div className="flex-1 min-w-0 space-y-6">
+          {archiving && (
+            <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 max-w-md">
+              <p className="text-sm font-medium text-gray-900">Archive {staff.first_name} {staff.last_name}</p>
+              <Field label="Last Active Day">
+                <Input type="date" value={archiveEndDate} onChange={(e) => setArchiveEndDate(e.target.value)} />
+              </Field>
+              <p className="text-xs text-gray-500">
+                Every currently open assignment will be ended as of this date — days on or before it still count
+                toward pay, but nothing accrues after. Editable per-assignment later if it turns out to be wrong.
+              </p>
+              <div className="flex gap-2">
+                <Button variant="danger" onClick={confirmArchive}>
+                  Confirm Archive
+                </Button>
+                <Button variant="secondary" onClick={() => setArchiving(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+
           <StaffInfoSection staff={staff} onUpdated={refresh} />
 
           <div className="space-y-3">

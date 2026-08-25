@@ -1,8 +1,53 @@
 import { supabase } from '../lib/supabase'
 import { computeAccrual, todayDateOnly, type AccrualJobSite, type AssignmentForAccrual, type WorkLogOverride } from '../lib/accrual'
+import { computeOccurrences } from '../lib/schedule'
 import { getJobSite } from './jobSites'
 import { listAssignmentsForJobSite } from './staff'
 import { listExpenses } from './expenses'
+
+function parseDateOnly(s: string): Date {
+  const [y, m, d] = s.split('-').map(Number)
+  return new Date(Date.UTC(y, m - 1, d))
+}
+
+function monthBounds(dateStr: string): [Date, Date] {
+  const [y, m] = dateStr.split('-').map(Number)
+  return [new Date(Date.UTC(y, m - 1, 1)), new Date(Date.UTC(y, m, 0))]
+}
+
+/**
+ * Finding #13: service_amount (the flat monthly revenue figure) was
+ * included in full for every job site regardless of the selected date
+ * range, while staff cost and job expenses ARE correctly scoped/prorated —
+ * picking a partial-month range badly overstated profit.
+ *
+ * Prorates the same way computeDailyRate already prorates a monthly
+ * assignment's staff pay: for every one of the job site's scheduled
+ * occurrences that falls inside [rangeStart, rangeEnd], attribute
+ * service_amount / (scheduled occurrences in that date's full calendar
+ * month) — summed across every month the range touches. This produces
+ * exactly service_amount when the range is precisely a full month (every
+ * occurrence that month is in range, so the per-occurrence shares sum back
+ * to the whole), and scales down proportionally for any partial range,
+ * consistent with how staff cost is already computed per scheduled day.
+ */
+function prorateServiceAmount(jobSite: AccrualJobSite, serviceAmount: number, rangeStart: Date, rangeEnd: Date): number {
+  const occurrences = computeOccurrences(jobSite, rangeStart, rangeEnd)
+  if (occurrences.length === 0) return 0
+  const fullMonthCounts = new Map<string, number>()
+  let total = 0
+  for (const date of occurrences) {
+    const monthKey = date.slice(0, 7)
+    let count = fullMonthCounts.get(monthKey)
+    if (count === undefined) {
+      const [monthStart, monthEnd] = monthBounds(date)
+      count = computeOccurrences(jobSite, monthStart, monthEnd, { ignoreEndCutoff: true }).length
+      fullMonthCounts.set(monthKey, count)
+    }
+    if (count > 0) total += serviceAmount / count
+  }
+  return total
+}
 
 export interface AccountingRow {
   job_site_id: string
@@ -70,8 +115,11 @@ export async function listJobAccounting(from: string, to: string): Promise<Accou
     expensesByJobSite.set(exp.job_site_id, (expensesByJobSite.get(exp.job_site_id) ?? 0) + exp.amount)
   }
 
+  const rangeStart = parseDateOnly(from)
+  const rangeEnd = parseDateOnly(to)
+
   return jobSites.map((row) => {
-    const service = row.service_amount ?? 0
+    const service = row.service_amount === null ? 0 : prorateServiceAmount(row, row.service_amount, rangeStart, rangeEnd)
     const staffCost = staffCostByJobSite.get(row.id) ?? 0
     const jobExpenses = expensesByJobSite.get(row.id) ?? 0
     const clientName = row.clients

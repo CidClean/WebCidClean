@@ -23,6 +23,8 @@ interface Row {
   checked: boolean
   beforeStart: boolean
   assignmentStartDate: string
+  afterEnd: boolean
+  assignmentEndDate: string | null
 }
 
 export function DayLogPanel({ jobSiteId, jobSiteName, date, onClose }: DayLogPanelProps) {
@@ -48,9 +50,16 @@ export function DayLogPanel({ jobSiteId, jobSiteName, date, onClose }: DayLogPan
       setRows(
         (assignments as JobStaffAssignmentWithStaff[]).map((a) => {
           const beforeStart = date < a.start_date
+          // Finding #9: computeAccrual unconditionally skips any date past
+          // an assignment's end_date before it even looks at overrides — an
+          // override saved here for such a date would silently have no
+          // effect. Grey the row out the same way a before-start date
+          // already is, instead of letting the admin save a no-op override.
+          const afterEnd = a.end_date !== null && date > a.end_date
+          const outOfRange = beforeStart || afterEnd
           const override = logsByStaff.get(a.staff_id)
-          const rowDefaultIncluded = !beforeStart && defaultIncluded
-          const checked = beforeStart ? false : override ? !override.excluded : defaultIncluded
+          const rowDefaultIncluded = !outOfRange && defaultIncluded
+          const checked = outOfRange ? false : override ? !override.excluded : defaultIncluded
           return {
             staffId: a.staff_id,
             staffName: a.staff ? `${a.staff.first_name} ${a.staff.last_name}` : 'Unknown',
@@ -64,6 +73,8 @@ export function DayLogPanel({ jobSiteId, jobSiteName, date, onClose }: DayLogPan
             checked,
             beforeStart,
             assignmentStartDate: a.start_date,
+            afterEnd,
+            assignmentEndDate: a.end_date,
           }
         }),
       )
@@ -142,10 +153,13 @@ export function DayLogPanel({ jobSiteId, jobSiteName, date, onClose }: DayLogPan
             </p>
           )}
           {rows.map((row) =>
-            row.beforeStart ? (
+            row.beforeStart || row.afterEnd ? (
               <div key={row.staffId} className="flex items-center justify-between text-sm text-gray-400">
                 <span>
-                  {row.staffName} <span className="text-xs">(starts {row.assignmentStartDate})</span>
+                  {row.staffName}{' '}
+                  <span className="text-xs">
+                    {row.beforeStart ? `(starts ${row.assignmentStartDate})` : `(ended ${row.assignmentEndDate})`}
+                  </span>
                 </span>
               </div>
             ) : (

@@ -49,8 +49,14 @@ export function ClientHomePage() {
   const rangeEnd = new Date(today)
   rangeEnd.setUTCDate(rangeEnd.getUTCDate() + 13)
 
+  // Finding #18: a job site still new/pending/approved (not yet activated)
+  // was computing next-visit occurrences the same as an active one, showing
+  // the client a specific upcoming-visit date as if it were confirmed
+  // before the job has actually been activated.
+  const scheduledJobSites = jobSites.filter((js) => js.status === 'active')
+
   const visits: NextVisit[] = []
-  for (const js of jobSites) {
+  for (const js of scheduledJobSites) {
     const dates = computeOccurrences(js as unknown as ScheduleJobSite, today, rangeEnd)
     for (const date of dates) visits.push({ jobSiteName: js.name, date, startTime: js.preferred_start_time })
   }
