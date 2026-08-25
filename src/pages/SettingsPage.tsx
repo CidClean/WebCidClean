@@ -10,6 +10,7 @@ import {
   updateTaxRate,
 } from '../api/settings'
 import {
+  countExpensesUsingCategory,
   createExpenseCategory,
   deleteExpenseCategory,
   listExpenseCategories,
@@ -308,8 +309,21 @@ function ExpenseCategoriesTab() {
       setError(`Delete subcategories of "${category.name}" first.`)
       return
     }
-    if (!confirm(`Delete category "${category.name}"? Expenses using it will keep their amount but lose the category.`)) return
     setError(null)
+    let usageCount = 0
+    try {
+      usageCount = await countExpensesUsingCategory(category.id)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to check category usage')
+      return
+    }
+    const message =
+      usageCount > 0
+        ? `Delete category "${category.name}"? It's used by ${usageCount} expense${usageCount === 1 ? '' : 's'} — ${
+            usageCount === 1 ? 'that expense' : 'those expenses'
+          } will keep its amount but lose its category, and won't be assigned to any other category automatically.`
+        : `Delete category "${category.name}"? It isn't used by any expenses yet.`
+    if (!confirm(message)) return
     try {
       await deleteExpenseCategory(category.id)
       refresh()

@@ -27,6 +27,15 @@ export async function deleteExpenseCategory(id: string): Promise<void> {
   if (error) throw error
 }
 
+export async function countExpensesUsingCategory(categoryId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('expenses')
+    .select('id', { count: 'exact', head: true })
+    .eq('category_id', categoryId)
+  if (error) throw error
+  return count ?? 0
+}
+
 export interface ExpenseWithCategory extends Expense {
   expense_categories: { id: string; name: string; parent_category_id: string | null } | null
 }

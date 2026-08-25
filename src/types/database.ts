@@ -296,6 +296,41 @@ export type Database = {
           },
         ]
       }
+      client_status_history: {
+        Row: {
+          changed_at: string
+          client_id: string
+          from_status: Database["public"]["Enums"]["client_status"] | null
+          id: string
+          reason: string | null
+          to_status: Database["public"]["Enums"]["client_status"]
+        }
+        Insert: {
+          changed_at?: string
+          client_id: string
+          from_status?: Database["public"]["Enums"]["client_status"] | null
+          id?: string
+          reason?: string | null
+          to_status: Database["public"]["Enums"]["client_status"]
+        }
+        Update: {
+          changed_at?: string
+          client_id?: string
+          from_status?: Database["public"]["Enums"]["client_status"] | null
+          id?: string
+          reason?: string | null
+          to_status?: Database["public"]["Enums"]["client_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_status_history_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           auth_user_id: string | null
@@ -1645,6 +1680,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _service_weekdays: {
+        Args: {
+          p_frequency: string
+          p_frequency_days: Database["public"]["Enums"]["weekday"][]
+          p_start_date: string
+        }
+        Returns: number[]
+      }
+      _staff_schedule_conflict: {
+        Args: { p_job_site_id: string; p_staff_id: string }
+        Returns: string
+      }
       activate_job: { Args: { p_job_site_id: string }; Returns: undefined }
       admin_activate_converted_account: {
         Args: {
@@ -3844,6 +3891,11 @@ export type Database = {
         }
         Returns: Json
       }
+      archive_client: { Args: { p_client_id: string }; Returns: undefined }
+      archive_staff: {
+        Args: { p_end_date?: string; p_staff_id: string }
+        Returns: undefined
+      }
       assign_staff_to_job: {
         Args: {
           p_end_date?: string
@@ -3878,6 +3930,23 @@ export type Database = {
         }
         Returns: Json
       }
+      change_assignment_rate: {
+        Args: {
+          p_assignment_id: string
+          p_effective_date?: string
+          p_new_payment_amount: number
+          p_new_payment_type: string
+        }
+        Returns: undefined
+      }
+      change_client_status: {
+        Args: {
+          p_client_id: string
+          p_new_status: Database["public"]["Enums"]["client_status"]
+          p_reason?: string
+        }
+        Returns: undefined
+      }
       claim_public_prospect_notification_delivery: {
         Args: { p_correlation_id?: string; p_prospect_id: string }
         Returns: Json
@@ -3905,6 +3974,23 @@ export type Database = {
       }
       get_public_quote: { Args: { p_token: string }; Returns: Json }
       is_admin: { Args: never; Returns: boolean }
+      list_client_status_history: {
+        Args: { p_client_id: string }
+        Returns: {
+          changed_at: string
+          client_id: string
+          from_status: Database["public"]["Enums"]["client_status"] | null
+          id: string
+          reason: string | null
+          to_status: Database["public"]["Enums"]["client_status"]
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "client_status_history"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       mark_client_contacted: {
         Args: { p_client_id: string }
         Returns: undefined
@@ -3939,6 +4025,10 @@ export type Database = {
         }
         Returns: Json
       }
+      reactivate_job_site: {
+        Args: { p_job_site_id: string }
+        Returns: undefined
+      }
       record_public_prospect_notification_delivery: {
         Args: {
           p_correlation_id?: string
@@ -3949,6 +4039,41 @@ export type Database = {
           p_recipient_count: number
         }
         Returns: string
+      }
+      replace_invoice_line_items: {
+        Args: { p_invoice_id: string; p_items: Json; p_tax_rate: number }
+        Returns: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          sort_order: number
+          taxable: boolean
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "invoice_line_items"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      replace_quote_line_items: {
+        Args: { p_items: Json; p_quote_id: string; p_tax_rate: number }
+        Returns: {
+          amount: number
+          description: string
+          id: string
+          quote_id: string
+          sort_order: number
+          taxable: boolean
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "quote_line_items"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       respond_to_public_quote: {
         Args: {
