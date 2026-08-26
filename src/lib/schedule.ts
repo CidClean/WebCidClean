@@ -1,6 +1,7 @@
 import type { JobSite, Weekday } from '../types/models'
 
 const WEEKDAY_INDEX: Record<Weekday, number> = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 }
+const INDEX_WEEKDAY: Weekday[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
 
 function toDateOnly(d: Date): string {
   return d.toISOString().slice(0, 10)
@@ -108,4 +109,27 @@ export function computeOccurrences(
   }
 
   return occurrences
+}
+
+/** The Weekday a YYYY-MM-DD date string falls on, treated as UTC midnight. */
+export function weekdayOf(date: string): Weekday {
+  return INDEX_WEEKDAY[parseDateOnly(date).getUTCDay()]
+}
+
+/**
+ * Due dates (YYYY-MM-DD) for a monthly-recurring job-site task within
+ * [rangeStart, rangeEnd] — one per month, on dayOfMonth, clamped to the
+ * number of days the month actually has (same clamp computeOccurrences uses
+ * for a job site's own monthly frequency), but anchored to an arbitrary
+ * target day rather than to a job site's start_date.
+ */
+export function computeMonthlyDueDates(dayOfMonth: number, rangeStart: Date, rangeEnd: Date): string[] {
+  const dueDates: string[] = []
+  const start = atUTCMidnight(rangeStart)
+  const end = atUTCMidnight(rangeEnd)
+  if (end < start) return dueDates
+  for (let cur = start; cur <= end; cur = new Date(cur.getTime() + 86400000)) {
+    if (cur.getUTCDate() === Math.min(dayOfMonth, daysInMonth(cur))) dueDates.push(toDateOnly(cur))
+  }
+  return dueDates
 }

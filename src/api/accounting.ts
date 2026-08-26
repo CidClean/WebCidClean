@@ -1,9 +1,18 @@
 import { supabase } from '../lib/supabase'
-import { computeAccrual, todayDateOnly, type AccrualJobSite, type AssignmentForAccrual, type WorkLogOverride } from '../lib/accrual'
+import {
+  computeAccrual,
+  todayDateOnly,
+  type AccrualJobSite,
+  type AssignmentForAccrual,
+  type RosterEntry,
+  type WorkLogOverride,
+} from '../lib/accrual'
 import { computeOccurrences } from '../lib/schedule'
 import { getJobSite } from './jobSites'
 import { listAssignmentsForJobSite } from './staff'
+import { listAllRoster, listRosterForJobSite } from './roster'
 import { listExpenses } from './expenses'
+import type { Weekday } from '../types/models'
 
 function parseDateOnly(s: string): Date {
   const [y, m, d] = s.split('-').map(Number)
@@ -61,7 +70,7 @@ export interface AccountingRow {
 }
 
 export async function listJobAccounting(from: string, to: string): Promise<AccountingRow[]> {
-  const [jobSitesRes, assignmentsRes, overridesRes, expensesRes] = await Promise.all([
+  const [jobSitesRes, assignmentsRes, overridesRes, expensesRes, roster] = await Promise.all([
     supabase
       .from('job_sites')
       .select(
@@ -82,6 +91,7 @@ export async function listJobAccounting(from: string, to: string): Promise<Accou
       .not('job_site_id', 'is', null)
       .gte('expense_date', from)
       .lte('expense_date', to),
+    listAllRoster(),
   ])
   if (jobSitesRes.error) throw jobSitesRes.error
   if (assignmentsRes.error) throw assignmentsRes.error
@@ -97,12 +107,20 @@ export async function listJobAccounting(from: string, to: string): Promise<Accou
     }
   >
 
+  const rosterEntries: RosterEntry[] = roster.map((r) => ({
+    job_site_id: r.job_site_id,
+    staff_id: r.staff_id,
+    weekdays: r.weekdays as Weekday[],
+  }))
+
   const accrualEntries = computeAccrual(
     jobSites,
     assignmentsRes.data as AssignmentForAccrual[],
     overridesRes.data as WorkLogOverride[],
     from,
     to,
+    todayDateOnly(),
+    rosterEntries,
   )
 
   const staffCostByJobSite = new Map<string, number>()
@@ -155,10 +173,11 @@ export async function getJobSiteClosingSummary(jobSiteId: string): Promise<JobSi
   const today = todayDateOnly()
   const from = jobSite.start_date ?? today
 
-  const [assignments, overridesRes, expenses] = await Promise.all([
+  const [assignments, overridesRes, expenses, roster] = await Promise.all([
     listAssignmentsForJobSite(jobSiteId),
     supabase.from('work_logs').select('job_site_id, staff_id, work_date, excluded').eq('job_site_id', jobSiteId),
     listExpenses({ jobSiteId }),
+    listRosterForJobSite(jobSiteId),
   ])
   if (overridesRes.error) throw overridesRes.error
 
@@ -180,7 +199,20 @@ export async function getJobSiteClosingSummary(jobSiteId: string): Promise<JobSi
     end_date: a.end_date,
   }))
 
-  const entries = computeAccrual([accrualJobSite], accrualAssignments, overridesRes.data as WorkLogOverride[], from, today)
+  const rosterEntries: RosterEntry[] = roster.map((r) => ({
+    job_site_id: r.job_site_id,
+    staff_id: r.staff_id,
+    weekdays: r.weekdays as Weekday[],
+  }))
+  const entries = computeAccrual(
+    [accrualJobSite],
+    accrualAssignments,
+    overridesRes.data as WorkLogOverride[],
+    from,
+    today,
+    today,
+    rosterEntries,
+  )
   const staffCostToDate = entries.reduce((sum, e) => sum + e.payment_amount, 0)
   const expensesToDate = expenses.reduce((sum, e) => sum + e.amount, 0)
 

@@ -32,13 +32,16 @@ import { AreaForm } from '../components/areas/AreaForm'
 import { AreaCard } from '../components/areas/AreaCard'
 import { AssignStaffForm } from '../components/staff/AssignStaffForm'
 import { JobSiteEditForm } from '../components/jobSites/JobSiteEditForm'
+import { RosterSection } from '../components/jobSites/RosterSection'
+import { TasksSection } from '../components/jobSites/TasksSection'
 
-type Tab = 'info' | 'areas' | 'staff' | 'quote' | 'invoices'
+type Tab = 'info' | 'areas' | 'staff' | 'roster' | 'quote' | 'invoices'
 
 const JOB_SITE_TABS: TabDef<Tab>[] = [
   { value: 'info', label: 'Info', icon: 'doc' },
   { value: 'areas', label: 'Areas', icon: 'pin' },
   { value: 'staff', label: 'Staff', icon: 'user' },
+  { value: 'roster', label: 'Roster', icon: 'calendar' },
   { value: 'quote', label: 'Quote', icon: 'cash' },
   { value: 'invoices', label: 'Invoices', icon: 'wallet' },
 ]
@@ -183,6 +186,16 @@ export function JobSiteDetailPage() {
         {tab === 'info' && <InfoTab jobSite={jobSite} onUpdated={refresh} />}
         {tab === 'areas' && <AreasSection jobSiteId={jobSiteId} />}
         {tab === 'staff' && <StaffAssignmentsSection jobSite={jobSite} onUpdated={refresh} />}
+        {tab === 'roster' && (
+          <div className="space-y-6">
+            <Section title="Weekly Roster">
+              <RosterSection jobSite={jobSite} />
+            </Section>
+            <Section title="Recurring Tasks">
+              <TasksSection jobSiteId={jobSiteId} />
+            </Section>
+          </div>
+        )}
         {tab === 'quote' && <QuoteSection jobSiteId={jobSiteId} clientId={clientId} />}
         {tab === 'invoices' && <InvoicesSection jobSiteId={jobSiteId} clientId={clientId} />}
       </div>

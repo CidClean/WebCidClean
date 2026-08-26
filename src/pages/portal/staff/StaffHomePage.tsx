@@ -3,9 +3,10 @@ import { useAuth } from '../../../auth/AuthContext'
 import { listAssignmentsForStaff, type JobStaffAssignmentWithJobSite } from '../../../api/staff'
 import { listMyStaffDocumentRequirements, listMyStaffDocuments } from '../../../api/staffPortal'
 import { listWorkLogsForStaff, type StaffWorkLogEntry } from '../../../api/workLogs'
-import { computeOccurrences, type ScheduleJobSite } from '../../../lib/schedule'
+import { listRosterForStaff } from '../../../api/roster'
+import { computeOccurrences, weekdayOf, type ScheduleJobSite } from '../../../lib/schedule'
 import { todayDateOnly } from '../../../lib/accrual'
-import type { DocumentRequirement, StaffDocument } from '../../../types/models'
+import type { DocumentRequirement, JobSiteRoster, StaffDocument, Weekday } from '../../../types/models'
 import { PortalShell } from '../../../components/layout/PortalShell'
 import { HeroCard } from '../../../components/portal/HeroCard'
 import { STAFF_TABS } from './tabs'
@@ -29,6 +30,7 @@ function startOfMonth(): string {
 export function StaffHomePage() {
   const { staffId, displayName } = useAuth()
   const [assignments, setAssignments] = useState<JobStaffAssignmentWithJobSite[]>([])
+  const [roster, setRoster] = useState<JobSiteRoster[]>([])
   const [logs, setLogs] = useState<StaffWorkLogEntry[]>([])
   const [documents, setDocuments] = useState<StaffDocument[]>([])
   const [requirements, setRequirements] = useState<DocumentRequirement[]>([])
@@ -38,12 +40,14 @@ export function StaffHomePage() {
     if (!staffId) return
     Promise.all([
       listAssignmentsForStaff(staffId),
+      listRosterForStaff(staffId),
       listWorkLogsForStaff(staffId, startOfMonth(), toDateOnly(new Date())),
       listMyStaffDocuments(),
       listMyStaffDocumentRequirements(),
     ])
-      .then(([a, l, d, reqs]) => {
+      .then(([a, r, l, d, reqs]) => {
         setAssignments(a)
+        setRoster(r)
         setLogs(l)
         setDocuments(d)
         setRequirements(reqs)
@@ -63,10 +67,15 @@ export function StaffHomePage() {
   const rangeEnd = new Date(today)
   rangeEnd.setUTCDate(rangeEnd.getUTCDate() + 6)
 
+  const rosterByJobSite = new Map(roster.map((r) => [r.job_site_id, r.weekdays as Weekday[]]))
+
   const visits: Visit[] = []
   for (const a of assignments) {
     if (!a.job_sites) continue
-    const dates = computeOccurrences(a.job_sites as unknown as ScheduleJobSite, today, rangeEnd)
+    const rosterDays = rosterByJobSite.get(a.job_site_id)
+    const dates = computeOccurrences(a.job_sites as unknown as ScheduleJobSite, today, rangeEnd).filter(
+      (date) => !rosterDays || rosterDays.length === 0 || rosterDays.includes(weekdayOf(date)),
+    )
     for (const date of dates) {
       visits.push({ jobSiteName: a.job_sites.name, address: a.job_sites.address, date, startTime: a.job_sites.preferred_start_time })
     }

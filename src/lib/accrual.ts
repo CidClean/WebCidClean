@@ -1,5 +1,5 @@
-import { computeOccurrences, type ScheduleJobSite } from './schedule'
-import type { PaymentType } from '../types/models'
+import { computeOccurrences, weekdayOf, type ScheduleJobSite } from './schedule'
+import type { PaymentType, Weekday } from '../types/models'
 
 function parseDateOnly(s: string): Date {
   const [y, m, d] = s.split('-').map(Number)
@@ -61,6 +61,10 @@ export function computeDailyRate(
   jobSite: AccrualJobSite,
   assignment: Pick<AssignmentForAccrual, 'payment_amount' | 'payment_type'>,
   date: string,
+  // Only set when this staff member has a job_site_roster entry narrowing
+  // them to specific weekdays at this job site — undefined/null means "works
+  // every day the site is scheduled", the pre-roster default behavior.
+  rosterDays?: Weekday[] | null,
 ): number {
   if (assignment.payment_type === 'per_day') return assignment.payment_amount
   if (assignment.payment_type === 'per_hour') return assignment.payment_amount * (jobSite.estimated_duration_minutes / 60)
@@ -71,7 +75,12 @@ export function computeDailyRate(
   // which days actually get paid. Keeping the denominator at the full-month
   // count is what makes a partial month prorate instead of always paying out
   // the whole monthly amount for however few days actually occurred.
-  const daysInMonth = computeOccurrences(jobSite, monthStart, monthEnd, { ignoreEndCutoff: true }).length
+  let monthOccurrences = computeOccurrences(jobSite, monthStart, monthEnd, { ignoreEndCutoff: true })
+  if (rosterDays && rosterDays.length > 0) {
+    const rosterSet = new Set(rosterDays)
+    monthOccurrences = monthOccurrences.filter((d) => rosterSet.has(weekdayOf(d)))
+  }
+  const daysInMonth = monthOccurrences.length
   return daysInMonth > 0 ? assignment.payment_amount / daysInMonth : 0
 }
 
@@ -88,6 +97,16 @@ export interface AccrualEntry {
   work_date: string
   payment_amount: number
   auto: boolean
+}
+
+// A job_site_roster row narrowing which weekdays a given staff member covers
+// at a given job site. Absent = that staff works every day the site is
+// scheduled (the behavior before rosters existed) — rosters are opt-in per
+// job site/staff pair, not required.
+export interface RosterEntry {
+  job_site_id: string
+  staff_id: string
+  weekdays: Weekday[]
 }
 
 /**
@@ -117,12 +136,16 @@ export function computeAccrual(
   from: string,
   to: string,
   today: string = todayDateOnly(),
+  roster: RosterEntry[] = [],
 ): AccrualEntry[] {
   const clippedTo = to < today ? to : today
   if (from > clippedTo) return []
 
   const overrideMap = new Map<string, WorkLogOverride>()
   for (const o of overrides) overrideMap.set(`${o.job_site_id}|${o.staff_id}|${o.work_date}`, o)
+
+  const rosterMap = new Map<string, Weekday[]>()
+  for (const r of roster) if (r.weekdays.length > 0) rosterMap.set(`${r.job_site_id}|${r.staff_id}`, r.weekdays)
 
   const assignmentsByJobSite = new Map<string, AssignmentForAccrual[]>()
   for (const a of assignments) {
@@ -141,13 +164,16 @@ export function computeAccrual(
     const occurrences = computeOccurrences(js, rangeStart, rangeEnd)
     for (const date of occurrences) {
       const defaultIncluded = date < today
+      const dateWeekday = weekdayOf(date)
       for (const a of jsAssignments) {
         if (date < a.start_date) continue
         if (a.end_date && date > a.end_date) continue
+        const rosterDays = rosterMap.get(`${js.id}|${a.staff_id}`)
+        if (rosterDays && !rosterDays.includes(dateWeekday)) continue
         const override = overrideMap.get(`${js.id}|${a.staff_id}|${date}`)
         const included = override ? !override.excluded : defaultIncluded
         if (!included) continue
-        const amount = computeDailyRate(js, a, date)
+        const amount = computeDailyRate(js, a, date, rosterDays)
         entries.push({ job_site_id: js.id, staff_id: a.staff_id, work_date: date, payment_amount: amount, auto: !override })
       }
     }

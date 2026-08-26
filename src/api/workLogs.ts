@@ -1,7 +1,8 @@
 import { supabase } from '../lib/supabase'
 import { listAssignmentsForStaff } from './staff'
-import { computeAccrual, type AccrualJobSite, type AssignmentForAccrual, type WorkLogOverride } from '../lib/accrual'
-import type { WorkLog } from '../types/models'
+import { listRosterForStaff } from './roster'
+import { computeAccrual, type AccrualJobSite, type AssignmentForAccrual, type RosterEntry, type WorkLogOverride } from '../lib/accrual'
+import type { Weekday, WorkLog } from '../types/models'
 
 export async function listWorkLogsForJobSiteDate(jobSiteId: string, workDate: string): Promise<WorkLog[]> {
   const { data, error } = await supabase
@@ -45,7 +46,7 @@ export interface StaffWorkLogEntry {
 }
 
 export async function listWorkLogsForStaff(staffId: string, from: string, to: string): Promise<StaffWorkLogEntry[]> {
-  const [assignments, overridesRes] = await Promise.all([
+  const [assignments, overridesRes, roster] = await Promise.all([
     listAssignmentsForStaff(staffId),
     supabase
       .from('work_logs')
@@ -53,6 +54,7 @@ export async function listWorkLogsForStaff(staffId: string, from: string, to: st
       .eq('staff_id', staffId)
       .gte('work_date', from)
       .lte('work_date', to),
+    listRosterForStaff(staffId),
   ])
   if (overridesRes.error) throw overridesRes.error
 
@@ -76,7 +78,21 @@ export async function listWorkLogsForStaff(staffId: string, from: string, to: st
     end_date: a.end_date,
   }))
 
-  const entries = computeAccrual(jobSites, accrualAssignments, overridesRes.data as WorkLogOverride[], from, to)
+  const rosterEntries: RosterEntry[] = roster.map((r) => ({
+    job_site_id: r.job_site_id,
+    staff_id: r.staff_id,
+    weekdays: r.weekdays as Weekday[],
+  }))
+
+  const entries = computeAccrual(
+    jobSites,
+    accrualAssignments,
+    overridesRes.data as WorkLogOverride[],
+    from,
+    to,
+    undefined,
+    rosterEntries,
+  )
 
   return entries
     .map((e) => {
