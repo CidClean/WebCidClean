@@ -582,7 +582,6 @@ function StaffAssignmentsSection({ jobSite, onUpdated }: { jobSite: JobSite; onU
   return (
     <div className="space-y-6">
       <Section title="Assignments">
-        <AssignStaffForm jobSite={jobSite} existingAssignments={activeAssignments} onAssigned={refreshAll} />
         {loading ? (
           <p className="text-sm text-gray-500">Loading...</p>
         ) : (
@@ -596,6 +595,10 @@ function StaffAssignmentsSection({ jobSite, onUpdated }: { jobSite: JobSite; onU
                 ))}
               </div>
             )}
+            <div className="pt-2">
+              <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2">Add Staff</h3>
+              <AssignStaffForm jobSite={jobSite} existingAssignments={activeAssignments} onAssigned={refreshAll} />
+            </div>
             <ArchivedSection count={endedAssignments.length} label="Ended">
               {endedAssignments.map((a) => (
                 <AssignmentRow key={a.id} assignment={a} onChanged={refreshAll} onEnd={() => {}} />

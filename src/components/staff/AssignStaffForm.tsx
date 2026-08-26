@@ -128,20 +128,13 @@ export function AssignStaffForm({
     return (
       <p className="text-sm text-gray-500">
         All staff members are already assigned to this job site{alreadyAssignedNames.length > 0 ? ` (${alreadyAssignedNames.join(', ')})` : ''}
-        . Edit their amount below, or add a new staff member first.
+        . Edit their amount in the list above, or add a new staff member first.
       </p>
     )
   }
 
-  const monthlyBlocked = paymentType === 'monthly' && staffPaymentAmount === null
-
   return (
     <form onSubmit={handleSubmit} className="space-y-2">
-      {alreadyAssignedNames.length > 0 && (
-        <p className="text-xs text-gray-400">
-          Already assigned (not shown below — edit their amount in the list instead): {alreadyAssignedNames.join(', ')}
-        </p>
-      )}
       {paymentType === 'monthly' &&
         (staffPaymentAmount !== null ? (
           <p className="text-xs text-gray-500">
@@ -149,7 +142,10 @@ export function AssignStaffForm({
             monthly-rate staff so far. Defaults to an even split; edit the amount to customize.
           </p>
         ) : (
-          <p className="text-xs text-red-600">Set the job site's staff payment amount before assigning monthly-rate staff.</p>
+          <p className="text-xs text-gray-500">
+            No site-wide staff payment budget set yet — enter this person's monthly amount directly below, or set a
+            budget in the Staff Payment Budget section first to get an even-split suggestion.
+          </p>
         ))}
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-2">
         <Field label="Staff">
@@ -176,7 +172,7 @@ export function AssignStaffForm({
         <Field label="Start Date">
           <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
         </Field>
-        <Button type="submit" disabled={submitting || monthlyBlocked} className="w-full sm:w-auto">
+        <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
           {submitting ? 'Saving...' : 'Assign'}
         </Button>
       </div>
