@@ -28,6 +28,8 @@ export type Invoice = Tables['invoices']['Row']
 export type InvoiceLineItem = Tables['invoice_line_items']['Row']
 export type JobSiteRoster = Tables['job_site_roster']['Row']
 export type JobSiteTask = Tables['job_site_tasks']['Row']
+export type MessageTemplate = Tables['message_templates']['Row']
+export type ClientContactLogEntry = Tables['client_contact_log']['Row']
 
 export type ClientStatus = Client['status']
 export type JobSiteStatus = JobSite['status']
@@ -43,6 +45,7 @@ export type CatalogItemKind = CatalogItem['kind']
 export type DiscountType = Discount['type']
 export type InvoiceStatus = Invoice['status']
 export type TaskRecurrence = 'weekly' | 'monthly'
+export type ContactChannel = 'email' | 'sms' | 'whatsapp' | 'call'
 
 export type PaymentType = 'monthly' | 'per_day' | 'per_hour'
 export const PAYMENT_TYPES: PaymentType[] = ['monthly', 'per_day', 'per_hour']
@@ -120,3 +123,11 @@ export const INVOICE_STATUSES: InvoiceStatus[] = ['draft', 'sent', 'paid', 'void
 
 export const TASK_RECURRENCES: TaskRecurrence[] = ['weekly', 'monthly']
 export const TASK_RECURRENCE_LABELS: Record<TaskRecurrence, string> = { weekly: 'Weekly', monthly: 'Monthly' }
+
+export const CONTACT_CHANNELS: ContactChannel[] = ['email', 'sms', 'whatsapp', 'call']
+export const CONTACT_CHANNEL_LABELS: Record<ContactChannel, string> = {
+  email: 'Email',
+  sms: 'SMS',
+  whatsapp: 'WhatsApp',
+  call: 'Call',
+}

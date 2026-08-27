@@ -13,7 +13,8 @@ import {
 } from '../api/clients'
 import { listJobSitesForClient } from '../api/jobSites'
 import { getPortalAccountStatus, invitePortalUser, type PortalAccountStatus } from '../api/portal'
-import { CLIENT_STATUSES, type Client, type ClientStatus, type JobSite } from '../types/models'
+import { listClientContactLog } from '../api/clientContact'
+import { CLIENT_STATUSES, CONTACT_CHANNEL_LABELS, type Client, type ClientContactLogEntry, type ClientStatus, type JobSite } from '../types/models'
 import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
 import { InviteForm } from '../components/ui/InviteForm'
@@ -24,6 +25,7 @@ import { ArchivedSection } from '../components/ui/ArchivedSection'
 import { TabBar, type TabDef } from '../components/ui/TabBar'
 import { BillingInfoForm } from '../components/clients/BillingInfoForm'
 import { DocumentUploadList } from '../components/clients/DocumentUploadList'
+import { ContactClientPanel } from '../components/clients/ContactClientPanel'
 import { JobSiteForm } from '../components/jobSites/JobSiteForm'
 
 type Tab = 'info' | 'jobSites' | 'billing' | 'documents'
@@ -45,6 +47,8 @@ export function ClientDetailPage() {
   const [actionError, setActionError] = useState<string | null>(null)
   const [tab, setTab] = useState<Tab>('info')
   const [showStatusChange, setShowStatusChange] = useState(false)
+  const [showContact, setShowContact] = useState(false)
+  const [contactRefreshKey, setContactRefreshKey] = useState(0)
 
   function refresh() {
     if (!clientId) return
@@ -113,6 +117,9 @@ export function ClientDetailPage() {
         ]}
         actions={
           <>
+            <Button variant="secondary" onClick={() => setShowContact(true)}>
+              Contact
+            </Button>
             {client.status === 'prospect' && (
               <Button onClick={() => runAction(() => markClientContacted(clientId))}>Mark Contacted</Button>
             )}
@@ -133,6 +140,17 @@ export function ClientDetailPage() {
         }
       />
 
+      {showContact && (
+        <ContactClientPanel
+          client={client}
+          onClose={() => setShowContact(false)}
+          onLogged={() => {
+            refresh()
+            setContactRefreshKey((k) => k + 1)
+          }}
+        />
+      )}
+
       <div className="space-y-6">
         {showStatusChange && (
           <ChangeStatusPanel
@@ -147,7 +165,7 @@ export function ClientDetailPage() {
 
         <TabBar tabs={CLIENT_DETAIL_TABS} active={tab} onChange={setTab} />
 
-        {tab === 'info' && <InfoTab client={client} onUpdated={refresh} />}
+        {tab === 'info' && <InfoTab client={client} onUpdated={refresh} contactRefreshKey={contactRefreshKey} />}
         {tab === 'jobSites' && (
           <JobSitesTab client={client} jobSites={jobSites} loading={jobSitesLoading} onUpdated={refreshJobSites} />
         )}
@@ -257,7 +275,46 @@ function StatusHistorySection({ clientId }: { clientId: string }) {
   )
 }
 
-function InfoTab({ client, onUpdated }: { client: Client; onUpdated: () => void }) {
+function ContactHistorySection({ clientId, refreshKey }: { clientId: string; refreshKey: number }) {
+  const [entries, setEntries] = useState<ClientContactLogEntry[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    setLoading(true)
+    listClientContactLog(clientId)
+      .then(setEntries)
+      .finally(() => setLoading(false))
+  }, [clientId, refreshKey])
+
+  if (loading || entries.length === 0) return null
+
+  return (
+    <div className="max-w-lg">
+      <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">Contact History</h2>
+      <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
+        {entries.map((e) => (
+          <div key={e.id} className="p-3 text-sm flex items-center justify-between">
+            <span className="text-gray-900">
+              {CONTACT_CHANNEL_LABELS[e.channel as keyof typeof CONTACT_CHANNEL_LABELS]}
+              {e.template_label ? ` · ${e.template_label}` : ''}
+            </span>
+            <span className="text-gray-400 text-xs">{new Date(e.created_at).toLocaleString()}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function InfoTab({
+  client,
+  onUpdated,
+  contactRefreshKey,
+}: {
+  client: Client
+  onUpdated: () => void
+  contactRefreshKey: number
+}) {
   const [editing, setEditing] = useState(false)
 
   return (
@@ -318,6 +375,7 @@ function InfoTab({ client, onUpdated }: { client: Client; onUpdated: () => void 
       </div>
 
       <PortalInviteSection client={client} />
+      <ContactHistorySection clientId={client.id} refreshKey={contactRefreshKey} />
       <StatusHistorySection clientId={client.id} />
     </div>
   )

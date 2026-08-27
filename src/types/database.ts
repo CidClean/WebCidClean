@@ -255,6 +255,64 @@ export type Database = {
           },
         ];
       };
+      client_contact_log: {
+        Row: {
+          channel: string;
+          client_id: string;
+          contact_address: string | null;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          job_site_id: string | null;
+          template_id: string | null;
+          template_label: string | null;
+        };
+        Insert: {
+          channel: string;
+          client_id: string;
+          contact_address?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          job_site_id?: string | null;
+          template_id?: string | null;
+          template_label?: string | null;
+        };
+        Update: {
+          channel?: string;
+          client_id?: string;
+          contact_address?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          job_site_id?: string | null;
+          template_id?: string | null;
+          template_label?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "client_contact_log_client_id_fkey";
+            columns: ["client_id"];
+            isOneToOne: false;
+            referencedRelation: "clients";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "client_contact_log_job_site_id_fkey";
+            columns: ["job_site_id"];
+            isOneToOne: false;
+            referencedRelation: "job_sites";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "client_contact_log_template_id_fkey";
+            columns: ["template_id"];
+            isOneToOne: false;
+            referencedRelation: "message_templates";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       client_documents: {
         Row: {
           client_id: string;
@@ -990,6 +1048,33 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      message_templates: {
+        Row: {
+          body: string;
+          created_at: string;
+          id: string;
+          label: string;
+          subject: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          body: string;
+          created_at?: string;
+          id?: string;
+          label: string;
+          subject?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          body?: string;
+          created_at?: string;
+          id?: string;
+          label?: string;
+          subject?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
       mfa_recovery_codes: {
         Row: {
@@ -4174,6 +4259,17 @@ export type Database = {
           isOneToOne: false;
           isSetofReturn: true;
         };
+      };
+      log_client_contact: {
+        Args: {
+          p_channel: string;
+          p_client_id: string;
+          p_contact_address: string;
+          p_job_site_id: string;
+          p_template_id: string;
+          p_template_label: string;
+        };
+        Returns: undefined;
       };
       mark_client_contacted: {
         Args: { p_client_id: string };

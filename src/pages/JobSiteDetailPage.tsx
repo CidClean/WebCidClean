@@ -1,7 +1,7 @@
 import { useEffect, useState, type MouseEvent, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { BackLink } from '../components/ui/BackLink'
-import { getClientBillingInfo, listClientDocuments } from '../api/clients'
+import { getClient, getClientBillingInfo, listClientDocuments } from '../api/clients'
 import { activateJob, getJobSite, reactivateJobSite, updateJobSite } from '../api/jobSites'
 import { getJobSiteClosingSummary, type JobSiteClosingSummary } from '../api/accounting'
 import { todayDateOnly } from '../lib/accrual'
@@ -34,6 +34,8 @@ import { AssignStaffForm } from '../components/staff/AssignStaffForm'
 import { JobSiteEditForm } from '../components/jobSites/JobSiteEditForm'
 import { RosterSection } from '../components/jobSites/RosterSection'
 import { TasksSection } from '../components/jobSites/TasksSection'
+import { ContactClientPanel } from '../components/clients/ContactClientPanel'
+import type { Client } from '../types/models'
 
 type Tab = 'info' | 'areas' | 'staff' | 'roster' | 'quote' | 'invoices'
 
@@ -237,9 +239,18 @@ function IconFieldValue({ label, value }: { label: string; value: string | null 
 
 function InfoTab({ jobSite, onUpdated }: { jobSite: JobSite; onUpdated: () => void }) {
   const [editing, setEditing] = useState(false)
+  const [client, setClient] = useState<Client | null>(null)
+  const [showContact, setShowContact] = useState(false)
+
+  useEffect(() => {
+    getClient(jobSite.client_id).then(setClient)
+  }, [jobSite.client_id])
 
   return (
     <div className="space-y-6">
+      {showContact && client && (
+        <ContactClientPanel client={client} jobSite={jobSite} onClose={() => setShowContact(false)} />
+      )}
       {editing ? (
         <JobSiteEditForm
           jobSite={jobSite}
@@ -263,6 +274,11 @@ function InfoTab({ jobSite, onUpdated }: { jobSite: JobSite; onUpdated: () => vo
               <IconFieldValue label="Email" value={jobSite.contact_email} />
               <IconFieldValue label="Phone" value={jobSite.contact_phone} />
             </dl>
+            <div className="mt-3">
+              <Button variant="secondary" onClick={() => setShowContact(true)} disabled={!client}>
+                Contact
+              </Button>
+            </div>
           </InfoCard>
 
           <InfoCard icon="calendar" title="Schedule">

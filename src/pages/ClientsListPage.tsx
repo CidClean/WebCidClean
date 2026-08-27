@@ -10,6 +10,7 @@ import { Select } from '../components/ui/Select'
 import { StatusBadge } from '../components/ui/StatusBadge'
 import { ArchivedSection } from '../components/ui/ArchivedSection'
 import { ListToolbar } from '../components/ui/ListToolbar'
+import { ContactClientPanel } from '../components/clients/ContactClientPanel'
 
 export function ClientsListPage() {
   const [clients, setClients] = useState<Client[]>([])
@@ -71,6 +72,7 @@ export function ClientsListPage() {
                     <th className="px-4 py-2 font-medium hidden sm:table-cell">Facility Type</th>
                     <th className="px-4 py-2 font-medium hidden sm:table-cell">Contact</th>
                     <th className="px-4 py-2 font-medium">Status</th>
+                    <th className="px-4 py-2 font-medium"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -98,6 +100,7 @@ export function ClientsListPage() {
 
 function ClientRow({ client }: { client: Client }) {
   const navigate = useNavigate()
+  const [showContact, setShowContact] = useState(false)
   return (
     <tr
       onClick={() => navigate(`/clients/${client.id}`)}
@@ -113,6 +116,21 @@ function ClientRow({ client }: { client: Client }) {
       <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{client.email || client.phone || '—'}</td>
       <td className="px-4 py-3">
         <StatusBadge status={client.status} />
+      </td>
+      <td className="px-4 py-3">
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            setShowContact(true)
+          }}
+          className="text-gray-400 hover:text-blue-600"
+          aria-label={`Contact ${client.first_name} ${client.last_name}`}
+        >
+          <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l9 6 9-6M4 6h16a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V7a1 1 0 011-1z" />
+          </svg>
+        </button>
+        {showContact && <ContactClientPanel client={client} onClose={() => setShowContact(false)} />}
       </td>
     </tr>
   )

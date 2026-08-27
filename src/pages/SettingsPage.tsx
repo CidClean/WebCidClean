@@ -16,12 +16,18 @@ import {
   listExpenseCategories,
 } from '../api/expenses'
 import { enrollTotp, listMfaFactors, unenrollFactor, verifyTotpCode, type MfaFactor } from '../api/mfa'
-import type { CatalogItem, CatalogItemKind, Discount, DiscountType, ExpenseCategory } from '../types/models'
+import {
+  createMessageTemplate,
+  deleteMessageTemplate,
+  listMessageTemplates,
+  updateMessageTemplate,
+} from '../api/messageTemplates'
+import type { CatalogItem, CatalogItemKind, Discount, DiscountType, ExpenseCategory, MessageTemplate } from '../types/models'
 import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 
-type Tab = 'catalog' | 'discounts' | 'expense-categories' | 'tax' | 'security'
+type Tab = 'catalog' | 'discounts' | 'expense-categories' | 'templates' | 'tax' | 'security'
 
 export function SettingsPage() {
   const [tab, setTab] = useState<Tab>('catalog')
@@ -38,6 +44,7 @@ export function SettingsPage() {
                 ['catalog', 'Services & Add-ons'],
                 ['discounts', 'Discounts'],
                 ['expense-categories', 'Expense Categories'],
+                ['templates', 'Message Templates'],
                 ['tax', 'Tax Rate'],
                 ['security', 'Security'],
               ] as [Tab, string][]
@@ -63,6 +70,7 @@ export function SettingsPage() {
           {tab === 'catalog' && <CatalogTab />}
           {tab === 'discounts' && <DiscountsTab />}
           {tab === 'expense-categories' && <ExpenseCategoriesTab />}
+          {tab === 'templates' && <MessageTemplatesTab />}
           {tab === 'tax' && <TaxRateTab />}
           {tab === 'security' && <SecurityTab />}
         </div>
@@ -282,6 +290,138 @@ function DiscountForm({ onCreated }: { onCreated: () => void }) {
           </Field>
         </div>
       </div>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
+        {submitting ? 'Saving...' : 'Save'}
+      </Button>
+    </form>
+  )
+}
+
+function MessageTemplatesTab() {
+  const [templates, setTemplates] = useState<MessageTemplate[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [editing, setEditing] = useState<MessageTemplate | null>(null)
+
+  function refresh() {
+    setLoading(true)
+    listMessageTemplates()
+      .then(setTemplates)
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(refresh, [])
+
+  async function handleDelete(id: string) {
+    if (!confirm('Delete this template?')) return
+    await deleteMessageTemplate(id)
+    refresh()
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-gray-500">
+        Reusable messages for the Contact panel on clients and job sites. Use <code>{'{{first_name}}'}</code>,{' '}
+        <code>{'{{last_name}}'}</code>, <code>{'{{company}}'}</code>, <code>{'{{email}}'}</code>,{' '}
+        <code>{'{{phone}}'}</code>, and — when sent from a job site — <code>{'{{job_site_name}}'}</code>,{' '}
+        <code>{'{{job_site_address}}'}</code>. The same body is used for email, SMS, and WhatsApp; Subject only
+        applies to email.
+      </p>
+      <div className="flex justify-end">
+        <Button
+          onClick={() => {
+            setEditing(null)
+            setShowForm((v) => !v)
+          }}
+          className="w-full sm:w-auto"
+        >
+          {showForm ? 'Cancel' : 'New Template'}
+        </Button>
+      </div>
+      {showForm && (
+        <MessageTemplateForm
+          template={editing}
+          onSaved={() => {
+            setShowForm(false)
+            setEditing(null)
+            refresh()
+          }}
+        />
+      )}
+      {loading ? (
+        <p className="text-sm text-gray-500">Loading...</p>
+      ) : (
+        <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
+          {templates.length === 0 && <p className="p-4 text-sm text-gray-500">No message templates yet.</p>}
+          {templates.map((t) => (
+            <div key={t.id} className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 p-3">
+              <div className="min-w-0 break-words">
+                <span className="text-sm font-medium text-gray-900">{t.label}</span>
+                <p className="text-xs text-gray-500 mt-0.5 truncate max-w-md">{t.body}</p>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <button
+                  onClick={() => {
+                    setEditing(t)
+                    setShowForm(true)
+                  }}
+                  className="text-xs text-blue-600 hover:underline"
+                >
+                  Edit
+                </button>
+                <button onClick={() => handleDelete(t.id)} className="text-xs text-red-600 hover:underline">
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function MessageTemplateForm({ template, onSaved }: { template: MessageTemplate | null; onSaved: () => void }) {
+  const [label, setLabel] = useState(template?.label ?? '')
+  const [subject, setSubject] = useState(template?.subject ?? '')
+  const [body, setBody] = useState(template?.body ?? '')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    setSubmitting(true)
+    setError(null)
+    try {
+      const input = { label, subject: subject || null, body }
+      if (template) await updateMessageTemplate(template.id, input)
+      else await createMessageTemplate(input)
+      onSaved()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 max-w-lg">
+      <Field label="Label">
+        <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="e.g. Visit reminder" required />
+      </Field>
+      <Field label="Subject (email only)">
+        <Input value={subject} onChange={(e) => setSubject(e.target.value)} />
+      </Field>
+      <Field label="Message">
+        <textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          rows={5}
+          className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm"
+          required
+        />
+      </Field>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
         {submitting ? 'Saving...' : 'Save'}
