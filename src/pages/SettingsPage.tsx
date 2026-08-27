@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import {
   createCatalogItem,
   createDiscount,
@@ -22,6 +22,7 @@ import {
   listMessageTemplates,
   updateMessageTemplate,
 } from '../api/messageTemplates'
+import { TEMPLATE_VARIABLES } from '../lib/messageTemplate'
 import type { CatalogItem, CatalogItemKind, Discount, DiscountType, ExpenseCategory, MessageTemplate } from '../types/models'
 import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Input'
@@ -322,11 +323,9 @@ function MessageTemplatesTab() {
   return (
     <div className="space-y-4">
       <p className="text-xs text-gray-500">
-        Reusable messages for the Contact panel on clients and job sites. Use <code>{'{{first_name}}'}</code>,{' '}
-        <code>{'{{last_name}}'}</code>, <code>{'{{company}}'}</code>, <code>{'{{email}}'}</code>,{' '}
-        <code>{'{{phone}}'}</code>, and — when sent from a job site — <code>{'{{job_site_name}}'}</code>,{' '}
-        <code>{'{{job_site_address}}'}</code>. The same body is used for email, SMS, and WhatsApp; Subject only
-        applies to email.
+        Reusable messages for the Contact panel on clients and job sites. Click a field below, then tap a variable
+        to drop it in at your cursor — no need to type the double braces yourself. The same body is used for email,
+        SMS, and WhatsApp; Subject only applies to email.
       </p>
       <div className="flex justify-end">
         <Button
@@ -389,6 +388,29 @@ function MessageTemplateForm({ template, onSaved }: { template: MessageTemplate 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const subjectRef = useRef<HTMLInputElement>(null)
+  const bodyRef = useRef<HTMLTextAreaElement>(null)
+  const [activeField, setActiveField] = useState<'subject' | 'body'>('body')
+
+  // Inserts {{key}} at the cursor of whichever field (Subject or Message)
+  // was last focused, instead of making the admin type the double braces
+  // by hand — restores focus + cursor position after so they can keep typing.
+  function insertVariable(key: string) {
+    const token = `{{${key}}}`
+    const isSubject = activeField === 'subject'
+    const el = isSubject ? subjectRef.current : bodyRef.current
+    const currentValue = isSubject ? subject : body
+    const setValue = isSubject ? setSubject : setBody
+    const start = el?.selectionStart ?? currentValue.length
+    const end = el?.selectionEnd ?? currentValue.length
+    setValue(currentValue.slice(0, start) + token + currentValue.slice(end))
+    requestAnimationFrame(() => {
+      el?.focus()
+      const pos = start + token.length
+      el?.setSelectionRange(pos, pos)
+    })
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setSubmitting(true)
@@ -410,13 +432,35 @@ function MessageTemplateForm({ template, onSaved }: { template: MessageTemplate 
       <Field label="Label">
         <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="e.g. Visit reminder" required />
       </Field>
+
+      <div className="flex flex-wrap gap-1.5">
+        {TEMPLATE_VARIABLES.map((v) => (
+          <button
+            key={v.key}
+            type="button"
+            onClick={() => insertVariable(v.key)}
+            className="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 hover:bg-blue-100"
+          >
+            + {v.label}
+          </button>
+        ))}
+      </div>
+
       <Field label="Subject (email only)">
-        <Input value={subject} onChange={(e) => setSubject(e.target.value)} />
+        <input
+          ref={subjectRef}
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          onFocus={() => setActiveField('subject')}
+          className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
       </Field>
       <Field label="Message">
         <textarea
+          ref={bodyRef}
           value={body}
           onChange={(e) => setBody(e.target.value)}
+          onFocus={() => setActiveField('body')}
           rows={5}
           className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm"
           required

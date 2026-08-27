@@ -1,3 +1,14 @@
+/** The variables a template body/subject can reference — kept in one place so the Settings composer's insert buttons can't drift out of sync with what actually gets substituted. */
+export const TEMPLATE_VARIABLES: { key: string; label: string }[] = [
+  { key: 'first_name', label: 'First name' },
+  { key: 'last_name', label: 'Last name' },
+  { key: 'company', label: 'Company' },
+  { key: 'email', label: 'Email' },
+  { key: 'phone', label: 'Phone' },
+  { key: 'job_site_name', label: 'Job site name' },
+  { key: 'job_site_address', label: 'Job site address' },
+]
+
 /**
  * Substitutes {{key}} placeholders with values from `vars`. A placeholder
  * with no matching key is left in the text untouched (visible) rather than
